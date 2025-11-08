@@ -1,0 +1,240 @@
+.expense-container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: "Poppins", sans-serif;
+}
+
+/* ===== Header ===== */
+.expense-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.expense-header h2 {
+    color: #2b3a55;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.new-entry-btn {
+    background: #0078d4;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.new-entry-btn:hover {
+    background: #005fa3;
+}
+
+/* ===== Search Bar ===== */
+.search-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.search-bar input {
+    width: 250px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: #0078d4;
+}
+
+/* ===== Form Section ===== */
+.expense-form {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border: 1px solid #e0e0e0;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.expense-form input,
+.expense-form select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    width: 100%;
+    transition: 0.2s;
+}
+
+.expense-form input:focus,
+.expense-form select:focus {
+    border-color: #0078d4;
+    outline: none;
+}
+
+.expense-form button {
+    margin-top: 15px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.expense-form button:hover {
+    background: #005fa3;
+}
+
+/* ===== Table Section ===== */
+.expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.expense-table th,
+.expense-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-size: 14px;
+}
+
+.expense-table th {
+    background: #0078d4;
+    color: white;
+    font-weight: 500;
+}
+
+.expense-table tr:hover {
+    background: #f5f9ff;
+}
+
+.expense-table .deleted-row {
+    background: #ffecec;
+    color: #a00;
+}
+
+.expense-table button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin: 0 4px;
+    font-size: 16px;
+    transition: transform 0.2s;
+}
+
+.expense-table button:hover {
+    transform: scale(1.2);
+}
+
+/* ===== Pagination ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: #0078d4;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover {
+    background: #005fa3;
+}
+
+.pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* ===== Total Section ===== */
+.total-expense {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: #2b3a55;
+    font-weight: 600;
+}
+
+.total-expense h3 {
+    background: #e8f4ff;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #bcdfff;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .expense-container {
+        padding: 15px;
+    }
+
+    .expense-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-bar {
+        justify-content: center;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .expense-table th,
+    .expense-table td {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .total-expense h3 {
+        font-size: 1rem;
+    }
+}

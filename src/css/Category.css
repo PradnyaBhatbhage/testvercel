@@ -1,0 +1,126 @@
+.category-container {
+    background: #fff;
+    border-radius: 10px;
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.new-entry-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.new-entry-btn:hover {
+    background: #0056b3;
+}
+
+.category-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.category-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-form label {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.category-form input,
+.category-form textarea,
+.category-form select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.submit-btn {
+    grid-column: span 2;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.submit-btn:hover {
+    background-color: #218838;
+}
+
+.category-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+.category-table th,
+.category-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.category-table th {
+    background-color: #f4f4f4;
+}
+
+.category-table button {
+    margin: 2px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.category-table button:nth-child(1) {
+    background: #ffc107;
+    color: #000;
+}
+
+.category-table button:nth-child(2) {
+    background: #dc3545;
+    color: #fff;
+}
+
+.category-table button:nth-child(3) {
+    background: #17a2b8;
+    color: #fff;
+}
+
+.search-bar {
+    margin: 15px 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.search-bar input {
+    padding: 8px 12px;
+    width: 280px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.search-bar input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
+}

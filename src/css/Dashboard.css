@@ -1,0 +1,26 @@
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.main-section {
+    display: flex;
+    flex: 1;
+    /*overflow: hidden;*/
+    position: relative;
+}
+
+.content-section {
+    flex: 1;
+    padding: 30px;
+    margin-left: 60px;
+    transition: margin-left 0.3s ease;
+    background-color: #f1f5fb;
+    min-height: calc(100vh - 60px);
+}
+
+.content-section.sidebar-open {
+    margin-left: 220px;
+}

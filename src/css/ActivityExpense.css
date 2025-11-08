@@ -1,0 +1,272 @@
+/* ====== Container ====== */
+.expense-container {
+    padding: 25px;
+    background: #f4f8fb;
+    border-radius: 12px;
+    min-height: 90vh;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ====== Header ====== */
+.expense-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.expense-header h2 {
+    color: #1a237e;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.new-entry-btn {
+    background-color: #0078d7;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.new-entry-btn:hover {
+    background-color: #005fa3;
+    transform: scale(1.03);
+}
+
+/* ====== Search Bar ====== */
+.search-bar {
+    margin-bottom: 15px;
+}
+
+.search-bar input {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.search-bar input:focus {
+    border-color: #0078d7;
+    box-shadow: 0 0 4px rgba(0, 120, 215, 0.3);
+    outline: none;
+}
+
+/* ====== Form Section ====== */
+.expense-form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.3s ease-in;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #0078d7;
+    box-shadow: 0 0 3px rgba(0, 120, 215, 0.3);
+    outline: none;
+}
+
+.form-group textarea {
+    resize: none;
+    min-height: 60px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.submit-btn {
+    background-color: #0078d7;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    background-color: #005fa3;
+    transform: scale(1.03);
+}
+
+/* ====== Table Section ====== */
+.expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.3s ease-in;
+}
+
+.expense-table th {
+    background-color: #0078d7;
+    color: white;
+    text-align: left;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.expense-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+}
+
+.expense-table tr:hover {
+    background-color: #f0f6ff;
+}
+
+.action-btns button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 6px;
+    transition: transform 0.2s ease;
+}
+
+.action-btns button:hover {
+    transform: scale(1.2);
+}
+
+/* Color codes for actions */
+.action-btns button:nth-child(1) {
+    color: #f0ad4e;
+    /* edit */
+}
+
+.action-btns button:nth-child(2) {
+    color: #d9534f;
+    /* delete */
+}
+
+.action-btns button:nth-child(3) {
+    color: #28a745;
+    /* restore */
+}
+
+/* ====== Animations ====== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ====== Responsive Design ====== */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+
+    .expense-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .expense-table th,
+    .expense-table td {
+        font-size: 12px;
+        padding: 6px;
+    }
+}
+
+.activity-totals {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.activity-totals h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #2b2b2b;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid #ddd;
+    font-size: 15px;
+}
+
+.total-row:last-child {
+    border-bottom: none;
+}
+
+.total-amount {
+    font-weight: bold;
+    color: #00695c;
+}
+
+.grand-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 10px;
+    background: #e8f5e9;
+    border-top: 2px solid #4caf50;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #2e7d32;
+}

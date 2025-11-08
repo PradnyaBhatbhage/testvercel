@@ -1,0 +1,210 @@
+/* .sidebar {
+    position: absolute;
+    /*top: 60px;*
+    left: 0;
+    /* height: calc(100vh - 60px); *
+    height: 100%;
+    width: 220px;
+    background-color: #0077b6;
+    color: white;
+    transition: transform 0.3s ease, width 0.3s ease;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.sidebar.closed {
+    transform: translateX(-100%);
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-title {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 18px;
+    border-bottom: 1px solid #90e0ef;
+    padding-bottom: 10px;
+}
+
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-list li {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-list li:hover {
+    background-color: #0096c7;
+}
+
+.icon {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.label {
+    font-size: 16px;
+} */
+
+
+/* === Sidebar Container === */
+.sidebar {
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: 230px;
+    background-color: #ffffff;
+    color: #1e293b;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    z-index: 10;
+    overflow-y: auto;
+    border-right: 1px solid #e5e7eb;
+}
+
+.sidebar.closed {
+    width: 70px;
+}
+
+/* === Title === */
+.sidebar-title {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #003366;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+
+/* === Menu List === */
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* === Menu Item === */
+.menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.menu-item:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.menu-item.active {
+    background-color: #eaf1ff;
+    color: #003399;
+    font-weight: 600;
+    border-left: 3px solid #003399;
+}
+
+/* === Icon & Label === */
+.menu-item .icon {
+    font-size: 18px;
+    color: #334155;
+    margin-right: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.menu-item.active .icon {
+    color: #003399;
+}
+
+.label {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* === Arrow Icon === */
+.arrow {
+    font-size: 14px;
+    color: #475569;
+    transition: transform 0.3s;
+}
+
+.arrow.rotate {
+    transform: rotate(90deg);
+    color: #003399;
+}
+
+/* === Submenu === */
+.submenu {
+    list-style: none;
+    margin: 0;
+    padding-left: 40px;
+    display: none;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.submenu.show {
+    display: block;
+}
+
+.submenu-item {
+    padding: 8px 0;
+    font-size: 14px;
+    color: #475569;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+}
+
+.submenu-item:hover {
+    color: #003399;
+    background-color: #f9fafb;
+}
+
+/* === Collapsed Sidebar === */
+.sidebar.closed .label,
+.sidebar.closed .arrow,
+.sidebar.closed .submenu {
+    display: none;
+}
+
+.sidebar.closed .icon {
+    margin: auto;
+}
+
+/* === Scrollbar === */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+}
+
+/* === Animation === */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,10 +1,12 @@
 .payment-container {
     padding: 20px;
-    background-color: #f9fafb;
+    background-color: var(--bg);
     border-radius: 12px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     font-family: "Poppins", sans-serif;
 }
+
+@import './common.css';
 
 .payment-header {
     display: flex;
@@ -16,22 +18,23 @@
 .payment-header h2 {
     font-size: 22px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-secondary);
 }
 
 .new-entry-btn {
-    background-color: #007bff;
+    background-color: var(--primary);
     color: white;
     border: none;
     padding: 8px 16px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-    transition: 0.3s ease;
+    font-weight: 600;
+    transition: 0.12s ease;
 }
 
 .new-entry-btn:hover {
-    background-color: #0056b3;
+    background-color: var(--primary-700);
 }
 
 .search-bar {
@@ -43,7 +46,7 @@
 .search-bar input {
     width: 250px;
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
 }
 
@@ -51,7 +54,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px 25px;
-    background: #ffffff;
+    background: var(--surface);
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 20px;
@@ -79,14 +82,14 @@
 .form-group label {
     font-weight: 500;
     margin-bottom: 5px;
-    color: #444;
+    color: var(--text-secondary);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     font-size: 14px;
     outline: none;
@@ -96,12 +99,12 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: #007bff;
+    border-color: var(--primary);
 }
 
 .submit-btn {
     grid-column: span 2;
-    background-color: #28a745;
+    background-color: var(--success);
     color: white;
     border: none;
     padding: 10px;
@@ -113,35 +116,19 @@
 }
 
 .submit-btn:hover {
-    background-color: #1e7e34;
+    background-color: var(--success-700);
 }
 
 .payment-table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
+    background: var(--surface);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
-.payment-table th,
-.payment-table td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #ddd;
-    font-size: 14px;
-}
-
-.payment-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 600;
-}
-
-.payment-table tr:hover {
-    background-color: #f9f9f9;
-}
+/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
 
 .payment-table button {
     margin-right: 6px;
@@ -153,36 +140,36 @@
     transition: 0.2s;
 }
 
-.payment-table button:nth-child(1) {
-    background-color: #ffc107;
+payment-table button:nth-child(1) {
+    background-color: var(--warning);
     color: #000;
 }
 
-.payment-table button:nth-child(1):hover {
-    background-color: #e0a800;
+payment-table button:nth-child(1):hover {
+    background-color: var(--warning-700);
 }
 
-.payment-table button:nth-child(2) {
-    background-color: #dc3545;
+payment-table button:nth-child(2) {
+    background-color: var(--danger);
     color: white;
 }
 
-.payment-table button:nth-child(2):hover {
-    background-color: #c82333;
+payment-table button:nth-child(2):hover {
+    background-color: var(--danger-700);
 }
 
-.payment-table button:nth-child(3) {
-    background-color: #17a2b8;
+payment-table button:nth-child(3) {
+    background-color: var(--info);
     color: white;
 }
 
-.payment-table button:nth-child(3):hover {
-    background-color: #117a8b;
+payment-table button:nth-child(3):hover {
+    background-color: var(--info-700);
 }
 
 .activity-totals {
     margin-top: 20px;
-    background: #f9f9f9;
+    background: var(--bg);
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -198,30 +185,19 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 15px;
-    background: white;
+    background: var(--surface);
 }
 
-.total-table th,
+/* total-table will inherit header styles from common.css; keep any specific variants minimal */
 .total-table td {
-    border: 1px solid #ddd;
     padding: 10px;
-    text-align: left;
 }
 
-.total-table th {
-    background: #007bff;
-    color: white;
-    text-align: center;
-}
-
-.total-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
 .grand-total-row td {
-    background: #e0f7e9;
+    background: var(--surface);
     font-weight: bold;
-    color: #1a5d2d;
-    border-top: 2px solid #28a745;
+    color: var(--success-700);
+    border-top: 2px solid var(--success);
     font-size: 16px;
 }
 

@@ -11,6 +11,10 @@ import Activity from "../pages/Activity";
 import ActivityPayment from "../pages/ActivityPayment";
 import ActivityExpense from "../pages/ActivityExpense";
 import ExpenseEntry from "../pages/ExpenseEntry";
+import MaintenanceComponent from "../pages/MaintenanceComponent";
+import MaintenanceRate from "../pages/MaintenanceRate";
+import MaintenanceDetail from "../pages/MaintenanceDetail";
+import MaintenancePayment from "../pages/MaintenancePayment";
 
 const Dashboard = () => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -42,6 +46,14 @@ const Dashboard = () => {
                 return <ActivityExpense />;
             case "Expenses":
                 return <ExpenseEntry />;
+            case "Maintenance Component":
+                return <MaintenanceComponent />;
+            case "Maintenance Rate":
+                return <MaintenanceRate />;
+            case "Maintenance Detail":
+                return <MaintenanceDetail />;
+            case "Maintenance Payment":
+                return <MaintenancePayment />;
             case "Home":
                 return (
                     <>

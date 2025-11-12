@@ -1,6 +1,8 @@
+@import './common.css';
+
 /* ===== Container ===== */
 .rental-container {
-    background: #f8f9fc;
+    background: var(--bg);
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -10,9 +12,12 @@
 }
 
 .rental-container h2 {
-    text-align: center;
-    color: #1a237e;
-    margin-bottom: 20px;
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.1);
 }
 
 /* ===== Table Header (Buttons + Search) ===== */
@@ -24,7 +29,7 @@
 }
 
 .table-header button {
-    background-color: #1a73e8;
+    background-color: var(--primary);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -32,17 +37,22 @@
     font-weight: 500;
     cursor: pointer;
     transition: 0.3s;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .table-header button:hover {
-    background-color: #0d47a1;
+    background-color: var(--primary-700);
 }
 
 .table-header input {
     padding: 8px 12px;
     border-radius: 6px;
-    border: 1px solid #ccc;
-    width: 280px;
+    border: 1px solid var(--border-dark);
+    width: 250px;
+    /* match FlatOwner */
     font-size: 14px;
 }
 
@@ -50,43 +60,46 @@
 .rental-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     overflow: hidden;
 }
 
-.rental-table th,
-.rental-table td {
-    border: 1px solid #ddd;
-    padding: 10px 12px;
-    text-align: center;
-    font-size: 14px;
-}
-
+/* Table headers/cells/hover unified in common.css; keep center alignment if needed */
 .rental-table th {
-    background-color: #1a237e;
-    color: white;
-    text-transform: uppercase;
-    font-weight: 600;
+    padding: 12px 15px;
+    text-align: center;
+    /* header centered for RentalDetail */
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.rental-table tr:nth-child(even) {
-    background-color: #f2f2f2;
+.rental-table td {
+    padding: 12px 15px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.rental-table tr:hover {
-    background-color: #e3f2fd;
+/* Prevent action buttons from stacking in narrow cells */
+.rental-table td:last-child {
+    white-space: nowrap;
 }
 
 /* ===== Buttons ===== */
 .rental-table button {
     border: none;
-    padding: 6px 10px;
+    padding: 8px 14px;
     border-radius: 5px;
     font-size: 13px;
     cursor: pointer;
-    margin: 0 3px;
+    margin: 0 6px 0 0;
     transition: all 0.2s ease-in-out;
+    height: 36px;
+    display: inline-flex;
+    /* keep buttons inline so they sit side-by-side */
+    align-items: center;
+    justify-content: center;
 }
 
 .rental-table button:hover {
@@ -94,54 +107,82 @@
 }
 
 .rental-table button:nth-child(1) {
-    background-color: #4caf50;
+    background-color: var(--success);
     color: white;
 }
 
 .rental-table .delete-btn {
-    background-color: #e53935;
+    background-color: var(--danger);
     color: white;
 }
 
 .rental-table .delete-btn:hover {
-    background-color: #c62828;
+    background-color: var(--danger-700);
 }
 
 /* ===== Form Section ===== */
 .rental-form-container {
-    background: white;
+    background: var(--surface);
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .rental-form-container h3 {
-    color: #1a237e;
+    color: var(--primary);
     margin-bottom: 15px;
+    text-align: left;
+    /* ensure Tenant Details title is left-aligned */
 }
 
 .rental-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 20px;
+}
+
+/* Form field wrapper: keeps label above input in each column */
+.form-field {
     display: flex;
     flex-direction: column;
+    gap: 6px;
+}
+
+/* helper to make a field span full width */
+.form-field.full {
+    grid-column: 1 / -1;
+}
+
+.form-field.checkbox {
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
 }
 
 .rental-form label {
     font-weight: 600;
-    color: #333;
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
 .rental-form input,
 .rental-form textarea,
 .rental-form select {
-    padding: 8px;
+    padding: 8px 10px;
+    /* match FlatOwner inputs */
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-dark);
     font-size: 14px;
+    box-sizing: border-box;
+}
+
+.rental-form textarea {
+    height: auto;
+    resize: vertical;
 }
 
 .flat-section {
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -152,61 +193,91 @@
 }
 
 .flat-section button {
-    background-color: #1a73e8;
+    background-color: var(--primary);
     color: white;
     border: none;
-    padding: 8px 14px;
+    padding: 12px 14px;
     border-radius: 6px;
     cursor: pointer;
     transition: 0.3s;
+    height: 45px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }
 
 .flat-section button:hover {
-    background-color: #0d47a1;
+    background-color: var(--primary-700);
 }
 
 /* ===== Flat Info Grid ===== */
 .flat-info {
+    grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin: 10px 0;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px 20px;
+}
+
+.flat-info label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.flat-info input {
+    padding: 8px 10px;
+    /* match FlatOwner */
+    border-radius: 6px;
+    border: 1px solid var(--border-dark);
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
 /* ===== Form Buttons ===== */
-.form-buttons {
+.button-group {
+    grid-column: 1 / -1;
     display: flex;
-    justify-content: center;
+    gap: 12px;
     margin-top: 15px;
-    gap: 10px;
 }
 
-.form-buttons button {
+.button-group button {
+    flex: 1;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 20px;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    height: 45px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.form-buttons button[type="submit"] {
-    background-color: #1a73e8;
+.button-group button[type="submit"] {
+    background-color: var(--success);
     color: white;
 }
 
-.form-buttons button[type="submit"]:hover {
-    background-color: #0d47a1;
+.button-group button[type="submit"]:hover {
+    background-color: var(--success-700);
+    transform: translateY(-2px);
 }
 
-.form-buttons button[type="button"] {
-    background-color: #9e9e9e;
+.button-group button[type="button"] {
+    background-color: var(--danger);
     color: white;
 }
 
-.form-buttons button[type="button"]:hover {
-    background-color: #616161;
+.button-group button[type="button"]:hover {
+    background-color: var(--danger-700);
+    transform: translateY(-2px);
 }
+
 
 /* ===== Delete Confirmation Modal ===== */
 .delete-modal {
@@ -223,7 +294,7 @@
 }
 
 .delete-modal-content {
-    background: white;
+    background: var(--surface);
     padding: 25px 30px;
     border-radius: 10px;
     width: 400px;
@@ -231,7 +302,7 @@
 }
 
 .delete-modal-content h3 {
-    color: #d32f2f;
+    color: var(--danger);
     text-align: center;
     margin-bottom: 10px;
 }
@@ -239,13 +310,13 @@
 .delete-modal-content p {
     font-size: 14px;
     margin-bottom: 10px;
-    color: #333;
+    color: var(--text-secondary);
 }
 
 .delete-modal-content textarea {
     width: 100%;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-dark);
     padding: 8px;
     font-size: 14px;
     resize: none;
@@ -268,19 +339,65 @@
 }
 
 .delete-modal-actions button:first-child {
-    background-color: #d32f2f;
+    background-color: var(--danger);
     color: white;
 }
 
 .delete-modal-actions button:first-child:hover {
-    background-color: #b71c1c;
+    background-color: var(--danger-700);
 }
 
 .delete-modal-actions .cancel {
-    background-color: #9e9e9e;
+    background-color: var(--muted);
     color: white;
 }
 
 .delete-modal-actions .cancel:hover {
-    background-color: #616161;
+    background-color: var(--text-muted);
+}
+
+/* ===== Responsive ===== */
+@media screen and (max-width: 768px) {
+    .rental-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .table-header input {
+        width: 100%;
+    }
+
+    .rental-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .form-field {
+        width: 100%;
+    }
+
+    .flat-info {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .button-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .button-group button {
+        width: 100%;
+    }
+
+    .delete-modal-content {
+        width: 90%;
+        max-width: 400px;
+    }
 }

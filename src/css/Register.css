@@ -1,0 +1,175 @@
+/* ===== Register Page Styling ===== */
+/* Limit styles to the register page by scoping to .register-root */
+.register-root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e3f2fd, #f8f9fa);
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== Form Container ===== */
+.form-container {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: slideFadeIn 0.7s ease-in-out;
+}
+
+@keyframes slideFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Title ===== */
+.form-container h2 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #023e8a;
+    margin-bottom: 30px;
+    margin-top: 0;
+    letter-spacing: -0.5px;
+}
+
+/* ===== Form ===== */
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+/* ===== Labels ===== */
+.form-container label {
+    font-weight: 500;
+    color: #023e8a;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* ===== Inputs and Selects ===== */
+.reg-input,
+.reg-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    color: #333;
+    height: 45px;
+}
+
+.form-container input:focus,
+.form-container select:focus {
+    border-color: #023e8a;
+    box-shadow: 0 0 0 2px rgba(2, 62, 138, 0.1);
+}
+
+.form-container select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    padding-right: 40px;
+}
+
+/* ===== Submit Button ===== */
+.form-container button[type="submit"] {
+    background: linear-gradient(135deg, #023e8a, #012f5e);
+    color: #fff;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px rgba(2, 62, 138, 0.2);
+}
+
+.form-container button[type="submit"]:hover {
+    background: linear-gradient(135deg, #012f5e, #001f40);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(2, 62, 138, 0.4);
+}
+
+/* ===== Footer ===== */
+.form-footer {
+    margin-top: 25px;
+    color: #555;
+    font-size: 14px;
+}
+
+.link-text {
+    color: #023e8a;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.link-text:hover {
+    text-decoration: underline;
+}
+
+/* ===== Input Placeholders ===== */
+.form-container input::placeholder {
+    color: #999;
+}
+
+/* ===== Error States ===== */
+.form-container input:invalid,
+.form-container select:invalid {
+    border-color: #ff6b6b;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 480px) {
+    .form-container {
+        padding: 30px 20px;
+        margin: 15px;
+    }
+
+    .form-container h2 {
+        font-size: 28px;
+    }
+
+    .form-container button[type="submit"] {
+        padding: 12px;
+    }
+}
+
+/* ===== Hover Effects ===== */
+.form-container input:hover,
+.form-container select:hover {
+    border-color: #023e8a;
+}
+
+/* Note: common.css is imported in page-specific CSS files where needed */

@@ -1,5 +1,7 @@
+@import './common.css';
+
 .expense-container {
-    background: #ffffff;
+    background: var(--surface);
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -17,24 +19,24 @@
 }
 
 .expense-header h2 {
-    color: #2b3a55;
+    color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 600;
 }
 
 .new-entry-btn {
-    background: #0078d4;
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 10px 18px;
+    padding: 8px 12px;
     border-radius: 8px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.12s ease;
 }
 
 .new-entry-btn:hover {
-    background: #005fa3;
+    background: var(--primary-700);
 }
 
 /* ===== Search Bar ===== */
@@ -48,23 +50,23 @@
     width: 250px;
     padding: 8px 12px;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-dark);
     font-size: 14px;
     transition: 0.3s;
 }
 
 .search-bar input:focus {
     outline: none;
-    border-color: #0078d4;
+    border-color: var(--primary);
 }
 
 /* ===== Form Section ===== */
 .expense-form {
-    background: #f8fafc;
+    background: var(--bg);
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 25px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-light);
     animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -90,7 +92,7 @@
 .expense-form select {
     padding: 10px;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-dark);
     font-size: 14px;
     width: 100%;
     transition: 0.2s;
@@ -98,13 +100,13 @@
 
 .expense-form input:focus,
 .expense-form select:focus {
-    border-color: #0078d4;
+    border-color: var(--primary);
     outline: none;
 }
 
 .expense-form button {
     margin-top: 15px;
-    background: #0078d4;
+    background: var(--primary);
     color: white;
     border: none;
     padding: 10px 18px;
@@ -115,34 +117,21 @@
 }
 
 .expense-form button:hover {
-    background: #005fa3;
+    background: var(--primary-700);
 }
 
 /* ===== Table Section ===== */
 .expense-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: var(--surface);
     border-radius: 10px;
     overflow: hidden;
 }
 
-.expense-table th,
+/* Table headers and cells are unified in common.css; keep per-table modifiers here */
 .expense-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #ddd;
     text-align: center;
-    font-size: 14px;
-}
-
-.expense-table th {
-    background: #0078d4;
-    color: white;
-    font-weight: 500;
-}
-
-.expense-table tr:hover {
-    background: #f5f9ff;
 }
 
 .expense-table .deleted-row {
@@ -173,7 +162,7 @@
 }
 
 .pagination button {
-    background: #0078d4;
+    background: var(--primary);
     color: white;
     border: none;
     padding: 8px 14px;
@@ -184,11 +173,11 @@
 }
 
 .pagination button:hover {
-    background: #005fa3;
+    background: var(--primary-700);
 }
 
 .pagination button:disabled {
-    background: #ccc;
+    background: var(--border-dark);
     cursor: not-allowed;
 }
 
@@ -197,16 +186,16 @@
     text-align: right;
     margin-top: 20px;
     font-size: 1.1rem;
-    color: #2b3a55;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .total-expense h3 {
-    background: #e8f4ff;
+    background: var(--bg);
     display: inline-block;
     padding: 10px 20px;
     border-radius: 8px;
-    border: 1px solid #bcdfff;
+    border: 1px solid var(--border-light);
 }
 
 /* ===== Responsive ===== */
@@ -228,7 +217,7 @@
         grid-template-columns: 1fr;
     }
 
-    .expense-table th,
+    /* responsive cell sizing managed globally */
     .expense-table td {
         font-size: 12px;
         padding: 8px;

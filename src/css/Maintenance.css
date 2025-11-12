@@ -1,0 +1,96 @@
+.maintenance-container {
+    background: #ffffff;
+    padding: 25px;
+    margin: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.maintenance-container h2 {
+    font-size: 1.6rem;
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+.maintenance-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.maintenance-form input,
+.maintenance-form select {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.maintenance-form input:focus,
+.maintenance-form select:focus {
+    border-color: #007bff;
+}
+
+.maintenance-form button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.maintenance-form button:hover {
+    background-color: #0056b3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+th,
+td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+th {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+button {
+    margin: 0 3px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:nth-child(1) {
+    background-color: #ffc107;
+    color: #000;
+}
+
+button:nth-child(2) {
+    background-color: #dc3545;
+    color: white;
+}
+
+button:nth-child(3) {
+    background-color: #28a745;
+    color: white;
+}

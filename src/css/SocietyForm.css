@@ -1,3 +1,4 @@
+@import './common.css';
 /* ================= Society Form ================= */
 
 /* Container styling */
@@ -5,7 +6,7 @@
     max-width: 900px;
     margin: 20px auto;
     padding: 25px;
-    background-color: #ffffff;
+    background-color: var(--surface);
     border-radius: 12px;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
     display: grid;
@@ -37,7 +38,7 @@
     display: block;
     padding: 10px 12px;
     border-radius: 6px;
-    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     width: 100%;
     box-sizing: border-box;
     font-size: 14px;
@@ -47,8 +48,8 @@
 /* Disabled / Freeze mode styling */
 .society-form input[disabled],
 .society-form select[disabled] {
-    background-color: #f5f5f5;
-    border-color: #ddd;
+    background-color: var(--bg);
+    border-color: rgba(0, 0, 0, 0.04);
     color: #555;
     cursor: not-allowed;
 }
@@ -57,12 +58,13 @@
 .society-form input:focus,
 .society-form select:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--primary);
 }
 
 /* Checkbox group styling */
 .society-form .checkbox-group {
-    grid-column: 1 / 3; /* full width */
+    grid-column: 1 / 3;
+    /* full width */
     display: flex;
     gap: 25px;
     flex-wrap: wrap;
@@ -101,9 +103,9 @@
     flex: 1;
 }
 
-.edit-btn{
-background-color: #007bff;
-    /* Blue */
+.edit-btn-society {
+    background-color: var(--success);
+    /* Success (green) for primary edit/update actions */
     color: #fff;
     font-weight: 600;
     padding: 12px;
@@ -113,33 +115,80 @@ background-color: #007bff;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.edit-btn:hover {
-    background-color: #0056b3;
-    /* Darker blue on hover */
+.edit-btn-society:hover {
+    background-color: var(--success-700);
+    /* Darker success on hover */
     transform: translateY(-2px);
     /* Slight lift effect */
 }
 
 /* Update button color */
-.update-btn {
-    background-color: #28a745;
+.update-btn-society {
+    /* Match edit button (success) */
+    background-color: var(--success);
     color: #fff;
 }
 
-.update-btn:hover {
-    background-color: #218838;
+.update-btn-society:hover {
+    background-color: var(--success-700);
     transform: translateY(-2px);
 }
 
 /* Cancel button color */
-.cancel-btn {
-    background-color: #dc3545;
+.cancel-btn-society {
+    background-color: var(--danger);
     color: #fff;
 }
 
-.cancel-btn:hover {
-    background-color: #c82333;
+.cancel-btn-society:hover {
+    background-color: var(--danger-700);
     transform: translateY(-2px);
+}
+
+/* Increase specificity so page-level generic button selectors don't override these */
+.society-form .edit-btn-society {
+    background-color: var(--success);
+    color: #fff;
+}
+
+.society-form .edit-btn-society:hover {
+    background-color: var(--success-700);
+}
+
+/* Force priority for edit button too */
+.society-form .edit-btn-society {
+    background-color: var(--success) !important;
+}
+
+.society-form .edit-btn-society:hover {
+    background-color: var(--success-700) !important;
+}
+
+.society-form .update-btn-society {
+    background-color: var(--success);
+    color: #fff;
+}
+
+.society-form .update-btn-society:hover {
+    background-color: var(--success-700);
+}
+
+.society-form .cancel-btn-society {
+    background-color: var(--danger);
+    color: #fff;
+}
+
+/* Force priority in case a very-specific global selector is applied elsewhere */
+.society-form .update-btn-society {
+    background-color: var(--success) !important;
+}
+
+.society-form .cancel-btn-society {
+    background-color: var(--danger) !important;
+}
+
+.society-form .cancel-btn-society:hover {
+    background-color: var(--danger-700);
 }
 
 /* ===== RESPONSIVE ===== */

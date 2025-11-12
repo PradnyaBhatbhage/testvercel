@@ -1,0 +1,229 @@
+/* Shared variables and base styles for SocietySync */
+:root {
+    --primary: #023e8a;
+    /* deep blue */
+    --primary-700: #012f5e;
+    --accent: #3b82f6;
+    --muted: #7b8aa3;
+    --bg: #f1f5fb;
+    --surface: #ffffff;
+    --card-shadow: 0 4px 18px rgba(2, 34, 64, 0.06);
+    --radius: 10px;
+    /* success / danger for buttons */
+    --success: #28a745;
+    /* green */
+    --success-700: #218838;
+    --danger: #dc3545;
+    /* red */
+    --danger-700: #c82333;
+    /* warning / info */
+    --warning: #ffc107;
+    /* yellow */
+    --warning-700: #e0a800;
+    --info: #17a2b8;
+    /* teal */
+    --info-700: #117a8b;
+    /* Neutral / Typography */
+    --text-primary: #243b53;
+    --text-secondary: #333;
+    --text-muted: #666;
+    --border-light: #e6eef8;
+    --border-dark: #ccc;
+}
+
+/* Reset box sizing */
+*,
+*::before,
+*::after {
+    box-sizing: border-box
+}
+
+/* Page inner wrapper for consistent padding */
+.page-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4 {
+    color: var(--primary);
+    margin: 0 0 12px 0
+}
+
+h1 {
+    font-size: 28px
+}
+
+h2 {
+    font-size: 24px
+}
+
+/* Cards */
+.card,
+.dashboard-card,
+.info-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--card-shadow)
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary), var(--primary-700));
+    color: #fff;
+    transition: transform .12s ease, box-shadow .12s ease
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(2, 34, 64, 0.08)
+}
+
+.btn.ghost {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid rgba(2, 62, 138, 0.08)
+}
+
+/* Success / Danger helpers for consistent action buttons */
+.btn-success {
+    background: linear-gradient(135deg, var(--success), var(--success-700));
+    color: #fff;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger), var(--danger-700));
+    color: #fff;
+}
+
+/* Table base styles */
+/* Table base styles - unified across pages */
+:root {
+    --table-font-size: 14px;
+    --table-padding: 10px 12px;
+}
+
+.table,
+table,
+.activity-table,
+.expense-table,
+.payment-table,
+.category-table,
+.total-table,
+.rental-table,
+.meeting-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    font-size: var(--table-font-size);
+}
+
+.table th,
+table th,
+.activity-table th,
+.expense-table th,
+.payment-table th,
+.category-table th,
+.total-table th,
+.rental-table th,
+.meeting-table th {
+    padding: var(--table-padding);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    text-align: left;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+}
+
+.table td,
+table td,
+.activity-table td,
+.expense-table td,
+.payment-table td,
+.category-table td,
+.total-table td,
+.rental-table td,
+.meeting-table td {
+    padding: var(--table-padding);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    text-align: left;
+    color: #243b53;
+}
+
+/* Hover row */
+.table tr:hover,
+table tr:hover,
+.activity-table tr:hover,
+.expense-table tr:hover,
+.payment-table tr:hover,
+.category-table tr:hover,
+.total-table tr:hover,
+.rental-table tr:hover,
+.meeting-table tr:hover {
+    background: var(--bg);
+}
+
+/* Form controls */
+.input,
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e6eef8;
+    border-radius: 8px;
+    background: #fff
+}
+
+.input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(3, 60, 120, 0.06);
+    border-color: var(--primary)
+}
+
+/* Utility */
+.flex {
+    display: flex;
+    align-items: center;
+    gap: 12px
+}
+
+.muted {
+    color: var(--muted)
+}
+
+.small {
+    font-size: 13px
+}
+
+/* Make main container full width baseline */
+.app-fullwidth {
+    width: 100%;
+    margin: 0;
+    padding: 0
+}
+
+@media(max-width:768px) {
+    .page-inner {
+        padding: 16px
+    }
+}

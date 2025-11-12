@@ -1,3 +1,4 @@
+@import './common.css';
 /* .sidebar {
     position: absolute;
     /*top: 60px;*
@@ -81,7 +82,7 @@
     margin: 15px 0;
     font-size: 18px;
     font-weight: 600;
-    color: #003366;
+    color: var(--primary);
     border-bottom: 1px solid #e2e8f0;
     padding-bottom: 8px;
 }
@@ -112,9 +113,9 @@
 
 .menu-item.active {
     background-color: #eaf1ff;
-    color: #003399;
+    color: var(--primary);
     font-weight: 600;
-    border-left: 3px solid #003399;
+    border-left: 3px solid var(--primary);
 }
 
 /* === Icon & Label === */
@@ -127,7 +128,7 @@
 }
 
 .menu-item.active .icon {
-    color: #003399;
+    color: var(--primary);
 }
 
 .label {
@@ -145,7 +146,7 @@
 
 .arrow.rotate {
     transform: rotate(90deg);
-    color: #003399;
+    color: var(--primary);
 }
 
 /* === Submenu === */

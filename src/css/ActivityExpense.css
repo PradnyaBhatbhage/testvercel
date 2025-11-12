@@ -1,7 +1,9 @@
+@import './common.css';
+
 /* ====== Container ====== */
 .expense-container {
     padding: 25px;
-    background: #f4f8fb;
+    background: var(--bg);
     border-radius: 12px;
     min-height: 90vh;
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
@@ -17,27 +19,27 @@
 }
 
 .expense-header h2 {
-    color: #1a237e;
+    color: var(--primary);
     font-size: 22px;
     font-weight: 600;
     margin: 0;
 }
 
 .new-entry-btn {
-    background-color: #0078d7;
+    background-color: var(--primary);
     color: white;
     border: none;
     padding: 8px 16px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.12s ease;
 }
 
 .new-entry-btn:hover {
-    background-color: #005fa3;
-    transform: scale(1.03);
+    background-color: var(--primary-700);
+    transform: translateY(-2px);
 }
 
 /* ====== Search Bar ====== */
@@ -49,21 +51,21 @@
     width: 100%;
     max-width: 400px;
     padding: 8px 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     font-size: 14px;
     transition: 0.2s ease;
 }
 
 .search-bar input:focus {
-    border-color: #0078d7;
+    border-color: var(--primary);
     box-shadow: 0 0 4px rgba(0, 120, 215, 0.3);
     outline: none;
 }
 
 /* ====== Form Section ====== */
 .expense-form {
-    background: #fff;
+    background: var(--surface);
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
@@ -87,14 +89,14 @@
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 5px;
-    color: #333;
+    color: var(--text-secondary);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     padding: 8px 10px;
-    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 8px;
     font-size: 14px;
     transition: 0.2s ease;
@@ -103,7 +105,7 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: #0078d7;
+    border-color: var(--primary);
     box-shadow: 0 0 3px rgba(0, 120, 215, 0.3);
     outline: none;
 }
@@ -118,7 +120,7 @@
 }
 
 .submit-btn {
-    background-color: #0078d7;
+    background-color: var(--primary);
     color: white;
     border: none;
     padding: 10px 16px;
@@ -131,7 +133,7 @@
 }
 
 .submit-btn:hover {
-    background-color: #005fa3;
+    background-color: var(--primary-700);
     transform: scale(1.03);
 }
 
@@ -139,32 +141,14 @@
 .expense-table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: var(--surface);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
     animation: fadeIn 0.3s ease-in;
 }
 
-.expense-table th {
-    background-color: #0078d7;
-    color: white;
-    text-align: left;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.expense-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
-    color: #333;
-}
-
-.expense-table tr:hover {
-    background-color: #f0f6ff;
-}
+/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
 
 .action-btns button {
     background: none;
@@ -181,17 +165,17 @@
 
 /* Color codes for actions */
 .action-btns button:nth-child(1) {
-    color: #f0ad4e;
+    color: var(--warning);
     /* edit */
 }
 
 .action-btns button:nth-child(2) {
-    color: #d9534f;
+    color: var(--danger);
     /* delete */
 }
 
 .action-btns button:nth-child(3) {
-    color: #28a745;
+    color: var(--success);
     /* restore */
 }
 
@@ -220,17 +204,17 @@
         gap: 8px;
     }
 
-    .expense-table th,
     .expense-table td {
         font-size: 12px;
         padding: 6px;
     }
 }
 
+
 .activity-totals {
     margin-top: 25px;
     padding: 15px;
-    background: #f8fafc;
+    background: var(--bg);
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -238,14 +222,14 @@
 .activity-totals h3 {
     font-size: 18px;
     margin-bottom: 10px;
-    color: #2b2b2b;
+    color: var(--text-secondary);
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
     padding: 6px 12px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-light);
     font-size: 15px;
 }
 
@@ -263,10 +247,10 @@
     justify-content: space-between;
     margin-top: 15px;
     padding: 10px;
-    background: #e8f5e9;
-    border-top: 2px solid #4caf50;
+    background: var(--surface);
+    border-top: 2px solid var(--success);
     border-radius: 5px;
     font-size: 16px;
     font-weight: bold;
-    color: #2e7d32;
+    color: var(--success-700);
 }

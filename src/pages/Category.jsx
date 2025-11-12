@@ -62,6 +62,13 @@ const Category = () => {
         }
     };
 
+    const handleCancel = () => {
+        // reset form and hide
+        setFormData({ catg_name: "", subcatg_name: "", description: "", status: "Active" });
+        setEditingId(null);
+        setShowForm(false);
+    };
+
     // Edit category
     const handleEdit = (cat) => {
         setFormData({
@@ -118,23 +125,27 @@ const Category = () => {
         <div className="category-container">
             <div className="category-header">
                 <h2>Category Management</h2>
-
-                {/* 🔍 Search Bar */}
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="Search by Category or Subcategory..."
-                        value={searchTerm}
-                        onChange={handleSearch}
-                    />
-                </div>
-
-                <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancel" : "New Entry"}
-                </button>
             </div>
 
+            <div className="category-controls">
+                {!showForm && (
+                    <>
+                        <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
+                            New Entry
+                        </button>
 
+                        {/* 🔍 Search Bar */}
+                        <div className="search-bar">
+                            <input
+                                type="text"
+                                placeholder="Search by Category or Subcategory..."
+                                value={searchTerm}
+                                onChange={handleSearch}
+                            />
+                        </div>
+                    </>
+                )}
+            </div>
 
             {showForm && (
                 <form className="category-form" onSubmit={handleSubmit}>
@@ -176,48 +187,55 @@ const Category = () => {
                         </select>
                     </div>
 
-                    <button type="submit" className="submit-btn">
-                        {editingId ? "Update Category" : "Add Category"}
-                    </button>
+                    <div className="button-group">
+                        <button type="submit" className="submit-btn">
+                            {editingId ? "Update Category" : "Add Category"}
+                        </button>
+                        <button type="button" className="cancel-btn" onClick={handleCancel}>
+                            Cancel
+                        </button>
+                    </div>
                 </form>
             )}
 
-            <table className="category-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Category</th>
-                        <th>Subcategory</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredCategories.length > 0 ? (
-                        filteredCategories.map((cat) => (
-                            <tr key={cat.catg_id}>
-                                <td>{cat.catg_id}</td>
-                                <td>{cat.catg_name}</td>
-                                <td>{cat.subcatg_name}</td>
-                                <td>{cat.description}</td>
-                                <td>{cat.status}</td>
-                                <td>
-                                    <button onClick={() => handleEdit(cat)}>Edit</button>
-                                    <button onClick={() => handleDelete(cat.catg_id)}>Delete</button>
-                                    <button onClick={() => handleRestore(cat.catg_id)}>Restore</button>
+            {!showForm && (
+                <table className="category-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((cat) => (
+                                <tr key={cat.catg_id}>
+                                    <td>{cat.catg_id}</td>
+                                    <td>{cat.catg_name}</td>
+                                    <td>{cat.subcatg_name}</td>
+                                    <td>{cat.description}</td>
+                                    <td>{cat.status}</td>
+                                    <td>
+                                        <button onClick={() => handleEdit(cat)}>Edit</button>
+                                        <button onClick={() => handleDelete(cat.catg_id)}>Delete</button>
+                                        <button onClick={() => handleRestore(cat.catg_id)}>Restore</button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="6" style={{ textAlign: "center" }}>
+                                    No categories found.
                                 </td>
                             </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="6" style={{ textAlign: "center" }}>
-                                No categories found.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                        )}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };

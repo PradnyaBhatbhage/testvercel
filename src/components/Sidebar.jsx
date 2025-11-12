@@ -27,7 +27,15 @@ const Sidebar = ({ isOpen, user, onMenuClick }) => {
             ]
         },
         { label: "Expenses", icon: "💵" },
-        { label: "Maintenance", icon: "🧾" },
+        {
+            label: "Maintenance", icon: "🧾",
+            subItems: [
+                { label: "Maintenance Component" },
+                { label: "Maintenance Rate" },
+                { label: "Maintenance Detail" },
+                { label: "Maintenance Payment" }
+            ]
+        },
         {
             label: "Reports", icon: "📊", subItems: [
                 { label: "Owner Report" },

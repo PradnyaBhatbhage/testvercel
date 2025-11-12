@@ -282,35 +282,58 @@ const RentalDetail = () => {
                         </div>
 
                         <div className="flat-info">
-                            <label>Wing:</label>
-                            <input type="text" value={formData.wing_name} readOnly />
-                            <label>Floor:</label>
-                            <input type="text" value={formData.floor_name} readOnly />
-                            <label>Flat Type:</label>
-                            <input type="text" value={formData.flat_type_name} readOnly />
-                            <label>Owner Name:</label>
-                            <input type="text" value={formData.owner_name} readOnly />
+                            <div className="form-field">
+                                <label>Wing:</label>
+                                <input type="text" value={formData.wing_name} readOnly />
+                            </div>
+                            <div className="form-field">
+                                <label>Floor:</label>
+                                <input type="text" value={formData.floor_name} readOnly />
+                            </div>
+                            <div className="form-field">
+                                <label>Flat Type:</label>
+                                <input type="text" value={formData.flat_type_name} readOnly />
+                            </div>
+                            <div className="form-field">
+                                <label>Owner Name:</label>
+                                <input type="text" value={formData.owner_name} readOnly />
+                            </div>
+                        </div>
+                        <h3>Tenant Details</h3> <br />
+                        <div className="form-field">
+                            <label>Tenant Name:</label>
+                            <input type="text" name="tenant_name" value={formData.tenant_name} onChange={handleChange} required />
+                        </div>
+                        <div className="form-field">
+                            <label>Contact No:</label>
+                            <input type="text" name="tenant_contactno" value={formData.tenant_contactno} onChange={handleChange} required />
+                        </div>
+                        <div className="form-field">
+                            <label>Alternate Contact:</label>
+                            <input type="text" name="tenant_altercontactno" value={formData.tenant_altercontactno} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                            <label>Email:</label>
+                            <input type="email" name="tenant_email" value={formData.tenant_email} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                            <label>Start Date:</label>
+                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                            <label>End Date:</label>
+                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                            <label>Monthly Rent:</label>
+                            <input type="number" name="monthly_rent" value={formData.monthly_rent} onChange={handleChange} />
+                        </div>
+                        <div className="form-field">
+                            <label>Deposit:</label>
+                            <input type="number" name="deposite" value={formData.deposite} onChange={handleChange} />
                         </div>
 
-                        <h3>Tenant Details</h3>
-                        <label>Tenant Name:</label>
-                        <input type="text" name="tenant_name" value={formData.tenant_name} onChange={handleChange} required />
-                        <label>Contact No:</label>
-                        <input type="text" name="tenant_contactno" value={formData.tenant_contactno} onChange={handleChange} required />
-                        <label>Alternate Contact:</label>
-                        <input type="text" name="tenant_altercontactno" value={formData.tenant_altercontactno} onChange={handleChange} />
-                        <label>Email:</label>
-                        <input type="email" name="tenant_email" value={formData.tenant_email} onChange={handleChange} />
-                        <label>Start Date:</label>
-                        <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
-                        <label>End Date:</label>
-                        <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
-                        <label>Monthly Rent:</label>
-                        <input type="number" name="monthly_rent" value={formData.monthly_rent} onChange={handleChange} />
-                        <label>Deposit:</label>
-                        <input type="number" name="deposite" value={formData.deposite} onChange={handleChange} />
-
-                        <div className="form-buttons">
+                        <div className="button-group">
                             <button type="submit" disabled={submitting}>
                                 {submitting ? "Submitting..." : editing ? "Update Rental" : "Add Rental"}
                             </button>

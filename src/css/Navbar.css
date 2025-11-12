@@ -1,12 +1,21 @@
+@import './common.css';
+
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #003566;
+    background-color: var(--primary-700);
     color: white;
     padding: 10px 20px;
     height: 60px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.navbar h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: white;
 }
 
 .menu-btn {
@@ -19,7 +28,7 @@
 }
 
 .menu-btn:hover {
-    color: #ffc300;
+    color: var(--accent);
 }
 
 .navbar-left {
@@ -34,7 +43,7 @@
 }
 
 .logout-btn {
-    background-color: #d62828;
+    background-color: var(--danger);
     color: white;
     border: none;
     padding: 7px 14px;
@@ -43,7 +52,7 @@
 }
 
 .logout-btn:hover {
-    background-color: #b91c1c;
+    background-color: var(--danger-700);
 }
 
 .user-info {

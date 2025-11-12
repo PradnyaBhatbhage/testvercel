@@ -1,0 +1,201 @@
+/* ===== Login Page Styling ===== */
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* ensure no global padding causes horizontal gaps */
+    box-sizing: border-box;
+}
+
+#root {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e3f2fd, #f8f9fa);
+    font-family: "Poppins", sans-serif;
+}
+
+@import './common.css';
+
+/* ===== Login Container ===== */
+.logincontainer {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: slideFadeIn 0.7s ease-in-out;
+    margin: auto;
+    box-sizing: border-box;
+}
+
+/* ===== Card Animation ===== */
+@keyframes slideFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Title ===== */
+.logintitle {
+    font-size: 32px;
+    font-weight: 600;
+    color: #023e8a;
+    margin-bottom: 30px;
+    margin-top: 0;
+    letter-spacing: -0.5px;
+}
+
+/* ===== Form ===== */
+.loginform {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+/* ===== Labels ===== */
+.loginlabel {
+    font-weight: 500;
+    color: #023e8a;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* ===== Input Wrapper ===== */
+.inputwrapper {
+    position: relative;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.inputwrapper:last-child {
+    margin-bottom: 0;
+}
+
+.logininput,
+.loginselect {
+    width: 100%;
+    padding: 12px 50px 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    color: #333;
+    height: 48px;
+}
+
+.logininput::placeholder,
+.loginselect::placeholder {
+    color: #999;
+}
+
+.loginselect {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 12px) center;
+    padding-right: 35px;
+}
+
+.logininput:focus,
+.loginselect:focus {
+    border-color: #023e8a;
+    box-shadow: 0 0 6px rgba(2, 62, 138, 0.3);
+}
+
+/* ===== Input Icons ===== */
+.inputicon {
+    position: absolute;
+    right: 15px;
+    top: 65%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #666;
+    opacity: 0.8;
+    pointer-events: none;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* background-color: #f8f9fa; */
+    border-radius: 6px;
+    padding: 6px;
+}
+
+/* ===== Login Button ===== */
+.loginbtn {
+    background: #023e8a;
+    background: linear-gradient(135deg, #023e8a, #012f5e);
+    color: #fff;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 6px rgba(2, 62, 138, 0.2);
+}
+
+.loginbtn:hover {
+    background: linear-gradient(135deg, #012f5e, #001f40);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(2, 62, 138, 0.4);
+}
+
+/* ===== Footer ===== */
+.loginfooter {
+    margin-top: 25px;
+    color: #555;
+    font-size: 14px;
+    text-align: center;
+}
+
+.loginlink {
+    color: #023e8a;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.loginlink:hover {
+    text-decoration: underline;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+    .logincontainer {
+        width: 90%;
+        padding: 35px 25px;
+    }
+
+    .logintitle {
+        font-size: 26px;
+    }
+}

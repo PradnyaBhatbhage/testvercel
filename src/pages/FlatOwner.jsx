@@ -164,6 +164,7 @@ const FlatOwner = () => {
 
     return (
         <div className="flat-owner-container">
+            <h1>Flat Owner</h1>
             {!showForm ? (
                 <div>
                     <div className="table-header">
@@ -222,140 +223,164 @@ const FlatOwner = () => {
                     <h2>{editMode ? "Edit Owner" : "Add Owner"}</h2>
                     <form onSubmit={handleSubmit}>
                         {/* Your existing form fields */}
-                        <label>Wing</label>
-                        <select
-                            name="wing_id"
-                            value={formData.wing_id || ""}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Select Wing</option>
-                            {wings.map((wing) => (
-                                <option key={wing.wing_id} value={wing.wing_id}>
-                                    {wing.wing_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Wing</label>
+                            <select
+                                name="wing_id"
+                                value={formData.wing_id || ""}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Select Wing</option>
+                                {wings.map((wing) => (
+                                    <option key={wing.wing_id} value={wing.wing_id}>
+                                        {wing.wing_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <label>Floor</label>
-                        <select
-                            name="floor_id"
-                            value={formData.floor_id || ""}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Select Floor</option>
-                            {floors.map((floor) => (
-                                <option key={floor.floor_id} value={floor.floor_id}>
-                                    {floor.floor_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Floor</label>
+                            <select
+                                name="floor_id"
+                                value={formData.floor_id || ""}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Select Floor</option>
+                                {floors.map((floor) => (
+                                    <option key={floor.floor_id} value={floor.floor_id}>
+                                        {floor.floor_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <label>Flat Type</label>
-                        <select
-                            name="flat_type_id"
-                            value={formData.flat_type_id || ""}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Select Flat Type</option>
-                            {flatTypes.map((ft) => (
-                                <option key={ft.flat_type_id} value={ft.flat_type_id}>
-                                    {ft.flat_type_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Flat Type</label>
+                            <select
+                                name="flat_type_id"
+                                value={formData.flat_type_id || ""}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Select Flat Type</option>
+                                {flatTypes.map((ft) => (
+                                    <option key={ft.flat_type_id} value={ft.flat_type_id}>
+                                        {ft.flat_type_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <label>Flat No.</label>
-                        <input
-                            type="text"
-                            name="flat_no"
-                            value={formData.flat_no}
-                            onChange={handleChange}
-                            placeholder="Enter Flat No."
-                            required
-                            disabled={editMode}
-                        />
+                        <div className="form-field">
+                            <label>Flat No.</label>
+                            <input
+                                type="text"
+                                name="flat_no"
+                                value={formData.flat_no}
+                                onChange={handleChange}
+                                placeholder="Enter Flat No."
+                                required
+                                disabled={editMode}
+                            />
+                        </div>
 
-                        <label>Owner Name</label>
-                        <input
-                            type="text"
-                            name="owner_name"
-                            value={formData.owner_name}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="form-field">
+                            <label>Owner Name</label>
+                            <input
+                                type="text"
+                                name="owner_name"
+                                value={formData.owner_name}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
 
-                        <label>Contact No.</label>
-                        <input
-                            type="text"
-                            name="owner_contactno"
-                            value={formData.owner_contactno}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="form-field">
+                            <label>Contact No.</label>
+                            <input
+                                type="text"
+                                name="owner_contactno"
+                                value={formData.owner_contactno}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
 
-                        <label>Alternate Contact</label>
-                        <input
-                            type="text"
-                            name="owner_altercontactno"
-                            value={formData.owner_altercontactno}
-                            onChange={handleChange}
-                        />
+                        <div className="form-field">
+                            <label>Alternate Contact</label>
+                            <input
+                                type="text"
+                                name="owner_altercontactno"
+                                value={formData.owner_altercontactno}
+                                onChange={handleChange}
+                            />
+                        </div>
 
-                        <label>Email</label>
-                        <input
-                            type="email"
-                            name="owner_email"
-                            value={formData.owner_email}
-                            onChange={handleChange}
-                        />
+                        <div className="form-field">
+                            <label>Email</label>
+                            <input
+                                type="email"
+                                name="owner_email"
+                                value={formData.owner_email}
+                                onChange={handleChange}
+                            />
+                        </div>
 
-                        <label>
+                        <div className="form-field checkbox">
+                            <label>Is Residence</label>
                             <input
                                 type="checkbox"
                                 name="is_residence"
                                 checked={formData.is_residence}
                                 onChange={handleChange}
-                            />{" "}
-                            Is Residence
-                        </label>
+                            />
+                        </div>
 
-                        <label>Aadhaar No.</label>
-                        <input
-                            type="text"
-                            name="owner_adhar_no"
-                            value={formData.owner_adhar_no}
-                            onChange={handleChange}
-                        />
+                        <div className="form-field">
+                            <label>Aadhaar No.</label>
+                            <input
+                                type="text"
+                                name="owner_adhar_no"
+                                value={formData.owner_adhar_no}
+                                onChange={handleChange}
+                            />
+                        </div>
 
-                        <label>PAN No.</label>
-                        <input
-                            type="text"
-                            name="owner_pan"
-                            value={formData.owner_pan}
-                            onChange={handleChange}
-                        />
+                        <div className="form-field">
+                            <label>PAN No.</label>
+                            <input
+                                type="text"
+                                name="owner_pan"
+                                value={formData.owner_pan}
+                                onChange={handleChange}
+                            />
+                        </div>
 
-                        <label>Ownership Type</label>
-                        <input
-                            type="text"
-                            name="ownership_type"
-                            value={formData.ownership_type}
-                            onChange={handleChange}
-                        />
+                        <div className="form-field">
+                            <label>Ownership Type</label>
+                            <input
+                                type="text"
+                                name="ownership_type"
+                                value={formData.ownership_type}
+                                onChange={handleChange}
+                            />
+                        </div>
 
-                        <button type="submit">{editMode ? "Update Owner" : "Add Owner"}</button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                resetForm();
-                                setShowForm(false);
-                            }}
-                        >
-                            Cancel
-                        </button>
+                        <div className="button-group">
+                            <button type="submit">{editMode ? "Update Owner" : "Add Owner"}</button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    resetForm();
+                                    setShowForm(false);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </form>
                 </div>
             )}

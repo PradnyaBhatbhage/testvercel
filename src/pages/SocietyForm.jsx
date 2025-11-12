@@ -127,11 +127,11 @@ const SocietyForm = () => {
 
             <div className="button-group">
                 {!isEditMode ? (
-                    <button type="button" className="edit-btn" onClick={() => setIsEditMode(true)}>Edit</button>
+                    <button type="button" className="edit-btn-society" onClick={() => setIsEditMode(true)}>Edit</button>
                 ) : (
                     <>
-                        <button type="button" className="update-btn" onClick={handleUpdateClick}>Update</button>
-                        <button type="button" className="cancel-btn" onClick={handleCancel}>Cancel</button>
+                        <button type="button" className="update-btn-society" onClick={handleUpdateClick}>Update</button>
+                        <button type="button" className="cancel-btn-society" onClick={handleCancel}>Cancel</button>
                     </>
                 )}
             </div>

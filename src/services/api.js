@@ -131,3 +131,35 @@ export const deleteExpense = (id, reason) =>
 
 // Restore deleted expense
 export const restoreExpense = (id) => API.put(`/expenses/restore/${id}`);
+
+// ================= Maintenance Component =================
+export const getMaintenanceComponents = () => API.get("/maintenance-components");
+export const addMaintenanceComponent = (data) => API.post("/maintenance-components/add", data);
+export const updateMaintenanceComponent = (id, data) => API.put(`/maintenance-components/update/${id}`, data);
+export const deleteMaintenanceComponent = (id, reason) =>
+    API.put(`/maintenance-components/delete/${id}`, { reason });
+export const restoreMaintenanceComponent = (id) => API.put(`/maintenance-components/restore/${id}`);
+
+// ================= Maintenance Rate =================
+export const getMaintenanceRates = () => API.get("/maintenance-rates");
+export const addMaintenanceRate = (data) => API.post("/maintenance-rates/add", data);
+export const updateMaintenanceRate = (id, data) => API.put(`/maintenance-rates/update/${id}`, data);
+export const deleteMaintenanceRate = (id, reason) =>
+    API.put(`/maintenance-rates/delete/${id}`, { reason });
+export const restoreMaintenanceRate = (id) => API.put(`/maintenance-rates/restore/${id}`);
+
+// ================= Maintenance Detail =================
+export const getMaintenanceDetails = () => API.get("/maintenance-details");
+export const addMaintenanceDetail = (data) => API.post("/maintenance-details/add", data);
+export const updateMaintenanceDetail = (id, data) => API.put(`/maintenance-details/update/${id}`, data);
+export const deleteMaintenanceDetail = (id, reason) =>
+    API.put(`/maintenance-details/delete/${id}`, { reason });
+export const restoreMaintenanceDetail = (id) => API.put(`/maintenance-details/restore/${id}`);
+
+// ================= Maintenance Payment =================
+export const getMaintenancePayments = () => API.get("/maintenance-payments");
+export const addMaintenancePayment = (data) => API.post("/maintenance-payments", data);
+export const updateMaintenancePayment = (id, data) => API.put(`/maintenance-payments/${id}`, data);
+export const deleteMaintenancePayment = (id, reason) =>
+    API.put(`/maintenance-payments/${id}`, { reason });
+export const restoreMaintenancePayment = (id) => API.put(`/maintenance-payments/${id}`);

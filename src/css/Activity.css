@@ -1,8 +1,10 @@
+@import './common.css';
+
 /* Container */
 .activity-container {
     padding: 20px;
     font-family: "Poppins", sans-serif;
-    background: #f8fafc;
+    background: var(--bg);
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -12,7 +14,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #2563eb;
+    background: var(--primary);
     color: white;
     padding: 12px 20px;
     border-radius: 8px;
@@ -26,18 +28,18 @@
 }
 
 .new-entry-btn {
-    background: #facc15;
-    color: #000;
+    background: var(--primary);
+    color: #fff;
     border: none;
     padding: 8px 15px;
     border-radius: 6px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.18s ease;
 }
 
 .new-entry-btn:hover {
-    background: #eab308;
+    background: var(--primary-700);
 }
 
 /* Search Bar */
@@ -50,21 +52,21 @@
 .search-bar input {
     width: 280px;
     padding: 8px 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 6px;
     font-size: 14px;
     outline: none;
 }
 
 .search-bar input:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 3px rgba(37, 99, 235, 0.3);
+    border-color: var(--accent);
+    box-shadow: 0 0 3px rgba(59, 130, 246, 0.24);
 }
 
 /* Form */
 .activity-form {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface);
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 25px;
@@ -79,7 +81,7 @@
 
 .form-group label {
     font-weight: 600;
-    color: #374151;
+    color: var(--text-secondary);
     margin-bottom: 5px;
 }
 
@@ -87,7 +89,7 @@
 .form-group select,
 .form-group textarea {
     padding: 8px 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 6px;
     font-size: 14px;
     outline: none;
@@ -96,11 +98,11 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: #2563eb;
+    border-color: var(--accent);
 }
 
 .submit-btn {
-    background: #2563eb;
+    background: var(--accent);
     color: white;
     border: none;
     padding: 10px 18px;
@@ -111,36 +113,20 @@
 }
 
 .submit-btn:hover {
-    background: #1e40af;
+    background: var(--primary-700);
 }
 
 /* Table */
 .activity-table {
     width: 100%;
     border-collapse: collapse;
-    background: #ffffff;
+    background: var(--surface);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.activity-table th,
-.activity-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    text-align: left;
-    font-size: 14px;
-}
-
-.activity-table th {
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-}
-
-.activity-table tr:hover {
-    background: #f9fafb;
-}
+/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
 
 /* Action Buttons */
 .activity-table button {
@@ -155,17 +141,17 @@
 }
 
 .activity-table button:nth-child(1) {
-    background: #60a5fa;
+    background: var(--info);
     color: white;
 }
 
 .activity-table button:nth-child(2) {
-    background: #ef4444;
+    background: var(--danger);
     color: white;
 }
 
 .activity-table button:nth-child(3) {
-    background: #10b981;
+    background: var(--success);
     color: white;
 }
 

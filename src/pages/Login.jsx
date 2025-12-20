@@ -6,24 +6,24 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Login = () => {
     const navigate = useNavigate();
-    const [wings, setWings] = useState([]);
+    //const [wings, setWings] = useState([]);
     const [formData, setFormData] = useState({
         user_name: "",
         password: "",
-        wing_id: "",
+        wing_id: "1",
     });
 
-    useEffect(() => {
-        const fetchWings = async () => {
-            try {
-                const res = await getWings();
-                setWings(res.data);
-            } catch (err) {
-                console.error("Error fetching wings:", err);
-            }
-        };
-        fetchWings();
-    }, []);
+    // useEffect(() => {
+    //     const fetchWings = async () => {
+    //         try {
+    //             const res = await getWings();
+    //             setWings(res.data);
+    //         } catch (err) {
+    //             console.error("Error fetching wings:", err);
+    //         }
+    //     };
+    //     fetchWings();
+    // }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,7 +36,7 @@ const Login = () => {
             // Ensure wing_id is stored in user object (from formData if not in response)
             const userData = {
                 ...res.data.user,
-                wing_id: res.data.user?.wing_id || formData.wing_id
+                //wing_id: res.data.user?.wing_id || formData.wing_id
             };
             localStorage.setItem("user", JSON.stringify(userData));
             alert("Login successful!");
@@ -79,7 +79,7 @@ const Login = () => {
                     />
                     <i className="inputicon fa-solid fa-lock" />
                 </div>
-                <div className="inputwrapper">
+                {/* <div className="inputwrapper">
                     <label className="loginlabel" htmlFor="wing">Wing</label>
                     <select
                         id="wing"
@@ -97,7 +97,7 @@ const Login = () => {
                         ))}
                     </select>
                     <i className="inputicon fa-solid fa-building" />
-                </div>
+                </div> */}
                 <button type="submit" className="loginbtn">Login</button>
             </form>
 

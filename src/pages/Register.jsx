@@ -5,28 +5,28 @@ import "../css/Register.css";
 
 const Register = () => {
     const navigate = useNavigate();
-    const [wings, setWings] = useState([]);
+    //const [wings, setWings] = useState([]);
     const [owners, setOwners] = useState([]);
     const [formData, setFormData] = useState({
         user_name: "",
         password: "",
-        wing_id: "",
+        /*wing_id: "",*/
         role_type: "user",
         owner_id: "",
     });
 
-    useEffect(() => {
-        const fetchWings = async () => {
-            try {
-                const res = await getWings();
-                setWings(res.data);
-            } catch (err) {
-                console.error("Error fetching wings:", err);
-            }
-        };
-        fetchWings();
-    }, []);
-
+    /*  useEffect(() => {
+         const fetchWings = async () => {
+             try {
+                 const res = await getWings();
+                 setWings(res.data);
+             } catch (err) {
+                 console.error("Error fetching wings:", err);
+             }
+         };
+         fetchWings();
+     }, []);
+  */
     useEffect(() => {
         const fetchOwners = async () => {
             if (formData.role_type === "owner") {
@@ -84,7 +84,7 @@ const Register = () => {
                         required
                     />
 
-                    <label>Wing</label>
+                    {/* <label>Wing</label>
                     <select
                         className="reg-select"
                         name="wing_id"
@@ -98,7 +98,7 @@ const Register = () => {
                                 {wing.wing_name}
                             </option>
                         ))}
-                    </select>
+                    </select> */}
 
                     <label>Role</label>
                     <select

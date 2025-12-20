@@ -79,7 +79,7 @@ const Login = () => {
                     />
                     <i className="inputicon fa-solid fa-lock" />
                 </div>
-                <div className="inputwrapper">
+                /*<div className="inputwrapper">
                     <label className="loginlabel" htmlFor="wing">Wing</label>
                     <select
                         id="wing"
@@ -97,7 +97,7 @@ const Login = () => {
                         ))}
                     </select>
                     <i className="inputicon fa-solid fa-building" />
-                </div>
+                </div>*/
                 <button type="submit" className="loginbtn">Login</button>
             </form>
 

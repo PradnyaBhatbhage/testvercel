@@ -5,7 +5,7 @@ import axios from "axios";
 // });
 
 const API = axios.create({
-    baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev",
+    baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev/api",
 });
 
 // ================= Wings =================locah

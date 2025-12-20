@@ -36,7 +36,7 @@ const Login = () => {
             // Ensure wing_id is stored in user object (from formData if not in response)
             const userData = {
                 ...res.data.user,
-                wing_id: res.data.user?.wing_id || formData.wing_id
+                wing_id: 1
             };
             localStorage.setItem("user", JSON.stringify(userData));
             alert("Login successful!");

@@ -5,13 +5,13 @@ import axios from "axios";
 // });
 
 const API = axios.create({
-    baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev/api",
+    baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev",
 });
 
 // ================= Wings =================locah
 // Fetch wings
 
-export const getWings = () => API.get("/wings");
+export const getWings = () => API.get("/api/wings");
 
 // ================= Users =================
 // Register user

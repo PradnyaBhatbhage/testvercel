@@ -36,7 +36,7 @@ const Login = () => {
             // Ensure wing_id is stored in user object (from formData if not in response)
             const userData = {
                 ...res.data.user,
-                wing_id: 1
+                wing_id: res.data.user?.wing_id || formData.wing_id
             };
             localStorage.setItem("user", JSON.stringify(userData));
             alert("Login successful!");
@@ -79,7 +79,25 @@ const Login = () => {
                     />
                     <i className="inputicon fa-solid fa-lock" />
                 </div>
-               
+                <div className="inputwrapper">
+                    <label className="loginlabel" htmlFor="wing">Wing</label>
+                    <select
+                        id="wing"
+                        name="wing_id"
+                        className="loginselect"
+                        value={formData.wing_id}
+                        onChange={handleChange}
+                        required
+                    >
+                        <option value="">Select your wing</option>
+                        {wings.map((wing) => (
+                            <option key={wing.wing_id} value={wing.wing_id}>
+                                {wing.wing_name}
+                            </option>
+                        ))}
+                    </select>
+                    <i className="inputicon fa-solid fa-building" />
+                </div>
                 <button type="submit" className="loginbtn">Login</button>
             </form>
 

@@ -4,8 +4,8 @@ import {
     createActivity,
     updateActivity,
     deleteActivity,
-    restoreActivity,
 } from "../services/api";
+import { canEdit, canDelete } from "../utils/ownerFilter";
 import "../css/Activity.css";
 
 const Activity = () => {
@@ -19,6 +19,8 @@ const Activity = () => {
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const fetchActivities = async () => {
         try {
@@ -75,34 +77,51 @@ const Activity = () => {
         fetchActivities();
     };
 
-    const handleRestore = async (id) => {
-        await restoreActivity(id);
-        alert("Restored successfully!");
-        fetchActivities();
+    const handleCancel = () => {
+        setFormData({ activity_name: "", plan_date: "", activity_date: "", description: "" });
+        setEditingId(null);
+        setShowForm(false);
     };
 
     const filtered = activities.filter((a) =>
         a.activity_name.toLowerCase().includes(search.toLowerCase())
     );
 
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentActivities = filtered.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+    // Reset to page 1 when search changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [search]);
+
     return (
         <div className="activity-container">
-            <div className="activity-header">
-                <h2>Activity Management</h2>
-                <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancel" : "New Entry"}
-                </button>
-            </div>
+            <h2>Activity Management</h2>
 
-            <div className="search-bar">
-                <input
-                    type="text"
-                    placeholder="Search by activity name..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </div>
+            {/* Controls (New Entry + Search) - Only show when form is not visible */}
+            {!showForm && (
+                <div className="activity-controls">
+                    {canEdit() && (
+                        <button className="new-entry-btn" onClick={() => setShowForm(true)}>
+                            New Entry
+                        </button>
+                    )}
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Search by activity name..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
+            )}
 
+            {/* Form */}
             {showForm && (
                 <form className="activity-form" onSubmit={handleSubmit}>
                     <div className="form-group">
@@ -146,48 +165,70 @@ const Activity = () => {
                         />
                     </div>
 
-                    <button type="submit" className="submit-btn">
-                        {editingId ? "Update Activity" : "Add Activity"}
-                    </button>
+                    <div className="button-group">
+                        <button type="submit" className="submit-btn">
+                            {editingId ? "Update Activity" : "Add Activity"}
+                        </button>
+                        <button type="button" className="cancel-btn" onClick={handleCancel}>
+                            Cancel
+                        </button>
+                    </div>
                 </form>
             )}
 
-            <table className="activity-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Activity Name</th>
-                        <th>Plan Date</th>
-                        <th>Activity Date</th>
-                        <th>Description</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtered.length > 0 ? (
-                        filtered.map((a) => (
-                            <tr key={a.activity_id}>
-                                <td>{a.activity_id}</td>
-                                <td>{a.activity_name}</td>
-                                <td>{a.plan_date?.split("T")[0]}</td>
-                                <td>{a.activity_date?.split("T")[0]}</td>
-                                <td>{a.description}</td>
-                                <td>
-                                    <button onClick={() => handleEdit(a)}>Edit</button>
-                                    <button onClick={() => handleDelete(a.activity_id)}>Delete</button>
-                                    <button onClick={() => handleRestore(a.activity_id)}>Restore</button>
+            {/* Table - Only show when form is not visible */}
+            {!showForm && (
+                <>
+                    <table className="activity-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Activity Name</th>
+                            <th>Plan Date</th>
+                            <th>Activity Date</th>
+                            <th>Description</th>
+                            {(canEdit() || canDelete()) && <th>Actions</th>}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtered.length > 0 ? (
+                            currentActivities.map((a) => (
+                                <tr key={a.activity_id}>
+                                    <td>{a.activity_id}</td>
+                                    <td>{a.activity_name}</td>
+                                    <td>{a.plan_date?.split("T")[0]}</td>
+                                    <td>{a.activity_date?.split("T")[0]}</td>
+                                    <td>{a.description}</td>
+                                    {(canEdit() || canDelete()) && (
+                                        <td>
+                                            {canEdit() && (
+                                                <button onClick={() => handleEdit(a)}>Edit</button>
+                                            )}
+                                            {canDelete() && (
+                                                <button onClick={() => handleDelete(a.activity_id)}>Delete</button>
+                                            )}
+                                        </td>
+                                    )}
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={(canEdit() || canDelete()) ? "6" : "5"} style={{ textAlign: "center" }}>
+                                    No activities found.
                                 </td>
                             </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="6" style={{ textAlign: "center" }}>
-                                No activities found.
-                            </td>
-                        </tr>
+                        )}
+                    </tbody>
+                    </table>
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>⟸ Prev</button>
+                            <span>Page {currentPage} of {totalPages}</span>
+                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Next ⟹</button>
+                        </div>
                     )}
-                </tbody>
-            </table>
+                </>
+            )}
         </div>
     );
 };

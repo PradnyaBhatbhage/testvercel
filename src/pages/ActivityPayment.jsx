@@ -4,10 +4,19 @@ import {
     createPayment,
     updatePayment,
     deletePayment,
-    restorePayment,
     getActivities,
     getFlats,
+    getOwners,
+    sendInvitationByEmail,
+    sendInvitationByWhatsApp,
 } from "../services/api";
+import { getCurrentUserWingId, filterByWing } from "../utils/wingFilter";
+import {
+    isOwnerRole,
+    filterActivityPaymentsByCurrentOwner,
+    canEdit,
+    canDelete,
+} from "../utils/ownerFilter";
 import "../css/ActivityPayment.css";
 
 const ActivityPayment = () => {
@@ -26,12 +35,39 @@ const ActivityPayment = () => {
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
+    const [expandedActivities, setExpandedActivities] = useState({}); // Track which activities are expanded
+
+    // Get current user's wing_id
+    const currentUserWingId = getCurrentUserWingId();
 
     // ====== Fetch All Payments ======
     const fetchPayments = async () => {
         try {
             const { data } = await getAllPayments();
-            setPayments(data);
+            let rawPayments = data || [];
+
+            // Filter payments by flat's wing_id
+            if (currentUserWingId !== null && flats.length > 0) {
+                // Use already fetched flats to filter payments
+                const wingFlatIds = new Set(flats.map(f => f.flat_id));
+
+                // Filter payments to only include those with flats in user's wing
+                rawPayments = rawPayments.filter(payment => {
+                    if (!payment.flat_id) return false;
+                    return wingFlatIds.has(payment.flat_id);
+                });
+            }
+
+            // Filter by owner_id if user is owner role
+            if (isOwnerRole()) {
+                // Need to get owners to map flat_id to owner_id
+                const ownersRes = await getOwners();
+                const allOwners = ownersRes.data || [];
+                
+                rawPayments = filterActivityPaymentsByCurrentOwner(rawPayments, allOwners);
+            }
+
+            setPayments(rawPayments);
         } catch (err) {
             console.error(err);
             alert("Error fetching payments!");
@@ -43,7 +79,15 @@ const ActivityPayment = () => {
         try {
             const [actRes, flatRes] = await Promise.all([getActivities(), getFlats()]);
             setActivities(actRes.data);
-            setFlats(flatRes.data);
+
+            // Filter flats by current user's wing
+            const allFlats = flatRes.data || [];
+            if (currentUserWingId !== null) {
+                const filteredFlats = filterByWing(allFlats, currentUserWingId, 'wing_id');
+                setFlats(filteredFlats);
+            } else {
+                setFlats(allFlats);
+            }
         } catch (err) {
             console.error(err);
             alert("Error fetching dropdown data!");
@@ -51,9 +95,15 @@ const ActivityPayment = () => {
     };
 
     useEffect(() => {
-        fetchPayments();
         fetchDropdowns();
     }, []);
+
+    // Fetch payments after flats are loaded
+    useEffect(() => {
+        if (flats.length > 0 || currentUserWingId === null) {
+            fetchPayments();
+        }
+    }, [flats]);
 
     // ====== Handle Input Changes ======
     const handleChange = (e) => {
@@ -119,41 +169,118 @@ const ActivityPayment = () => {
         }
     };
 
-    // ====== Handle Restore ======
-    const handleRestore = async (id) => {
+    // ====== Handle Cancel ======
+    const handleCancel = () => {
+        setFormData({
+            activity_id: "",
+            flat_id: "",
+            payment_date: "",
+            amount: "",
+            payment_status: "",
+            payment_mode: "",
+            description: "",
+        });
+        setEditingId(null);
+        setShowForm(false);
+    };
+
+    // ====== Handle Send Invitation by Email ======
+    const handleSendInvitationEmail = async (id) => {
+        if (!window.confirm("Send invitation via email?")) return;
         try {
-            await restorePayment(id);
-            alert("Payment restored!");
-            fetchPayments();
+            const { data } = await sendInvitationByEmail(id);
+            alert(`Invitation sent successfully via email to ${data.payerName || 'payer'}!`);
         } catch (err) {
             console.error(err);
-            alert("Error restoring payment!");
+            const errorMsg = err.response?.data?.error || err.response?.data?.details || err.message;
+            alert(`Error sending invitation: ${errorMsg}`);
+        }
+    };
+
+    // ====== Handle Send Invitation by WhatsApp ======
+    const handleSendInvitationWhatsApp = async (id) => {
+        if (!window.confirm("Send invitation via WhatsApp?")) return;
+        try {
+            const { data } = await sendInvitationByWhatsApp(id);
+            if (data.whatsappLink) {
+                // Open WhatsApp link in new tab
+                window.open(data.whatsappLink, '_blank');
+                alert("WhatsApp invitation opened! Click 'Send' to deliver the invitation.");
+            } else {
+                alert("Invitation sent successfully via WhatsApp!");
+            }
+        } catch (err) {
+            console.error(err);
+            const errorMsg = err.response?.data?.error || err.response?.data?.details || err.message;
+            alert(`Error sending invitation: ${errorMsg}`);
         }
     };
 
     // ====== Search Filter ======
     const filtered = payments.filter((p) =>
-        p.description?.toLowerCase().includes(search.toLowerCase())
+        p.description?.toLowerCase().includes(search.toLowerCase()) ||
+        p.flat_no?.toLowerCase().includes(search.toLowerCase()) ||
+        p.owner_name?.toLowerCase().includes(search.toLowerCase())
     );
+
+    // ===== Group Payments by Activity =====
+    const groupPaymentsByActivity = () => {
+        const grouped = {};
+
+        filtered.forEach(payment => {
+            const activityId = payment.activity_id;
+            const activity = activities.find(a => a.activity_id === activityId);
+            const activityName = activity?.activity_name || `Activity ${activityId}`;
+
+            if (!grouped[activityId]) {
+                grouped[activityId] = {
+                    activityId: activityId,
+                    activityName: activityName,
+                    payments: [],
+                    total: 0
+                };
+            }
+
+            grouped[activityId].payments.push(payment);
+            grouped[activityId].total += Number(payment.amount || 0);
+        });
+
+        // Convert to array and sort by activity name
+        return Object.values(grouped).sort((a, b) =>
+            a.activityName.localeCompare(b.activityName)
+        );
+    };
+
+    const groupedPayments = groupPaymentsByActivity();
+
+    // ===== Toggle Activity Expansion =====
+    const toggleActivity = (activityId) => {
+        setExpandedActivities(prev => ({
+            ...prev,
+            [activityId]: !prev[activityId]
+        }));
+    };
 
     return (
         <div className="payment-container">
-            <div className="payment-header">
-                <h2>Activity Payments</h2>
-                <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancel" : "New Entry"}
-                </button>
-            </div>
+            <h2>Activity Payments</h2>
 
-            {/* ====== Search Bar ====== */}
+            {/* Controls (New Entry + Search) - Only show when form is not visible */}
             {!showForm && (
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="Search by description..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                <div className="payment-controls">
+                    {canEdit() && (
+                        <button className="new-entry-btn" onClick={() => setShowForm(true)}>
+                            New Entry
+                        </button>
+                    )}
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Search by description..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -257,92 +384,168 @@ const ActivityPayment = () => {
                         />
                     </div>
 
-                    <button type="submit" className="submit-btn">
-                        {editingId ? "Update Payment" : "Add Payment"}
-                    </button>
+                    <div className="button-group">
+                        <button type="submit" className="submit-btn">
+                            {editingId ? "Update Payment" : "Add Payment"}
+                        </button>
+                        <button type="button" className="cancel-btn" onClick={handleCancel}>
+                            Cancel
+                        </button>
+                    </div>
                 </form>
             )}
 
-            {/* ====== Table Section ====== */}
+            {/* ====== Grouped Payments by Activity ====== */}
             {!showForm && (
                 <>
-                    <table className="payment-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Activity</th>
-                                <th>Flat ID</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Mode</th>
-                                <th>Description</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((p) => (
-                                <tr key={p.activity_pay_id}>
-                                    <td>{p.activity_pay_id}</td>
-                                    <td>
-                                        {activities.find((a) => a.activity_id === p.activity_id)
-                                            ?.activity_name || p.activity_id}
-                                    </td>
-                                    <td>{p.flat_id}</td>
-                                    <td>{p.payment_date?.split("T")[0]}</td>
-                                    <td>{p.amount}</td>
-                                    <td>{p.payment_status}</td>
-                                    <td>{p.payment_mode}</td>
-                                    <td>{p.description}</td>
-                                    <td className="action-btns">
-                                        <button onClick={() => handleEdit(p)}>Edit✏️</button>
-                                        <button onClick={() => handleDelete(p.activity_pay_id)}>Delete🗑️</button>
-                                        <button onClick={() => handleRestore(p.activity_pay_id)}>Restore♻️</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    {groupedPayments.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                            {search ? 'No payments found matching your search.' : 'No payments found.'}
+                        </div>
+                    ) : (
+                        <div className="activity-payment-groups">
+                            {groupedPayments.map((group) => {
+                                const isExpanded = expandedActivities[group.activityId] === true; // Default to false (collapsed)
+                                const paymentCount = group.payments.length;
 
-                    {/* ====== Total Amount by Activity ====== */}
-                    <div className="activity-totals">
-                        <h3>Activity Totals</h3>
-                        <table className="total-table">
-                            <thead>
-                                <tr>
-                                    <th>Activity Name</th>
-                                    <th>Total Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {activities.map((a) => {
-                                    const total = payments
-                                        .filter((p) => p.activity_id === a.activity_id)
-                                        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-                                    if (total === 0) return null;
-                                    return (
-                                        <tr key={a.activity_id}>
-                                            <td>{a.activity_name}</td>
-                                            <td>₹ {total.toFixed(2)}</td>
-                                        </tr>
-                                    );
-                                })}
+                                return (
+                                    <div key={group.activityId} className="activity-group">
+                                        {/* Activity Header - Clickable */}
+                                        <div
+                                            className="activity-header"
+                                            onClick={() => toggleActivity(group.activityId)}
+                                            style={{
+                                                cursor: 'pointer',
+                                                padding: '15px 20px',
+                                                backgroundColor: '#f8f9fa',
+                                                border: '1px solid #dee2e6',
+                                                borderRadius: '8px',
+                                                marginBottom: '10px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                transition: 'background-color 0.2s',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e9ecef'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#495057' }}>
+                                                    {isExpanded ? '▼' : '▶'} {group.activityName}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '14px',
+                                                    color: '#6c757d',
+                                                    backgroundColor: '#e9ecef',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '12px'
+                                                }}>
+                                                    {paymentCount} payment{paymentCount !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                            <span style={{
+                                                fontSize: '16px',
+                                                fontWeight: 'bold',
+                                                color: '#28a745'
+                                            }}>
+                                                Total: ₹{group.total.toFixed(2)}
+                                            </span>
+                                        </div>
 
-                                {/* ====== Grand Total Row ====== */}
-                                <tr className="grand-total-row">
-                                    <td><strong>Grand Total</strong></td>
-                                    <td>
-                                        <strong>
-                                            ₹{" "}
-                                            {payments
-                                                .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
-                                                .toFixed(2)}
-                                        </strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                        {/* Payments Table - Collapsible */}
+                                        {isExpanded && (
+                                            <div className="activity-payments-table" style={{ marginBottom: '20px' }}>
+                                                <table className="payment-table" style={{ width: '100%' }}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Flat No</th>
+                                                            <th>Owner Name</th>
+                                                            <th>Date</th>
+                                                            <th>Amount</th>
+                                                            <th>Status</th>
+                                                            <th>Mode</th>
+                                                            <th>Description</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {group.payments.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan="9" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                                                                    No payments found for this activity.
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            group.payments.map((p) => (
+                                                                <tr key={p.activity_pay_id}>
+                                                                    <td>{p.activity_pay_id}</td>
+                                                                    <td>{p.flat_no || '-'}</td>
+                                                                    <td>{p.owner_name || '-'}</td>
+                                                                    <td>{p.payment_date?.split("T")[0]}</td>
+                                                                    <td style={{ color: '#28a745', fontWeight: 'bold' }}>₹{Number(p.amount || 0).toFixed(2)}</td>
+                                                                    <td>{p.payment_status}</td>
+                                                                    <td>{p.payment_mode}</td>
+                                                                    <td>{p.description}</td>
+                                                                    <td className="action-btns">
+                                                                        {canEdit() && (
+                                                                            <button onClick={() => handleEdit(p)}>Edit</button>
+                                                                        )}
+                                                                        {canDelete() && (
+                                                                            <button onClick={() => handleDelete(p.activity_pay_id)}>Delete</button>
+                                                                        )}
+                                                                        {isOwnerRole() && (
+                                                                            <span style={{ color: '#999', fontSize: '12px' }}>View Only</span>
+                                                                        )}
+                                                                        {p.payment_status === 'Paid' && (
+                                                                            <>
+                                                                                <button
+                                                                                    onClick={() => handleSendInvitationEmail(p.activity_pay_id)}
+                                                                                    style={{ backgroundColor: '#4CAF50', color: 'white' }}
+                                                                                    title="Send invitation via email"
+                                                                                >
+                                                                                    📧 Invite
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleSendInvitationWhatsApp(p.activity_pay_id)}
+                                                                                    style={{ backgroundColor: '#25D366', color: 'white' }}
+                                                                                    title="Send invitation via WhatsApp"
+                                                                                >
+                                                                                    💬 WhatsApp
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {/* Grand Total Summary */}
+                            <div className="grand-total-summary" style={{
+                                marginTop: '30px',
+                                padding: '20px',
+                                backgroundColor: '#f8f9fa',
+                                border: '2px solid #28a745',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{ margin: '0 0 10px 0', color: '#495057' }}>Grand Total Payment</h3>
+                                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
+                                    ₹{filtered.reduce((sum, p) => sum + Number(p.amount || 0), 0).toFixed(2)}
+                                </div>
+                                <div style={{ fontSize: '14px', color: '#6c757d', marginTop: '5px' }}>
+                                    Across {groupedPayments.length} activit{groupedPayments.length !== 1 ? 'ies' : 'y'}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>

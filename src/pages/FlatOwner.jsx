@@ -5,10 +5,22 @@ import {
     getFlatTypes,
     getOwners,
     createFlat,
+    updateFlat,
     addOwner,
     updateOwner,
     deleteOwner,
+    getParking,
+    addParking,
+    updateParking,
+    deleteParking,
 } from "../services/api";
+import { getCurrentUserWingId, filterOwnersByWing } from "../utils/wingFilter";
+import { 
+    isOwnerRole, 
+    filterOwnersByCurrentOwner, 
+    canEdit, 
+    canDelete 
+} from "../utils/ownerFilter";
 import "../css/FlatOwner.css";
 
 const FlatOwner = () => {
@@ -34,6 +46,21 @@ const FlatOwner = () => {
     const [editId, setEditId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [searchText, setSearchText] = useState("");
+    const [originalFlatNo, setOriginalFlatNo] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Parking details state
+    const [parkingDetails, setParkingDetails] = useState([]);
+    const [existingParking, setExistingParking] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [filePreview, setFilePreview] = useState(null);
+    // Parking attachment states (arrays to handle multiple parking entries)
+    const [parkingFiles, setParkingFiles] = useState([]);
+    const [parkingFilePreviews, setParkingFilePreviews] = useState([]);
+
+    // Get current user's wing_id
+    const currentUserWingId = getCurrentUserWingId();
 
     useEffect(() => {
         fetchData();
@@ -47,10 +74,31 @@ const FlatOwner = () => {
                 getFlatTypes(),
                 getOwners(),
             ]);
-            setWings(wingRes.data);
+            
+            // Filter wings by current user's wing_id
+            const allWings = wingRes.data || [];
+            if (currentUserWingId !== null) {
+                const filteredWings = allWings.filter(wing => Number(wing.wing_id) === Number(currentUserWingId));
+                setWings(filteredWings);
+            } else {
+                setWings(allWings);
+            }
+            
             setFloors(floorRes.data);
             setFlatTypes(flatTypeRes.data);
-            setOwners(ownerRes.data);
+
+            // Filter owners by current user's wing
+            let rawOwners = ownerRes.data || [];
+            if (currentUserWingId !== null) {
+                rawOwners = filterOwnersByWing(rawOwners, currentUserWingId);
+            }
+            
+            // Filter by owner_id if user is owner role
+            if (isOwnerRole()) {
+                rawOwners = filterOwnersByCurrentOwner(rawOwners);
+            }
+            
+            setOwners(rawOwners);
         } catch (err) {
             console.error(err);
         }
@@ -64,10 +112,57 @@ const FlatOwner = () => {
         }));
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a PDF or JPEG/PNG image file.');
+                e.target.value = '';
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size should be less than 10MB.');
+                e.target.value = '';
+                return;
+            }
+
+            setSelectedFile(file);
+
+            // Create preview for images
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setFilePreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setFilePreview(null);
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Check for duplicate flat number
+            const duplicateOwner = owners.find(
+                (owner) =>
+                    owner.flat_no &&
+                    owner.flat_no.toLowerCase() === formData.flat_no.toLowerCase() &&
+                    (!editMode || owner.flat_id !== formData.flat_id)
+            );
+
+            if (duplicateOwner) {
+                alert(`Flat number "${formData.flat_no}" already exists. Please use a different flat number.`);
+                return;
+            }
+
             let flatId;
+            let ownerId;
 
             if (!editMode) {
                 // Create Flat first
@@ -82,16 +177,94 @@ const FlatOwner = () => {
                 flatId = flatRes.data.insertId;
             } else {
                 flatId = formData.flat_id;
+                
+                // If flat number changed, update the flat record
+                if (originalFlatNo && originalFlatNo !== formData.flat_no) {
+                    const flatPayload = {
+                        flat_no: formData.flat_no,
+                        wing_id: formData.wing_id,
+                        floor_id: formData.floor_id,
+                        flat_type_id: formData.flat_type_id,
+                        soc_id: 1,
+                    };
+                    await updateFlat(flatId, flatPayload);
+                }
             }
 
             const ownerPayload = { ...formData, flat_id: flatId };
 
             if (editMode && editId) {
-                await updateOwner(editId, ownerPayload);
+                await updateOwner(editId, ownerPayload, selectedFile);
+                ownerId = editId;
                 alert("Owner updated successfully");
             } else {
-                await addOwner(ownerPayload);
+                const ownerRes = await addOwner(ownerPayload, selectedFile);
+                ownerId = ownerRes.data.id || ownerRes.data.insertId || ownerRes.data.owner_id;
                 alert("Owner added successfully");
+            }
+
+            // Handle parking details
+            if (ownerId) {
+                if (editMode) {
+                    // In edit mode: update existing or add new parking
+                    const existingParkingIds = existingParking.map(p => p.parking_id);
+                    const updatedParkingIds = parkingDetails
+                        .filter(p => p.parking_id)
+                        .map(p => p.parking_id);
+
+                    // Delete parking that was removed
+                    for (const existing of existingParking) {
+                        if (!updatedParkingIds.includes(existing.parking_id)) {
+                            try {
+                                await deleteParking(existing.parking_id, "Removed from owner form");
+                            } catch (err) {
+                                console.error("Error deleting parking:", err);
+                            }
+                        }
+                    }
+
+                    // Update or add parking
+                    for (let i = 0; i < parkingDetails.length; i++) {
+                        const parking = parkingDetails[i];
+                        if (parking.vehical_type && parking.vehical_no) {
+                            const parkingFile = parkingFiles[i] || null;
+                            if (parking.parking_id && existingParkingIds.includes(parking.parking_id)) {
+                                // Update existing parking
+                                await updateParking(parking.parking_id, {
+                                    vehical_type: parking.vehical_type,
+                                    vehical_no: parking.vehical_no,
+                                    parking_slot_no: parking.parking_slot_no || "",
+                                    remark: parking.remark || "",
+                                    attachment_url: parking.attachment_url || null,
+                                }, parkingFile);
+                            } else {
+                                // Add new parking
+                                await addParking({
+                                    owner_id: ownerId,
+                                    vehical_type: parking.vehical_type,
+                                    vehical_no: parking.vehical_no,
+                                    parking_slot_no: parking.parking_slot_no || "",
+                                    remark: parking.remark || "",
+                                }, parkingFile);
+                            }
+                        }
+                    }
+                } else {
+                    // In add mode: just add new parking
+                    for (let i = 0; i < parkingDetails.length; i++) {
+                        const parking = parkingDetails[i];
+                        if (parking.vehical_type && parking.vehical_no) {
+                            const parkingFile = parkingFiles[i] || null;
+                            await addParking({
+                                owner_id: ownerId,
+                                vehical_type: parking.vehical_type,
+                                vehical_no: parking.vehical_no,
+                                parking_slot_no: parking.parking_slot_no || "",
+                                remark: parking.remark || "",
+                            }, parkingFile);
+                        }
+                    }
+                }
             }
 
             resetForm();
@@ -99,13 +272,24 @@ const FlatOwner = () => {
             setShowForm(false);
         } catch (err) {
             console.error(err);
+            alert("Error: " + (err.response?.data?.error || err.message));
         }
     };
 
     const resetForm = () => {
+        // Auto-set wing_id to current user's wing when resetting for new entry
+        // Since wings is filtered to only show user's wing, use the first wing if available
+        let defaultWingId = "";
+        if (wings.length > 0) {
+            defaultWingId = wings[0].wing_id;
+        } else if (currentUserWingId !== null) {
+            // Fallback to currentUserWingId if wings array is empty
+            defaultWingId = currentUserWingId;
+        }
+        
         setFormData({
             flat_no: "",
-            wing_id: "",
+            wing_id: defaultWingId,
             floor_id: "",
             flat_type_id: "",
             owner_name: "",
@@ -117,11 +301,18 @@ const FlatOwner = () => {
             owner_pan: "",
             ownership_type: "",
         });
+        setParkingDetails([]);
+        setExistingParking([]);
+        setParkingFiles([]);
+        setParkingFilePreviews([]);
         setEditMode(false);
         setEditId(null);
+        setOriginalFlatNo("");
+        setSelectedFile(null);
+        setFilePreview(null);
     };
 
-    const handleEdit = (owner) => {
+    const handleEdit = async (owner) => {
         setFormData({
             flat_id: owner.flat_id,
             flat_no: owner.flat_no,
@@ -136,9 +327,42 @@ const FlatOwner = () => {
             owner_adhar_no: owner.owner_adhar_no,
             owner_pan: owner.owner_pan,
             ownership_type: owner.ownership_type,
+            attachment_url: owner.attachment_url || null,
         });
         setEditMode(true);
         setEditId(owner.owner_id);
+        setOriginalFlatNo(owner.flat_no || "");
+        setSelectedFile(null);
+        setFilePreview(owner.attachment_url && owner.attachment_url.startsWith('http') ? owner.attachment_url : null);
+
+        // Load existing parking details for this owner
+        try {
+            const parkingRes = await getParking();
+            const allParking = parkingRes.data || [];
+            const ownerParking = allParking.filter(p => p.owner_id === owner.owner_id && !p.is_deleted);
+            setExistingParking(ownerParking);
+            const parkingData = ownerParking.map(p => ({
+                parking_id: p.parking_id,
+                vehical_type: p.vehical_type || "",
+                vehical_no: p.vehical_no || "",
+                parking_slot_no: p.parking_slot_no || "",
+                remark: p.remark || "",
+                attachment_url: p.attachment_url || null,
+            }));
+            setParkingDetails(parkingData);
+            // Initialize parking file states
+            setParkingFiles(new Array(parkingData.length).fill(null));
+            setParkingFilePreviews(parkingData.map(p => 
+                p.attachment_url && p.attachment_url.startsWith('http') ? p.attachment_url : null
+            ));
+        } catch (err) {
+            console.error("Error loading parking details:", err);
+            setExistingParking([]);
+            setParkingDetails([]);
+            setParkingFiles([]);
+            setParkingFilePreviews([]);
+        }
+
         setShowForm(true);
     };
 
@@ -156,11 +380,91 @@ const FlatOwner = () => {
         }
     };
 
+    // Parking detail management functions
+    const handleAddParking = () => {
+        setParkingDetails([...parkingDetails, {
+            vehical_type: "",
+            vehical_no: "",
+            parking_slot_no: "",
+            remark: "",
+            attachment_url: null,
+        }]);
+        setParkingFiles([...parkingFiles, null]);
+        setParkingFilePreviews([...parkingFilePreviews, null]);
+    };
+
+    const handleRemoveParking = (index) => {
+        const updated = parkingDetails.filter((_, i) => i !== index);
+        setParkingDetails(updated);
+        const updatedFiles = parkingFiles.filter((_, i) => i !== index);
+        setParkingFiles(updatedFiles);
+        const updatedPreviews = parkingFilePreviews.filter((_, i) => i !== index);
+        setParkingFilePreviews(updatedPreviews);
+    };
+
+    const handleParkingChange = (index, field, value) => {
+        const updated = [...parkingDetails];
+        updated[index] = {
+            ...updated[index],
+            [field]: value,
+        };
+        setParkingDetails(updated);
+    };
+
+    const handleParkingFileChange = (index, e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a PDF or JPEG/PNG image file.');
+                e.target.value = '';
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size should be less than 10MB.');
+                e.target.value = '';
+                return;
+            }
+
+            const updatedFiles = [...parkingFiles];
+            updatedFiles[index] = file;
+            setParkingFiles(updatedFiles);
+
+            // Create preview for images
+            const updatedPreviews = [...parkingFilePreviews];
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    updatedPreviews[index] = reader.result;
+                    setParkingFilePreviews([...updatedPreviews]);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                updatedPreviews[index] = null;
+                setParkingFilePreviews(updatedPreviews);
+            }
+        }
+    };
+
     const filteredOwners = owners.filter(
         (o) =>
             o.owner_name.toLowerCase().includes(searchText.toLowerCase()) ||
             (o.flat_no && o.flat_no.toLowerCase().includes(searchText.toLowerCase()))
     );
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentOwners = filteredOwners.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredOwners.length / itemsPerPage);
+
+    // Reset to page 1 when search changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchText]);
 
     return (
         <div className="flat-owner-container">
@@ -168,13 +472,26 @@ const FlatOwner = () => {
             {!showForm ? (
                 <div>
                     <div className="table-header">
-                        <button onClick={() => setShowForm(true)}>New Entry</button>
-                        <input
-                            type="text"
-                            placeholder="Search by owner or flat no"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                        />
+                        {canEdit() && (
+                            <button className="new-entry-btn" onClick={() => {
+                                // Auto-set wing_id to current user's wing when creating new entry
+                                // Since wings is filtered to only show user's wing, use the first wing if available
+                                if (wings.length > 0) {
+                                    setFormData(prev => ({ ...prev, wing_id: wings[0].wing_id }));
+                                } else if (currentUserWingId !== null) {
+                                    setFormData(prev => ({ ...prev, wing_id: currentUserWingId }));
+                                }
+                                setShowForm(true);
+                            }}>New Entry</button>
+                        )}
+                        <div className="search-bar">
+                            <input
+                                type="text"
+                                placeholder="Search by owner or flat no"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <table>
                         <thead>
@@ -187,11 +504,12 @@ const FlatOwner = () => {
                                 <th>Contact</th>
                                 <th>Email</th>
                                 <th>Status</th>
+                                <th>Attachment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOwners.map((owner) => (
+                            {currentOwners.map((owner) => (
                                 <tr key={owner.owner_id}>
                                     <td>{owner.owner_name}</td>
                                     <td>{owner.flat_no || "-"}</td>
@@ -206,17 +524,41 @@ const FlatOwner = () => {
 
                                     </td>
                                     <td>
-                                        {!owner.is_deleted && (
+                                        {owner.attachment_url ? (
+                                            <a
+                                                href={owner.attachment_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: '#007bff', textDecoration: 'none' }}
+                                            >
+                                                {owner.attachment_url.endsWith('.pdf') || owner.attachment_url.includes('pdf') ? '📄 View PDF' : '🖼️ View Image'}
+                                            </a>
+                                        ) : (
+                                            <span style={{ color: '#999' }}>No attachment</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {!owner.is_deleted && canEdit() && (
                                             <button className="edit-btn-flat" onClick={() => handleEdit(owner)}>Edit</button>
                                         )}
-                                        {!owner.is_deleted && (
+                                        {!owner.is_deleted && canDelete() && (
                                             <button className="delete-btn-flat" onClick={() => handleDelete(owner)}>Delete</button>
+                                        )}
+                                        {isOwnerRole() && (
+                                            <span style={{ color: '#999', fontSize: '12px' }}>View Only</span>
                                         )}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>⟸ Prev</button>
+                            <span>Page {currentPage} of {totalPages}</span>
+                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Next ⟹</button>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div>
@@ -230,6 +572,7 @@ const FlatOwner = () => {
                                 value={formData.wing_id || ""}
                                 onChange={handleChange}
                                 required
+                                disabled={currentUserWingId !== null && wings.length === 1}
                             >
                                 <option value="">Select Wing</option>
                                 {wings.map((wing) => (
@@ -283,7 +626,6 @@ const FlatOwner = () => {
                                 onChange={handleChange}
                                 placeholder="Enter Flat No."
                                 required
-                                disabled={editMode}
                             />
                         </div>
 
@@ -367,6 +709,152 @@ const FlatOwner = () => {
                                 value={formData.ownership_type}
                                 onChange={handleChange}
                             />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Attachment (PDF/JPEG):</label>
+                            <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={handleFileChange}
+                            />
+                            {selectedFile && (
+                                <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                                    Selected: {selectedFile.name}
+                                </p>
+                            )}
+                            {filePreview && !selectedFile && formData.attachment_url && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
+                                    {formData.attachment_url.endsWith('.pdf') || formData.attachment_url.includes('pdf') ? (
+                                        <a href={formData.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                            View PDF
+                                        </a>
+                                    ) : (
+                                        <img src={formData.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                    )}
+                                </div>
+                            )}
+                            {filePreview && selectedFile && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
+                                    {selectedFile.type === 'application/pdf' ? (
+                                        <p style={{ color: '#007bff' }}>PDF file selected</p>
+                                    ) : (
+                                        <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Parking Detail Section */}
+                        <div className="form-section-divider">
+                            <h3>Parking Details</h3>
+                        </div>
+
+                        {parkingDetails.map((parking, index) => (
+                            <div key={index} className="parking-detail-row">
+                                <div className="form-field">
+                                    <label>Vehicle Type</label>
+                                    <select
+                                        value={parking.vehical_type || ""}
+                                        onChange={(e) => handleParkingChange(index, "vehical_type", e.target.value)}
+                                    >
+                                        <option value="">Select Vehicle Type</option>
+                                        <option value="Car">Car</option>
+                                        <option value="Bike">Bike</option>
+                                        <option value="Scooter">Scooter</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Vehicle Number</label>
+                                    <input
+                                        type="text"
+                                        value={parking.vehical_no || ""}
+                                        onChange={(e) => handleParkingChange(index, "vehical_no", e.target.value)}
+                                        placeholder="Enter vehicle number"
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Parking Slot Number</label>
+                                    <input
+                                        type="text"
+                                        value={parking.parking_slot_no || ""}
+                                        onChange={(e) => handleParkingChange(index, "parking_slot_no", e.target.value)}
+                                        placeholder="Enter parking slot number"
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Remark</label>
+                                    <input
+                                        type="text"
+                                        value={parking.remark || ""}
+                                        onChange={(e) => handleParkingChange(index, "remark", e.target.value)}
+                                        placeholder="Optional remark"
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Attachment (PDF/JPEG):</label>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        onChange={(e) => handleParkingFileChange(index, e)}
+                                    />
+                                    {parkingFiles[index] && (
+                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                                            Selected: {parkingFiles[index].name}
+                                        </p>
+                                    )}
+                                    {parkingFilePreviews[index] && !parkingFiles[index] && parking.attachment_url && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
+                                            {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf') ? (
+                                                <a href={parking.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                                    View PDF
+                                                </a>
+                                            ) : (
+                                                <img src={parking.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                            )}
+                                        </div>
+                                    )}
+                                    {parkingFilePreviews[index] && parkingFiles[index] && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
+                                            {parkingFiles[index].type === 'application/pdf' ? (
+                                                <p style={{ color: '#007bff' }}>PDF file selected</p>
+                                            ) : (
+                                                <img src={parkingFilePreviews[index]} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label>&nbsp;</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveParking(index)}
+                                        className="remove-btn"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="form-field">
+                            <button
+                                type="button"
+                                onClick={handleAddParking}
+                                className="add-parking-btn"
+                            >
+                                + Add Parking Detail
+                            </button>
                         </div>
 
                         <div className="button-group">

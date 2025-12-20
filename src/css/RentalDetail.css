@@ -2,13 +2,11 @@
 
 /* ===== Container ===== */
 .rental-container {
-    background: var(--bg);
-    padding: 25px;
+    background: var(--surface);
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 1100px;
-    margin: 0 auto;
-    font-family: "Poppins", sans-serif;
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .rental-container h2 {
@@ -16,108 +14,115 @@
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 25px 0;
+    text-align: left;
     padding-bottom: 15px;
-    border-bottom: 2px solid rgba(2, 62, 138, 0.1);
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
 }
 
-/* ===== Table Header (Buttons + Search) ===== */
+/* ===== Controls (New Entry + Search) ===== */
 .table-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .table-header button {
-    background-color: var(--primary);
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 16px;
     border-radius: 6px;
-    font-weight: 500;
     cursor: pointer;
-    transition: 0.3s;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight: 600;
+    transition: 0.12s ease;
 }
 
 .table-header button:hover {
-    background-color: var(--primary-700);
+    background: var(--primary-700);
 }
 
-.table-header input {
+.search-bar {
+    margin: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.search-bar input {
     padding: 8px 12px;
-    border-radius: 6px;
+    width: 280px;
     border: 1px solid var(--border-dark);
-    width: 250px;
-    /* match FlatOwner */
-    font-size: 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.search-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
 }
 
 /* ===== Table ===== */
 .rental-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    border-radius: 8px;
-    overflow: hidden;
+    margin-top: 25px;
 }
 
-/* Table headers/cells/hover unified in common.css; keep center alignment if needed */
 .rental-table th {
-    padding: 12px 15px;
+    padding: 10px 12px;
     text-align: center;
-    /* header centered for RentalDetail */
-    vertical-align: middle;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .rental-table td {
-    padding: 12px 15px;
-    text-align: left;
-    vertical-align: middle;
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* Prevent action buttons from stacking in narrow cells */
-.rental-table td:last-child {
-    white-space: nowrap;
+.rental-table tr:hover {
+    background: var(--bg);
 }
 
-/* ===== Buttons ===== */
+/* ===== Action Buttons ===== */
 .rental-table button {
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
     border: none;
-    padding: 8px 14px;
-    border-radius: 5px;
-    font-size: 13px;
+    border-radius: 6px;
     cursor: pointer;
-    margin: 0 6px 0 0;
-    transition: all 0.2s ease-in-out;
-    height: 36px;
+    font-weight: 600;
     display: inline-flex;
-    /* keep buttons inline so they sit side-by-side */
     align-items: center;
     justify-content: center;
 }
 
-.rental-table button:hover {
-    transform: scale(1.05);
+/* Edit button (green) */
+.rental-table button:nth-child(1),
+.rental-table button:not(.delete-btn) {
+    background: var(--success);
+    color: #fff;
 }
 
-.rental-table button:nth-child(1) {
-    background-color: var(--success);
-    color: white;
+.rental-table button:nth-child(1):hover,
+.rental-table button:not(.delete-btn):hover {
+    background: var(--success-700);
 }
 
+/* Delete button (red) */
 .rental-table .delete-btn {
-    background-color: var(--danger);
-    color: white;
+    background: var(--danger);
+    color: #fff;
 }
 
 .rental-table .delete-btn:hover {
-    background-color: var(--danger-700);
+    background: var(--danger-700);
 }
 
 /* ===== Form Section ===== */
@@ -132,35 +137,28 @@
     color: var(--primary);
     margin-bottom: 15px;
     text-align: left;
-    /* ensure Tenant Details title is left-aligned */
 }
 
 .rental-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px 20px;
+    gap: 16px;
+    margin-top: 20px;
 }
 
-/* Form field wrapper: keeps label above input in each column */
 .form-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-/* helper to make a field span full width */
 .form-field.full {
     grid-column: 1 / -1;
 }
 
-.form-field.checkbox {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-}
-
 .rental-form label {
     font-weight: 600;
+    margin-bottom: 6px;
     color: var(--text-secondary);
     font-size: 14px;
 }
@@ -168,16 +166,13 @@
 .rental-form input,
 .rental-form textarea,
 .rental-form select {
-    padding: 8px 10px;
-    /* match FlatOwner inputs */
-    border-radius: 6px;
-    border: 1px solid var(--border-dark);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    box-sizing: border-box;
 }
 
 .rental-form textarea {
-    height: auto;
     resize: vertical;
 }
 
@@ -212,12 +207,11 @@
     background-color: var(--primary-700);
 }
 
-/* ===== Flat Info Grid ===== */
 .flat-info {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px 20px;
+    gap: 16px;
 }
 
 .flat-info label {
@@ -227,35 +221,34 @@
 }
 
 .flat-info input {
-    padding: 8px 10px;
-    /* match FlatOwner */
-    border-radius: 6px;
-    border: 1px solid var(--border-dark);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    box-sizing: border-box;
 }
 
 /* ===== Form Buttons ===== */
 .button-group {
-    grid-column: 1 / -1;
     display: flex;
     gap: 12px;
-    margin-top: 15px;
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    align-items: stretch;
 }
 
 .button-group button {
     flex: 1;
-    border: none;
-    padding: 12px 20px;
+    padding: 12px 18px;
+    height: 45px;
     border-radius: 6px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    height: 45px;
-    font-size: 15px;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    vertical-align: middle;
+    margin: 0;
 }
 
 .button-group button[type="submit"] {
@@ -265,7 +258,6 @@
 
 .button-group button[type="submit"]:hover {
     background-color: var(--success-700);
-    transform: translateY(-2px);
 }
 
 .button-group button[type="button"] {
@@ -275,9 +267,7 @@
 
 .button-group button[type="button"]:hover {
     background-color: var(--danger-700);
-    transform: translateY(-2px);
 }
-
 
 /* ===== Delete Confirmation Modal ===== */
 .delete-modal {
@@ -356,11 +346,123 @@
     background-color: var(--text-muted);
 }
 
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* ===== Parking Details Section ===== */
+.form-section-divider {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.form-section-divider h3 {
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.parking-detail-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 15px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.parking-detail-row .form-field:last-child {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
+
+.add-parking-btn {
+    grid-column: 1 / -1;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    width: auto;
+    margin-top: 10px;
+}
+
+.add-parking-btn:hover {
+    background-color: var(--primary-700);
+}
+
+.remove-btn {
+    background-color: var(--danger);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    width: auto;
+}
+
+.remove-btn:hover {
+    background-color: var(--danger-700);
+}
+
 /* ===== Responsive ===== */
 @media screen and (max-width: 768px) {
+    .rental-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
     .rental-container h2 {
         font-size: 24px;
         margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
     }
 
     .table-header {
@@ -369,17 +471,22 @@
         gap: 10px;
     }
 
-    .table-header input {
+    .table-header button {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
         width: 100%;
     }
 
     .rental-form {
         grid-template-columns: 1fr;
         gap: 12px;
-    }
-
-    .form-field {
-        width: 100%;
     }
 
     .flat-info {
@@ -399,5 +506,13 @@
     .delete-modal-content {
         width: 90%;
         max-width: 400px;
+    }
+
+    .parking-detail-row {
+        grid-template-columns: 1fr;
+    }
+
+    .parking-detail-row .form-field:last-child {
+        align-items: flex-start;
     }
 }

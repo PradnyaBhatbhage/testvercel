@@ -1,76 +1,75 @@
 @import './common.css';
 
-/* ====== Container ====== */
 .expense-container {
+    background: var(--surface);
+    border-radius: 10px;
     padding: 25px;
-    background: var(--bg);
-    border-radius: 12px;
-    min-height: 90vh;
-    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ====== Header ====== */
-.expense-header {
+.expense-container h2 {
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: left;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+/* Controls (New Entry + Search) */
+.expense-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-}
-
-.expense-header h2 {
-    color: var(--primary);
-    font-size: 22px;
-    font-weight: 600;
-    margin: 0;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .new-entry-btn {
-    background-color: var(--primary);
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.12s ease;
+    font-weight: 600;
+    transition: 0.12s ease;
 }
 
 .new-entry-btn:hover {
-    background-color: var(--primary-700);
-    transform: translateY(-2px);
+    background: var(--primary-700);
 }
 
-/* ====== Search Bar ====== */
 .search-bar {
+    margin: 0;
+    display: flex;
+    justify-content: flex-end;
     margin-bottom: 15px;
 }
 
 .search-bar input {
-    width: 100%;
-    max-width: 400px;
-    padding: 8px 10px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    font-size: 14px;
-    transition: 0.2s ease;
+    padding: 8px 12px;
+    width: 280px;
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
 }
 
 .search-bar input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 4px rgba(0, 120, 215, 0.3);
-    outline: none;
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
 }
 
-/* ====== Form Section ====== */
+/* Form */
 .expense-form {
     background: var(--surface);
-    padding: 20px;
+    padding: 25px;
     border-radius: 10px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-    animation: fadeIn 0.3s ease-in;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
 }
 
 .form-row {
@@ -86,28 +85,19 @@
 }
 
 .form-group label {
-    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     color: var(--text-secondary);
+    font-size: 14px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 8px 10px;
+    padding: 8px;
+    border-radius: 5px;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
     font-size: 14px;
-    transition: 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 3px rgba(0, 120, 215, 0.3);
-    outline: none;
 }
 
 .form-group textarea {
@@ -115,108 +105,148 @@
     min-height: 60px;
 }
 
-.full-width {
-    width: 100%;
-}
-
 .submit-btn {
-    background-color: var(--primary);
+    background-color: var(--success);
     color: white;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 18px;
+    border-radius: 6px;
     font-size: 15px;
-    font-weight: 500;
-    border-radius: 8px;
+    font-weight: 600;
     cursor: pointer;
     margin-top: 10px;
-    transition: all 0.2s ease;
+    transition: 0.3s;
 }
 
 .submit-btn:hover {
-    background-color: var(--primary-700);
-    transform: scale(1.03);
+    background-color: var(--success-700);
 }
 
-/* ====== Table Section ====== */
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    align-items: stretch;
+}
+
+.button-group button {
+    flex: 1;
+    padding: 12px 18px;
+    height: 45px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.cancel-btn {
+    background-color: var(--danger);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: var(--danger-700);
+}
+
+/* Table */
 .expense-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-    animation: fadeIn 0.3s ease-in;
+    margin-top: 25px;
 }
 
-/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
+.expense-table th {
+    padding: 10px 12px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.expense-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.expense-table tr:hover {
+    background: var(--bg);
+}
 
 .action-btns button {
-    background: none;
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
     border: none;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
-    margin-right: 6px;
-    transition: transform 0.2s ease;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.action-btns button:hover {
-    transform: scale(1.2);
-}
-
-/* Color codes for actions */
 .action-btns button:nth-child(1) {
-    color: var(--warning);
-    /* edit */
+    background: var(--success);
+    color: #fff;
 }
 
 .action-btns button:nth-child(2) {
-    color: var(--danger);
-    /* delete */
-}
-
-.action-btns button:nth-child(3) {
-    color: var(--success);
-    /* restore */
-}
-
-/* ====== Animations ====== */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ====== Responsive Design ====== */
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
-    }
-
-    .expense-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .expense-table td {
-        font-size: 12px;
-        padding: 6px;
-    }
+    background: var(--danger);
+    color: #fff;
 }
 
 
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Activity Totals */
 .activity-totals {
     margin-top: 25px;
     padding: 15px;
     background: var(--bg);
     border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .activity-totals h3 {
@@ -226,20 +256,16 @@
 }
 
 .total-row {
-    display: flex;
+    /* display: flex; */
     justify-content: space-between;
     padding: 6px 12px;
     border-bottom: 1px solid var(--border-light);
     font-size: 15px;
 }
 
-.total-row:last-child {
-    border-bottom: none;
-}
-
 .total-amount {
     font-weight: bold;
-    color: #00695c;
+    color: var(--success-700);
 }
 
 .grand-total {
@@ -253,4 +279,42 @@
     font-size: 16px;
     font-weight: bold;
     color: var(--success-700);
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .expense-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .expense-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .expense-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .new-entry-btn {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
+        width: 100%;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
 }

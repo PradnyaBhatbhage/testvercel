@@ -1,51 +1,57 @@
 @import './common.css';
-/* ================= Society Form ================= */
 
-/* Container styling */
 .society-form {
-    max-width: 900px;
-    margin: 20px auto;
+    background: var(--surface);
+    border-radius: 10px;
     padding: 25px;
-    background-color: var(--surface);
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    gap: 16px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* Label styling */
+.society-form h2 {
+    grid-column: 1 / -1;
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: left;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
 .society-form label {
     display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
     font-size: 14px;
-    margin-bottom: 5px;
-    font-weight: 500;
-    color: #333;
 }
 
-/* Full-width elements (dropdown, buttons, checkbox group) */
-.society-form select,
-.society-form .checkbox-group,
-.society-form button {
-    grid-column: 1 / 3;
-}
-
-/* Input fields styling */
 .society-form input[type="text"],
 .society-form input[type="email"],
 .society-form select {
-    display: block;
-    padding: 10px 12px;
-    border-radius: 6px;
+    padding: 8px;
+    border-radius: 5px;
     border: 1px solid rgba(0, 0, 0, 0.08);
     width: 100%;
     box-sizing: border-box;
     font-size: 14px;
-    transition: border 0.2s ease, background-color 0.2s ease;
+    transition: 0.3s;
 }
 
-/* Disabled / Freeze mode styling */
+.society-form input:focus,
+.society-form select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
 .society-form input[disabled],
 .society-form select[disabled] {
     background-color: var(--bg);
@@ -54,149 +60,92 @@
     cursor: not-allowed;
 }
 
-/* Input focus effect */
-.society-form input:focus,
-.society-form select:focus {
-    outline: none;
-    border-color: var(--primary);
+.society-form select,
+.society-form .checkbox-group,
+.society-form button {
+    grid-column: 1 / -1;
 }
 
-/* Checkbox group styling */
 .society-form .checkbox-group {
-    grid-column: 1 / 3;
-    /* full width */
     display: flex;
     gap: 25px;
     flex-wrap: wrap;
     align-items: center;
 }
 
-/* Checkbox input and label spacing */
 .society-form .checkbox-group label {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 14px;
-}
-
-/* Buttons styling */
-.society-form button {
-    padding: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-/* Edit / Update / Cancel buttons */
 .button-group {
-    grid-column: 1 / 3;
+    grid-column: 1 / -1;
     display: flex;
     gap: 12px;
-    justify-content: flex-start;
-    margin-top: 10px;
+    margin-top: 18px;
+    align-items: stretch;
 }
 
 .button-group button {
     flex: 1;
-}
-
-.edit-btn-society {
-    background-color: var(--success);
-    /* Success (green) for primary edit/update actions */
-    color: #fff;
+    padding: 12px 18px;
+    height: 45px;
+    border-radius: 6px;
     font-weight: 600;
-    padding: 12px;
-    border-radius: 8px;
     border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: 0.3s;
 }
 
-.edit-btn-society:hover {
-    background-color: var(--success-700);
-    /* Darker success on hover */
-    transform: translateY(-2px);
-    /* Slight lift effect */
-}
-
-/* Update button color */
-.update-btn-society {
-    /* Match edit button (success) */
-    background-color: var(--success);
-    color: #fff;
-}
-
-.update-btn-society:hover {
-    background-color: var(--success-700);
-    transform: translateY(-2px);
-}
-
-/* Cancel button color */
-.cancel-btn-society {
-    background-color: var(--danger);
-    color: #fff;
-}
-
-.cancel-btn-society:hover {
-    background-color: var(--danger-700);
-    transform: translateY(-2px);
-}
-
-/* Increase specificity so page-level generic button selectors don't override these */
-.society-form .edit-btn-society {
-    background-color: var(--success);
-    color: #fff;
-}
-
-.society-form .edit-btn-society:hover {
-    background-color: var(--success-700);
-}
-
-/* Force priority for edit button too */
-.society-form .edit-btn-society {
+/* Edit and Update buttons - Green (Success) */
+.society-form .edit-btn-society,
+.society-form .update-btn-society,
+.button-group .edit-btn-society,
+.button-group .update-btn-society {
     background-color: var(--success) !important;
+    color: #fff !important;
 }
 
-.society-form .edit-btn-society:hover {
+.society-form .edit-btn-society:hover,
+.society-form .update-btn-society:hover,
+.button-group .edit-btn-society:hover,
+.button-group .update-btn-society:hover {
     background-color: var(--success-700) !important;
 }
 
-.society-form .update-btn-society {
-    background-color: var(--success);
-    color: #fff;
-}
-
-.society-form .update-btn-society:hover {
-    background-color: var(--success-700);
-}
-
-.society-form .cancel-btn-society {
-    background-color: var(--danger);
-    color: #fff;
-}
-
-/* Force priority in case a very-specific global selector is applied elsewhere */
-.society-form .update-btn-society {
-    background-color: var(--success) !important;
-}
-
-.society-form .cancel-btn-society {
+/* Cancel button - Red (Danger) */
+.society-form .cancel-btn-society,
+.button-group .cancel-btn-society {
     background-color: var(--danger) !important;
+    color: #fff !important;
 }
 
-.society-form .cancel-btn-society:hover {
-    background-color: var(--danger-700);
+.society-form .cancel-btn-society:hover,
+.button-group .cancel-btn-society:hover {
+    background-color: var(--danger-700) !important;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
+/* Responsive */
+@media screen and (max-width: 768px) {
     .society-form {
         grid-template-columns: 1fr;
         gap: 12px;
         padding: 15px;
+        margin: 10px;
+    }
+
+    .society-form h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
     }
 
     .society-form select,
@@ -212,16 +161,10 @@
 
     .button-group {
         flex-direction: column;
+        gap: 10px;
     }
 
     .button-group button {
-        flex: 1;
+        width: 100%;
     }
-}
-
-/* Optional: smooth input transitions */
-.society-form input,
-.society-form select,
-.society-form button {
-    transition: all 0.2s ease-in-out;
 }

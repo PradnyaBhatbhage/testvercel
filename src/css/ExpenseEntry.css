@@ -2,36 +2,39 @@
 
 .expense-container {
     background: var(--surface);
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 25px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    max-width: 1200px;
-    margin: 20px auto;
-    font-family: "Poppins", sans-serif;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== Header ===== */
-.expense-header {
+.expense-container h2 {
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: left;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+/* Controls (New Entry + Search) */
+.expense-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-}
-
-.expense-header h2 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    font-weight: 600;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .new-entry-btn {
     background: var(--primary);
     color: white;
     border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: 600;
     transition: 0.12s ease;
 }
 
@@ -39,99 +42,114 @@
     background: var(--primary-700);
 }
 
-/* ===== Search Bar ===== */
 .search-bar {
+    margin: 0;
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 15px;
 }
 
 .search-bar input {
-    width: 250px;
     padding: 8px 12px;
-    border-radius: 6px;
+    width: 280px;
     border: 1px solid var(--border-dark);
-    font-size: 14px;
+    border-radius: 6px;
+    outline: none;
     transition: 0.3s;
 }
 
 .search-bar input:focus {
-    outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
 }
 
-/* ===== Form Section ===== */
+/* Form */
 .expense-form {
-    background: var(--bg);
-    padding: 20px;
+    background: var(--surface);
+    padding: 25px;
     border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
-    border: 1px solid var(--border-light);
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px;
+    gap: 16px;
 }
 
 .expense-form input,
 .expense-form select {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-dark);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    width: 100%;
-    transition: 0.2s;
 }
 
-.expense-form input:focus,
-.expense-form select:focus {
-    border-color: var(--primary);
-    outline: none;
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    align-items: stretch;
 }
 
-.expense-form button {
-    margin-top: 15px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 10px 18px;
+.button-group button {
+    flex: 1;
+    padding: 12px 18px;
+    height: 45px;
     border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     cursor: pointer;
-    font-weight: 500;
     transition: 0.3s;
 }
 
-.expense-form button:hover {
-    background: var(--primary-700);
+.submit-btn {
+    background-color: var(--success);
+    color: white;
 }
 
-/* ===== Table Section ===== */
+.submit-btn:hover {
+    background-color: var(--success-700);
+}
+
+.cancel-btn {
+    background-color: var(--danger);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: var(--danger-700);
+}
+
+/* Table */
 .expense-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    border-radius: 10px;
-    overflow: hidden;
+    margin-top: 25px;
 }
 
-/* Table headers and cells are unified in common.css; keep per-table modifiers here */
-.expense-table td {
+.expense-table th {
+    padding: 10px 12px;
     text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.expense-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.expense-table tr:hover {
+    background: var(--bg);
 }
 
 .expense-table .deleted-row {
@@ -140,19 +158,36 @@
 }
 
 .expense-table button {
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
     border: none;
-    background: none;
+    border-radius: 6px;
     cursor: pointer;
-    margin: 0 4px;
-    font-size: 16px;
-    transition: transform 0.2s;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.expense-table button:hover {
-    transform: scale(1.2);
+.expense-table button:nth-child(1) {
+    background: var(--success);
+    color: #fff;
 }
 
-/* ===== Pagination ===== */
+.expense-table button:nth-child(1):hover {
+    background: var(--success-700);
+}
+
+.expense-table button:nth-child(2) {
+    background: var(--danger);
+    color: #fff;
+}
+
+.expense-table button:nth-child(2):hover {
+    background: var(--danger-700);
+}
+
+/* Pagination */
 .pagination {
     display: flex;
     justify-content: center;
@@ -181,7 +216,7 @@
     cursor: not-allowed;
 }
 
-/* ===== Total Section ===== */
+/* Total Section */
 .total-expense {
     text-align: right;
     margin-top: 20px;
@@ -198,32 +233,46 @@
     border: 1px solid var(--border-light);
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
+/* Responsive */
+@media screen and (max-width: 768px) {
     .expense-container {
+        margin: 10px;
         padding: 15px;
     }
 
-    .expense-header {
+    .expense-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .expense-controls {
         flex-direction: column;
+        align-items: flex-start;
         gap: 10px;
     }
 
+    .new-entry-btn {
+        width: 100%;
+    }
+
     .search-bar {
-        justify-content: center;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
+        width: 100%;
     }
 
     .form-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
-    /* responsive cell sizing managed globally */
     .expense-table td {
         font-size: 12px;
         padding: 8px;
-    }
-
-    .total-expense h3 {
-        font-size: 1rem;
     }
 }

@@ -1,0 +1,877 @@
+@import './common.css';
+
+.reports-container {
+    background: #f5f7fa;
+    border-radius: 10px;
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.header-left h2 {
+    margin: 0 0 8px 0;
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.header-left p {
+    margin: 4px 0 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-print,
+.btn-email {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-print {
+    background: #17a2b8;
+    color: white;
+    border: none;
+}
+
+.btn-print:hover {
+    background: #138496;
+}
+
+.btn-email {
+    background: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-email:hover {
+    background: #218838;
+}
+
+.reports-filters {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.filter-group:last-child {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    min-width: auto;
+    align-items: flex-end;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 150px;
+    transition: 0.3s;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
+.btn-filter,
+.btn-reset {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    white-space: nowrap;
+    min-width: 120px;
+    flex: 1;
+}
+
+.btn-filter {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-filter:hover {
+    background: var(--primary-700);
+}
+
+.btn-reset {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-reset:hover {
+    background: var(--danger-700);
+}
+
+.reports-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: 0.3s;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    background: var(--bg);
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    background: var(--primary);
+    color: white;
+}
+
+.report-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    min-height: 400px;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.report-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.report-title-section h1 {
+    margin: 0 0 8px 0;
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.report-meta {
+    margin: 8px 0 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.summary-card .summary-label {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
+.summary-card .summary-value {
+    color: var(--primary);
+}
+
+.summary-card .summary-value.success {
+    color: var(--success-700);
+}
+
+.summary-card .summary-value.warning {
+    color: var(--warning-700);
+}
+
+.summary-label {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.report-table-container {
+    overflow-x: auto;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.payment-mode-breakdown .report-table-container {
+    width: 100% !important;
+    overflow-x: visible;
+}
+
+/* Specific styling for payment mode breakdown table */
+.payment-mode-breakdown {
+    width: 100%;
+}
+
+.payment-mode-breakdown .report-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: auto;
+    /* Use auto for better column distribution */
+}
+
+/* Override for payment-breakdown-table */
+.payment-breakdown-table,
+.report-table.payment-breakdown-table {
+    table-layout: fixed !important;
+}
+
+/* Override general report-table styles for payment-breakdown-table */
+.payment-breakdown-table {
+    table-layout: fixed !important;
+}
+
+.report-table th {
+    padding: 10px 12px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    word-wrap: break-word;
+}
+
+.report-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    word-wrap: break-word;
+    vertical-align: middle;
+}
+
+.report-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.status-badge.paid,
+.status-badge.completed {
+    background: var(--success);
+    color: white;
+}
+
+.status-badge.pending {
+    background: var(--warning);
+    color: #856404;
+}
+
+.status-badge.advance {
+    background: var(--info);
+    color: white;
+}
+
+.report-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-light);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Print Styles - Show Only Report Content */
+@media print {
+
+    /* Remove all margins and padding from html/body */
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* Hide all scrollbars in print */
+    * {
+        overflow: visible !important;
+    }
+
+    *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    /* Hide all UI elements */
+    .navbar,
+    .sidebar,
+    .header-actions,
+    .reports-header,
+    .reports-filters,
+    .reports-tabs,
+    .btn-filter,
+    .btn-reset,
+    .btn-print,
+    .btn-email {
+        display: none !important;
+    }
+
+    /* Remove sidebar spacing from layout containers */
+    .dashboard-container,
+    .main-section {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .content-section,
+    .content-section.sidebar-open {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Show only report content - remove all margins and padding */
+    .reports-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        background: white !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        position: relative !important;
+        left: 0 !important;
+    }
+
+    .report-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        background: white !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Remove horizontal scrollbar and ensure table fits */
+    .report-table-container {
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .report-table-container::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .report-table {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Remove left padding/margin from all report sections */
+    .report-header,
+    .report-summary,
+    .report-table-container,
+    .report-footer {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .reports-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .header-left h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .reports-filters {
+        flex-direction: column;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+    }
+
+    .report-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Complete Report Styles */
+.complete-report {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.complete-report-summary {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.complete-report-summary h3 {
+    margin: 0 0 20px 0;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.summary-item {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.summary-item.highlight {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-700) 100%);
+    color: white;
+    border: none;
+}
+
+.summary-item.highlight .summary-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.summary-item.highlight .summary-value {
+    color: white;
+}
+
+.summary-item .summary-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.summary-item .summary-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.summary-item .summary-value.success {
+    color: #28a745;
+}
+
+.summary-item .summary-value.danger {
+    color: #dc3545;
+}
+
+.summary-item.highlight .summary-value.success,
+.summary-item.highlight .summary-value.danger {
+    color: white;
+}
+
+.payment-mode-breakdown {
+    margin-top: 20px;
+}
+
+.payment-mode-breakdown h3 {
+    margin: 0 0 20px 0;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.report-table .success {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.report-table .danger {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Different colors for balance columns - applies to both table and summary */
+.report-table .balance-maintenance,
+.summary-value.balance-maintenance {
+    color: #007bff;
+    /* Blue for Maintenance Balance */
+    font-weight: 600;
+}
+
+.report-table .balance-maintenance.negative,
+.summary-value.balance-maintenance.negative {
+    color: #0056b3;
+    /* Darker blue for negative */
+}
+
+.report-table .balance-activity,
+.summary-value.balance-activity {
+    color: #6f42c1;
+    /* Purple for Activity Balance */
+    font-weight: 600;
+}
+
+.report-table .balance-activity.negative,
+.summary-value.balance-activity.negative {
+    color: #5a32a3;
+    /* Darker purple for negative */
+}
+
+.report-table .balance-total,
+.summary-value.balance-total {
+    color: #fd7e14;
+    /* Orange for Total Balance */
+    font-weight: 600;
+}
+
+.report-table .balance-total.negative,
+.summary-value.balance-total.negative {
+    color: #e55a00;
+    /* Darker orange for negative */
+}
+
+.report-table .total-row {
+    background: #f8f9fa;
+    font-weight: 700;
+}
+
+.report-table .total-row td {
+    border-top: 2px solid var(--primary);
+    padding: 15px 12px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Grand total row - EXACT same styling as regular rows */
+.payment-mode-breakdown .payment-breakdown-table .total-row {
+    font-weight: 700;
+    background: #f8f9fa !important;
+}
+
+/* Grand total row cells - EXACT same as regular cells */
+.payment-mode-breakdown .payment-breakdown-table .total-row td {
+    padding: 10px 8px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    border-spacing: 0 !important;
+    border-top: none !important;
+}
+
+/* All grand total values in blue color and bold */
+.payment-mode-breakdown .payment-breakdown-table .total-row td:not(:first-child) {
+    font-weight: 700 !important;
+    color: #007bff !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td:first-child {
+    color: #243b53 !important;
+    /* Keep first column (GRAND TOTAL text) in default color */
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td:first-child {
+    text-align: left !important;
+    padding-left: 15px !important;
+    padding-right: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td:not(:first-child) {
+    text-align: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+/* Separate CSS for grand total row - override activity expense and other classes */
+.payment-mode-breakdown .payment-breakdown-table .total-row td.success {
+    color: #007bff !important;
+    /* Blue color for grand total success columns (Maintenance Collected, Activity Payment) */
+    font-weight: 700 !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td.danger {
+    color: #007bff !important;
+    /* Blue color for grand total danger columns (Expense, Activity Expense) - override activity expense CSS */
+    font-weight: 700 !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td.balance-maintenance {
+    color: #007bff !important;
+    /* Blue color for grand total maintenance balance */
+    font-weight: 700 !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td.balance-activity {
+    color: #007bff !important;
+    /* Blue color for grand total activity balance */
+    font-weight: 700 !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table .total-row td.balance-total {
+    color: #007bff !important;
+    /* Blue color for grand total balance */
+    font-weight: 700 !important;
+}
+
+/* Ensure payment mode breakdown table columns align properly */
+.payment-mode-breakdown {
+    overflow-x: auto;
+    /* Allow horizontal scroll if needed */
+}
+
+.payment-mode-breakdown .payment-breakdown-table,
+.payment-mode-breakdown table.payment-breakdown-table,
+.payment-mode-breakdown .report-table.payment-breakdown-table {
+    table-layout: fixed !important;
+    /* Fixed layout ensures columns align properly */
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table colgroup col {
+    width: 12.5% !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table th,
+.payment-mode-breakdown .payment-breakdown-table td {
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    padding: 10px 8px !important;
+    /* Consistent padding for all cells */
+    box-sizing: border-box !important;
+    overflow: visible;
+    margin: 0 !important;
+    border-spacing: 0;
+}
+
+.payment-mode-breakdown .payment-breakdown-table th:first-child,
+.payment-mode-breakdown .payment-breakdown-table td:first-child {
+    text-align: left !important;
+    padding-left: 15px !important;
+    padding-right: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.payment-mode-breakdown .payment-breakdown-table th:not(:first-child),
+.payment-mode-breakdown .payment-breakdown-table td:not(:first-child) {
+    text-align: center !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+
+
+.formula-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.formula-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.formula-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formula-item {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--primary);
+}
+
+.formula-item.highlight {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left-color: var(--primary-700);
+}
+
+.formula-item strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--primary);
+    font-size: 16px;
+}
+
+.formula-result {
+    margin-top: 10px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.formula-result .success {
+    color: #28a745;
+    font-weight: 700;
+}
+
+.formula-result .danger {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+/* Responsive for Complete Report */
+@media screen and (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-mode-breakdown {
+        overflow-x: auto;
+    }
+
+    .report-table {
+        min-width: 800px;
+    }
+}

@@ -1,77 +1,89 @@
-.payment-container {
-    padding: 20px;
-    background-color: var(--bg);
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    font-family: "Poppins", sans-serif;
-}
-
 @import './common.css';
 
-.payment-header {
+.payment-container {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-container h2 {
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: left;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+/* Controls (New Entry + Search) */
+.payment-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-}
-
-.payment-header h2 {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--text-secondary);
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .new-entry-btn {
-    background-color: var(--primary);
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
     font-weight: 600;
     transition: 0.12s ease;
 }
 
 .new-entry-btn:hover {
-    background-color: var(--primary-700);
+    background: var(--primary-700);
 }
 
 .search-bar {
+    margin: 0;
     display: flex;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
 
 .search-bar input {
-    width: 250px;
-    padding: 8px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
+    padding: 8px 12px;
+    width: 280px;
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
 }
 
+.search-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
+/* Form */
 .payment-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px 25px;
+    gap: 16px;
     background: var(--surface);
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    padding: 25px;
+    border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    animation: fadeIn 0.3s ease-in-out;
+    margin-bottom: 25px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+.form-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.form-group.full-width {
+    grid-column: 1 / -1;
 }
 
 .form-group {
@@ -80,26 +92,19 @@
 }
 
 .form-group label {
-    font-weight: 500;
-    margin-bottom: 5px;
+    font-weight: 600;
+    margin-bottom: 6px;
     color: var(--text-secondary);
+    font-size: 14px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     padding: 8px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: var(--primary);
 }
 
 .submit-btn {
@@ -107,11 +112,10 @@
     background-color: var(--success);
     color: white;
     border: none;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 15px;
-    font-weight: 500;
     transition: 0.3s;
 }
 
@@ -119,65 +123,123 @@
     background-color: var(--success-700);
 }
 
-.payment-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--surface);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+.button-group {
+    display: flex;
+    gap: 12px;
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    align-items: stretch;
 }
 
-/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
-
-.payment-table button {
-    margin-right: 6px;
-    padding: 5px 10px;
-    border: none;
+.button-group button {
+    flex: 1;
+    padding: 12px 18px;
+    height: 45px;
     border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     cursor: pointer;
-    font-size: 13px;
-    transition: 0.2s;
+    transition: 0.3s;
 }
 
-payment-table button:nth-child(1) {
-    background-color: var(--warning);
-    color: #000;
-}
-
-payment-table button:nth-child(1):hover {
-    background-color: var(--warning-700);
-}
-
-payment-table button:nth-child(2) {
+.cancel-btn {
     background-color: var(--danger);
     color: white;
 }
 
-payment-table button:nth-child(2):hover {
+.cancel-btn:hover {
     background-color: var(--danger-700);
 }
 
-payment-table button:nth-child(3) {
-    background-color: var(--info);
+/* Table */
+.payment-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.payment-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+.payment-table th {
+    padding: 10px 12px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.payment-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.payment-table tr:hover {
+    background: var(--bg);
+}
+
+.payment-table button {
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-table button:nth-child(1) {
+    background: var(--success);
     color: white;
 }
 
-payment-table button:nth-child(3):hover {
-    background-color: var(--info-700);
+.payment-table button:nth-child(1):hover {
+    background: var(--success-700);
 }
 
+.payment-table button:nth-child(2) {
+    background: var(--danger);
+    color: white;
+}
+
+.payment-table button:nth-child(2):hover {
+    background: var(--danger-700);
+}
+
+.payment-table button:nth-child(3) {
+    background: var(--info);
+    color: white;
+}
+
+.payment-table button:nth-child(3):hover {
+    background: var(--info-700);
+}
+
+/* Activity Totals */
 .activity-totals {
     margin-top: 20px;
     background: var(--bg);
     padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .activity-totals h3 {
     margin-bottom: 10px;
-    color: #333;
+    color: var(--text-secondary);
     text-align: left;
 }
 
@@ -188,7 +250,6 @@ payment-table button:nth-child(3):hover {
     background: var(--surface);
 }
 
-/* total-table will inherit header styles from common.css; keep any specific variants minimal */
 .total-table td {
     padding: 10px;
 }
@@ -201,6 +262,78 @@ payment-table button:nth-child(3):hover {
     font-size: 16px;
 }
 
-.grand-total-row td:first-child {
-    text-align: right;
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .payment-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .payment-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .payment-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .new-entry-btn {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
+        width: 100%;
+    }
+
+    .payment-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
 }

@@ -1,76 +1,75 @@
 @import './common.css';
 
-/* Container */
 .activity-container {
-    padding: 20px;
-    font-family: "Poppins", sans-serif;
-    background: var(--bg);
+    background: var(--surface);
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Section */
-.activity-header {
+.activity-container h2 {
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 25px 0;
+    text-align: left;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+/* Controls (New Entry + Search) */
+.activity-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--primary);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.activity-header h2 {
-    font-size: 22px;
-    font-weight: 600;
-    margin: 0;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .new-entry-btn {
     background: var(--primary);
-    color: #fff;
+    color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 10px 16px;
     border-radius: 6px;
-    font-weight: 600;
     cursor: pointer;
-    transition: 0.18s ease;
+    font-weight: 600;
+    transition: 0.12s ease;
 }
 
 .new-entry-btn:hover {
     background: var(--primary-700);
 }
 
-/* Search Bar */
 .search-bar {
-    margin-bottom: 20px;
+    margin: 0;
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 20px;
 }
 
 .search-bar input {
+    padding: 8px 12px;
     width: 280px;
-    padding: 8px 10px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-dark);
     border-radius: 6px;
-    font-size: 14px;
     outline: none;
+    transition: 0.3s;
 }
 
 .search-bar input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 3px rgba(59, 130, 246, 0.24);
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
 }
 
 /* Form */
 .activity-form {
     background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 25px;
     border-radius: 10px;
-    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
-    animation: fadeIn 0.3s ease;
 }
 
 .form-group {
@@ -81,68 +80,112 @@
 
 .form-group label {
     font-weight: 600;
+    margin-bottom: 6px;
     color: var(--text-secondary);
-    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 8px 10px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 6px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    outline: none;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: var(--accent);
 }
 
 .submit-btn {
-    background: var(--accent);
+    background: var(--success);
     color: white;
     border: none;
     padding: 10px 18px;
     border-radius: 6px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     transition: 0.3s;
 }
 
 .submit-btn:hover {
-    background: var(--primary-700);
+    background: var(--success-700);
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    align-items: stretch;
+}
+
+.button-group button {
+    flex: 1;
+    padding: 12px 18px;
+    height: 45px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.cancel-btn {
+    background-color: var(--danger);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: var(--danger-700);
 }
 
 /* Table */
 .activity-table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-top: 25px;
 }
 
-/* Table cells, headers and hover are handled globally in `common.css` to ensure consistent table styling across pages */
+.activity-table th {
+    padding: 10px 12px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
 
-/* Action Buttons */
+.activity-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.activity-table tr:hover {
+    background: var(--bg);
+}
+
 .activity-table button {
-    margin-right: 5px;
-    padding: 6px 10px;
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: 0.3s;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .activity-table button:nth-child(1) {
-    background: var(--info);
+    background: var(--success);
     color: white;
+}
+
+.activity-table button:nth-child(1):hover {
+    background: var(--success-700);
 }
 
 .activity-table button:nth-child(2) {
@@ -150,24 +193,78 @@
     color: white;
 }
 
-.activity-table button:nth-child(3) {
-    background: var(--success);
+.activity-table button:nth-child(2):hover {
+    background: var(--danger-700);
+}
+
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
     color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.activity-table button:hover {
-    opacity: 0.85;
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
 }
 
-/* Fade-in Animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .activity-container {
+        margin: 10px;
+        padding: 15px;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .activity-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .activity-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .new-entry-btn {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
+        width: 100%;
     }
 }

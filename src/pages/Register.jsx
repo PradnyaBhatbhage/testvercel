@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { getWings, registerUser } from "../services/api";
+import { getWings, registerUser, getOwners } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../css/Register.css";
 
 const Register = () => {
     const navigate = useNavigate();
     const [wings, setWings] = useState([]);
+    const [owners, setOwners] = useState([]);
     const [formData, setFormData] = useState({
         user_name: "",
         password: "",
         wing_id: "",
         role_type: "user",
+        owner_id: "",
     });
 
     useEffect(() => {
@@ -24,6 +26,22 @@ const Register = () => {
         };
         fetchWings();
     }, []);
+
+    useEffect(() => {
+        const fetchOwners = async () => {
+            if (formData.role_type === "owner") {
+                try {
+                    const res = await getOwners();
+                    setOwners(res.data || []);
+                } catch (err) {
+                    console.error("Error fetching owners:", err);
+                }
+            } else {
+                setOwners([]);
+            }
+        };
+        fetchOwners();
+    }, [formData.role_type]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -91,7 +109,28 @@ const Register = () => {
                     >
                         <option value="admin">Admin</option>
                         <option value="user">User</option>
+                        <option value="owner">Owner</option>
                     </select>
+
+                    {formData.role_type === "owner" && (
+                        <>
+                            <label>Select Owner</label>
+                            <select
+                                className="reg-select"
+                                name="owner_id"
+                                value={formData.owner_id}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">-- Select Owner --</option>
+                                {owners.map((owner) => (
+                                    <option key={owner.owner_id} value={owner.owner_id}>
+                                        {owner.owner_name} - {owner.flat_no || "N/A"}
+                                    </option>
+                                ))}
+                            </select>
+                        </>
+                    )}
 
                     <button type="submit">Register</button>
                 </form>

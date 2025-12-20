@@ -1,11 +1,16 @@
 import axios from "axios";
 
+// const API = axios.create({
+//     baseURL: "http://localhost:5000/api", // your Node.js backend base URL
+// });
+
 const API = axios.create({
-    baseURL: "http://localhost:5000/api", // your Node.js backend base URL
+    baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev",
 });
 
-// ================= Wings =================
+// ================= Wings =================locah
 // Fetch wings
+
 export const getWings = () => API.get("/wings");
 
 // ================= Users =================
@@ -45,20 +50,90 @@ export const restoreFloor = (id) => API.patch(`/floors/restore/${id}`);
 
 // ================= Owner =================
 export const getOwners = () => API.get("/owners");
-export const addOwner = (data) => API.post("/owners/add", data);
-export const updateOwner = (id, data) => API.put(`/owners/update/${id}`, data);
+export const addOwner = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/owners/add", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateOwner = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/owners/update/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 export const deleteOwner = (id, reason) => API.put(`/owners/delete/${id}`, { reason });
 export const restoreOwner = (id) => API.put(`/owners/restore/${id}`);
 
 ///================= Rental =================
 // Create rental
-export const addRental = (data) => API.post(`/rental/add`, data);
+export const addRental = (data, file = null) => {
+    const formData = new FormData();
+
+    // Append all form fields
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+
+    // Append file if provided
+    if (file) {
+        formData.append('rental_agreement', file);
+    }
+
+    return API.post(`/rental/add`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 
 // Get all rentals
 export const getRentals = () => API.get(`/rental`);
 
 // Update rental
-export const updateRental = (id, data) => API.put(`/rental/update/${id}`, data);
+export const updateRental = (id, data, file = null) => {
+    const formData = new FormData();
+
+    // Append all form fields
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+
+    // Append file if provided
+    if (file) {
+        formData.append('rental_agreement', file);
+    }
+
+    return API.put(`/rental/update/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 
 // Soft delete rental
 export const deleteRental = (id, reason) => API.put(`/rental/delete/${id}`, { reason });
@@ -80,8 +155,44 @@ export const restoreCategory = (id) => API.put(`/categories/restore/${id}`);
 // ================= Meetings =================
 export const getMeetings = () => API.get("/meetings");
 export const getMeetingById = (id) => API.get(`/meetings/${id}`);
-export const createMeeting = (data) => API.post("/meetings", data);
-export const updateMeeting = (id, data) => API.put(`/meetings/${id}`, data);
+export const getMeetingAttendance = (id) => API.get(`/meetings/${id}/attendance`);
+export const updateMeetingAttendance = (meetingId, attendance) => API.put(`/meetings/${meetingId}/attendance`, { attendance });
+export const getAbsenteeWarnings = () => API.get("/meetings/warnings/absentees");
+export const sendAbsenteeWarningByEmail = (ownerId) => API.post("/meetings/warnings/absentees/email", { owner_id: ownerId });
+export const sendAbsenteeWarningByWhatsApp = (ownerId) => API.post("/meetings/warnings/absentees/whatsapp", { owner_id: ownerId });
+export const sendAbsenteeWarningBySMS = (ownerId) => API.post("/meetings/warnings/absentees/sms", { owner_id: ownerId });
+export const createMeeting = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/meetings", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateMeeting = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/meetings/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 export const deleteMeeting = (id, reason) => API.delete(`/meetings/${id}`, { data: { reason } });
 export const restoreMeeting = (id) => API.put(`/meetings/restore/${id}`);
 
@@ -94,6 +205,45 @@ export const deleteActivity = (id, reason) =>
     API.delete(`/activities/${id}`, { data: { reason } });
 export const restoreActivity = (id) => API.put(`/activities/restore/${id}`);
 
+// ================= Activity Expenses =================
+export const getAllActivityExpenses = () => API.get("/activity-expenses");
+export const getActivityExpenseById = (id) => API.get(`/activity-expenses/${id}`);
+export const createActivityExpense = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/activity-expenses", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateActivityExpense = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/activity-expenses/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const deleteActivityExpense = (id, reason) =>
+    API.delete(`/activity-expenses/${id}`, { data: { reason } });
+export const restoreActivityExpense = (id) => API.put(`/activity-expenses/restore/${id}`);
+
 // ================= Activity Payments =================
 export const getAllPayments = () => API.get("/activity-payments");
 export const getPaymentById = (id) => API.get(`/activity-payments/${id}`);
@@ -102,14 +252,9 @@ export const updatePayment = (id, data) => API.put(`/activity-payments/${id}`, d
 export const deletePayment = (id, reason) =>
     API.delete(`/activity-payments/${id}`, { data: { reason } });
 export const restorePayment = (id) => API.put(`/activity-payments/restore/${id}`);
+export const sendInvitationByEmail = (id) => API.post(`/activity-payments/${id}/send-invitation/email`);
+export const sendInvitationByWhatsApp = (id) => API.post(`/activity-payments/${id}/send-invitation/whatsapp`);
 
-// ================= ACTIVITY EXPENSE =================
-export const getAllActivityExpenses = () => API.get("/activity-expenses");
-export const createActivityExpense = (data) => API.post("/activity-expenses", data);
-export const updateActivityExpense = (id, data) => API.put(`/activity-expenses/${id}`, data);
-export const deleteActivityExpense = (id, reason) =>
-    API.delete(`/activity-expenses/${id}`, { data: { reason } });
-export const restoreActivityExpense = (id) => API.put(`/activity-expenses/restore/${id}`);
 
 // ================= EXPENSES =================
 
@@ -120,10 +265,40 @@ export const getExpenses = () => API.get("/expenses");
 export const getExpenseById = (id) => API.get(`/expenses/${id}`);
 
 // Create a new expense
-export const createExpense = (data) => API.post("/expenses", data);
+export const createExpense = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/expenses", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 
 // Update an existing expense
-export const updateExpense = (id, data) => API.put(`/expenses/${id}`, data);
+export const updateExpense = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/expenses/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
 
 // Soft delete expense (with reason)
 export const deleteExpense = (id, reason) =>
@@ -163,3 +338,80 @@ export const updateMaintenancePayment = (id, data) => API.put(`/maintenance-paym
 export const deleteMaintenancePayment = (id, reason) =>
     API.put(`/maintenance-payments/${id}`, { reason });
 export const restoreMaintenancePayment = (id) => API.put(`/maintenance-payments/${id}`);
+
+// ================= Maintenance Receipt & Reminders =================
+// Generate and send receipt via email
+export const sendReceiptByEmail = (maintainId) => API.post(`/maintenance-details/${maintainId}/send-receipt/email`);
+
+// Generate and send receipt via WhatsApp
+export const sendReceiptByWhatsApp = (maintainId) => API.post(`/maintenance-details/${maintainId}/send-receipt/whatsapp`);
+
+// Send monthly reminders to all owners
+export const sendMonthlyReminders = () => API.post("/maintenance-details/send-monthly-reminders");
+
+// ================= Role Delegation =================
+// Get all users (for delegation selection)
+export const getUsers = () => API.get("/users");
+
+// Create role delegation
+export const createRoleDelegation = (data) => API.post("/role-delegations", data);
+
+// Get all role delegations
+export const getRoleDelegations = () => API.get("/role-delegations");
+
+// Get role delegations for current user
+export const getMyDelegations = (userId) => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user_id = userId || user?.user_id;
+    return API.get(`/role-delegations/my-delegations${user_id ? `?user_id=${user_id}` : ""}`);
+};
+
+// Update role delegation
+export const updateRoleDelegation = (id, data) => API.put(`/role-delegations/${id}`, data);
+
+// Revoke role delegation
+export const revokeRoleDelegation = (id) => API.put(`/role-delegations/${id}/revoke`);
+
+// ================= Parking =================
+export const getParking = () => API.get("/parking/get");
+export const addParking = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/parking/add", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateParking = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/parking/update/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const deleteParking = (id, reason) => API.put(`/parking/delete/${id}`, { reason });
+export const restoreParking = (id) => API.put(`/parking/restore/${id}`);
+
+// ================= Subscription =================
+export const getSubscriptionStatus = (socId) => API.get(`/subscription/status/${socId}`);
+export const getSubscriptionByWing = (wingId) => API.get(`/subscription/status-by-wing/${wingId}`);
+export const getAllSubscriptions = () => API.get("/subscription");
+export const createOrUpdateSubscription = (data) => API.post("/subscription", data);
+export const checkAndCreateLockFile = (socId) => API.post(`/subscription/check-lock/${socId}`);

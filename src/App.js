@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./components/Dashboard";
 import ForgotPassword from "./components/ForgotPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (

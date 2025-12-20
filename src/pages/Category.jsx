@@ -4,8 +4,8 @@ import {
     createCategory,
     updateCategory,
     deleteCategory,
-    restoreCategory,
 } from "../services/api";
+import { canEdit, canDelete } from "../utils/ownerFilter";
 import "../css/Category.css";
 
 const Category = () => {
@@ -20,6 +20,8 @@ const Category = () => {
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     // Fetch all categories
     const fetchCategories = async () => {
@@ -95,18 +97,6 @@ const Category = () => {
         }
     };
 
-    // Restore category
-    const handleRestore = async (id) => {
-        try {
-            await restoreCategory(id);
-            alert("Category restored successfully!");
-            fetchCategories();
-        } catch (error) {
-            alert("Error restoring category!");
-            console.error(error);
-        }
-    };
-
     // 🔍 Filter categories based on search input
     const handleSearch = (e) => {
         const value = e.target.value.toLowerCase();
@@ -119,7 +109,14 @@ const Category = () => {
         );
 
         setFilteredCategories(filtered);
+        setCurrentPage(1); // Reset to page 1 when search changes
     };
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentCategories = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
 
     return (
         <div className="category-container">
@@ -130,9 +127,11 @@ const Category = () => {
             <div className="category-controls">
                 {!showForm && (
                     <>
-                        <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
-                            New Entry
-                        </button>
+                        {canEdit() && (
+                            <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
+                                New Entry
+                            </button>
+                        )}
 
                         {/* 🔍 Search Bar */}
                         <div className="search-bar">
@@ -199,42 +198,56 @@ const Category = () => {
             )}
 
             {!showForm && (
-                <table className="category-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Category</th>
-                            <th>Subcategory</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredCategories.length > 0 ? (
-                            filteredCategories.map((cat) => (
-                                <tr key={cat.catg_id}>
-                                    <td>{cat.catg_id}</td>
-                                    <td>{cat.catg_name}</td>
-                                    <td>{cat.subcatg_name}</td>
-                                    <td>{cat.description}</td>
-                                    <td>{cat.status}</td>
-                                    <td>
-                                        <button onClick={() => handleEdit(cat)}>Edit</button>
-                                        <button onClick={() => handleDelete(cat.catg_id)}>Delete</button>
-                                        <button onClick={() => handleRestore(cat.catg_id)}>Restore</button>
+                <>
+                    <table className="category-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                {canEdit() || canDelete() ? <th>Actions</th> : null}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredCategories.length > 0 ? (
+                                currentCategories.map((cat) => (
+                                    <tr key={cat.catg_id}>
+                                        <td>{cat.catg_id}</td>
+                                        <td>{cat.catg_name}</td>
+                                        <td>{cat.subcatg_name}</td>
+                                        <td>{cat.description}</td>
+                                        <td>{cat.status}</td>
+                                        {(canEdit() || canDelete()) && (
+                                            <td>
+                                                {canEdit() && (
+                                                    <button onClick={() => handleEdit(cat)}>Edit</button>
+                                                )}
+                                                {canDelete() && (
+                                                    <button onClick={() => handleDelete(cat.catg_id)}>Delete</button>
+                                                )}
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={(canEdit() || canDelete()) ? "6" : "5"} style={{ textAlign: "center" }}>
+                                        No categories found.
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="6" style={{ textAlign: "center" }}>
-                                    No categories found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>⟸ Prev</button>
+                            <span>Page {currentPage} of {totalPages}</span>
+                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Next ⟹</button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

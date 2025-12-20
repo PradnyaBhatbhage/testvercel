@@ -1,0 +1,481 @@
+@import './common.css';
+
+.role-assignment-container {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.role-assignment-header {
+    margin-bottom: 18px;
+}
+
+.role-assignment-header h2 {
+    color: var(--primary);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+/* Controls Section */
+.role-assignment-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.new-entry-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.new-entry-btn:hover {
+    background: var(--primary-700);
+}
+
+.access-denied {
+    text-align: center;
+    padding: 40px;
+    background: var(--warning);
+    border: 1px solid var(--warning-700);
+    border-radius: 8px;
+    color: #856404;
+}
+
+.access-denied h2 {
+    margin-bottom: 10px;
+}
+
+.delegation-form {
+    background: var(--surface);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+.delegation-form h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 15px;
+    clear: both;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    display: block;
+    width: 100%;
+    clear: both;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group select,
+.form-group input[type="date"],
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+    width: 100%;
+    display: block;
+}
+
+.form-group select:focus,
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
+.permissions-section {
+    margin-top: 20px;
+    margin-bottom: 0;
+    padding: 20px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    display: block;
+    width: 100%;
+    clear: both;
+}
+
+.permissions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.permissions-header label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.select-all-btn {
+    background: var(--info);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.select-all-btn:hover {
+    background: var(--info-700);
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.permission-item {
+    background: var(--surface);
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid var(--border-light);
+    transition: 0.3s;
+}
+
+.permission-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.permission-item label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    gap: 10px;
+}
+
+.permission-item input[type="checkbox"] {
+    margin-top: 3px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.permission-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.permission-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: block;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.form-actions button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.3s;
+    flex: 1;
+    height: 45px;
+}
+
+.submit-btn {
+    background: var(--success);
+    color: white;
+}
+
+.submit-btn:hover {
+    background: var(--success-700);
+}
+
+.cancel-btn {
+    background: var(--danger);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: var(--danger-700);
+}
+
+.search-bar {
+    margin-left: auto;
+}
+
+.search-bar input {
+    padding: 8px 12px;
+    width: 280px;
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
+.delegations-table-container {
+    background: var(--surface);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.delegations-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+.delegations-table th {
+    padding: 10px 12px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.delegations-table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.delegations-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.delegations-table tbody tr.revoked {
+    opacity: 0.6;
+    background: var(--bg);
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.permissions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.permission-badge {
+    background: rgba(2, 62, 138, 0.1);
+    color: var(--primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.permission-badge.more {
+    background: var(--bg);
+    color: var(--text-muted);
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: var(--success);
+    color: white;
+}
+
+.status-badge.inactive {
+    background: var(--warning);
+    color: #856404;
+}
+
+.status-badge.revoked {
+    background: var(--danger);
+    color: white;
+}
+
+.reason-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn,
+.revoke-btn {
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-btn {
+    background: var(--success);
+    color: white;
+}
+
+.edit-btn:hover {
+    background: var(--success-700);
+}
+
+.revoke-btn {
+    background: var(--danger);
+    color: white;
+}
+
+.revoke-btn:hover {
+    background: var(--danger-700);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .role-assignment-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .role-assignment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .role-assignment-header h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .permissions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .delegations-table-container {
+        overflow-x: scroll;
+    }
+
+    .delegations-table {
+        min-width: 1000px;
+    }
+}

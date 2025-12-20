@@ -33,7 +33,12 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await loginUser(formData);
-            localStorage.setItem("user", JSON.stringify(res.data.user));
+            // Ensure wing_id is stored in user object (from formData if not in response)
+            const userData = {
+                ...res.data.user,
+                wing_id: res.data.user?.wing_id || formData.wing_id
+            };
+            localStorage.setItem("user", JSON.stringify(userData));
             alert("Login successful!");
             navigate("/dashboard");
         } catch (err) {

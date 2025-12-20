@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getWings, getSocieties, updateSociety } from "../services/api";
+import { canEdit } from "../utils/ownerFilter";
 import "../css/SocietyForm.css";
 
 const SocietyForm = () => {
@@ -125,16 +126,18 @@ const SocietyForm = () => {
                 </label>
             </div>
 
-            <div className="button-group">
-                {!isEditMode ? (
-                    <button type="button" className="edit-btn-society" onClick={() => setIsEditMode(true)}>Edit</button>
-                ) : (
-                    <>
-                        <button type="button" className="update-btn-society" onClick={handleUpdateClick}>Update</button>
-                        <button type="button" className="cancel-btn-society" onClick={handleCancel}>Cancel</button>
-                    </>
-                )}
-            </div>
+            {canEdit() && (
+                <div className="button-group">
+                    {!isEditMode ? (
+                        <button type="button" className="edit-btn-society" onClick={() => setIsEditMode(true)}>Edit</button>
+                    ) : (
+                        <>
+                            <button type="button" className="update-btn-society" onClick={handleUpdateClick}>Update</button>
+                            <button type="button" className="cancel-btn-society" onClick={handleCancel}>Cancel</button>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

@@ -6,7 +6,9 @@ import {
     deleteMaintenancePayment,
     restoreMaintenancePayment,
     getMaintenanceDetails,
+    getOwners,
 } from "../services/api";
+import { getCurrentUserWingId, filterMaintenanceDetailsByWing, filterOwnersByWing } from "../utils/wingFilter";
 import "../css/Maintenance.css";
 
 const MaintenancePayment = () => {
@@ -20,12 +22,30 @@ const MaintenancePayment = () => {
         remark: "",
     });
     const [editId, setEditId] = useState(null);
+    const [owners, setOwners] = useState([]);
+
+    // Get current user's wing_id
+    const currentUserWingId = getCurrentUserWingId();
 
     // Fetch all payments
     const fetchPayments = async () => {
         try {
             const res = await getMaintenancePayments();
-            setPayments(res.data);
+            const rawPayments = res.data || [];
+            
+            // Filter payments by maintenance detail's owner wing
+            if (currentUserWingId !== null && details.length > 0) {
+                // Get maintain_ids for current wing
+                const wingMaintainIds = new Set(
+                    details.map(d => d.maintain_id).filter(id => id)
+                );
+                const filteredPayments = rawPayments.filter(payment => 
+                    payment.maintain_id && wingMaintainIds.has(payment.maintain_id)
+                );
+                setPayments(filteredPayments);
+            } else {
+                setPayments(rawPayments);
+            }
         } catch (err) {
             console.error("Error fetching payments:", err);
         }
@@ -34,8 +54,27 @@ const MaintenancePayment = () => {
     // Fetch all maintenance details for dropdown
     const fetchDetails = async () => {
         try {
+            const ownersRes = await getOwners();
+            const rawOwners = ownersRes.data || [];
+            
+            // Filter owners by wing
+            if (currentUserWingId !== null) {
+                const filteredOwners = filterOwnersByWing(rawOwners, currentUserWingId);
+                setOwners(filteredOwners);
+            } else {
+                setOwners(rawOwners);
+            }
+            
             const res = await getMaintenanceDetails();
-            setDetails(res.data);
+            const rawDetails = res.data || [];
+            
+            // Filter details by owner's wing
+            if (currentUserWingId !== null) {
+                const filteredDetails = filterMaintenanceDetailsByWing(rawDetails, rawOwners, currentUserWingId);
+                setDetails(filteredDetails);
+            } else {
+                setDetails(rawDetails);
+            }
         } catch (err) {
             console.error("Error fetching details:", err);
         }

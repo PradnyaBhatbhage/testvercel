@@ -2,80 +2,136 @@
 
 /* Container */
 .flat-owner-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg);
+    background: var(--surface);
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    margin: 20px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Page Header */
-.flat-owner-container>h1 {
+.flat-owner-container h1,
+.flat-owner-container h2 {
     color: var(--primary);
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 25px 0;
+    text-align: left;
     padding-bottom: 15px;
-    border-bottom: 2px solid rgba(2, 62, 138, 0.1);
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
 }
 
-/* Table header with search and new entry */
+/* Controls (New Entry + Search) */
 .table-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
-.table-header button {
-    padding: 8px 16px;
-    background-color: var(--success);
+.new-entry-btn {
+    background: var(--primary);
     color: white;
     border: none;
-    border-radius: 5px;
+    padding: 10px 16px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.3s ease;
+    transition: 0.12s ease;
 }
 
-.table-header button:hover {
-    background-color: var(--success-700);
+.new-entry-btn:hover {
+    background: var(--primary-700);
 }
 
-.table-header input[type="text"] {
+.search-bar {
+    margin: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.search-bar input {
     padding: 8px 12px;
+    width: 280px;
+    max-width: 280px;
     border: 1px solid var(--border-dark);
-    border-radius: 5px;
-    width: 250px;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
+    box-sizing: border-box;
+}
+
+.search-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 3px rgba(2, 62, 138, 0.18);
+}
+
+/* Ensure search input in table-header doesn't expand */
+.table-header input[type="text"] {
+    width: 280px;
+    max-width: 280px;
 }
 
 /* Table */
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: var(--surface);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-top: 25px;
 }
 
-th {
-    padding: 12px 15px;
+table th {
+    padding: 10px 12px;
     text-align: center;
-    /* header centered for FlatOwner */
+    color: #fff;
+    font-weight: 700;
+    background: var(--primary);
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-td {
-    padding: 12px 15px;
-    text-align: left;
+table td {
+    padding: 10px 12px;
+    text-align: center;
+    color: #243b53;
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-tr:hover {
-    background-color: var(--bg);
+table tr:hover {
+    background: var(--bg);
+}
+
+/* Action Buttons */
+table button {
+    margin: 2px 6px 2px 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+table button:nth-child(1),
+.edit-btn-flat {
+    background: var(--success);
+    color: #fff;
+}
+
+table button:nth-child(1):hover,
+.edit-btn-flat:hover {
+    background: var(--success-700);
+}
+
+table button:nth-child(2),
+.delete-btn-flat {
+    background: var(--danger);
+    color: #fff;
+}
+
+table button:nth-child(2):hover,
+.delete-btn-flat:hover {
+    background: var(--danger-700);
 }
 
 /* Status badges */
@@ -96,66 +152,33 @@ tr:hover {
     background-color: var(--danger);
 }
 
-/* Action buttons */
-button.edit-btn-flat {
-    background-color: var(--success);
-    color: white;
-    margin: 2px;
-    font-weight: 600;
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-button.edit-btn-flat:hover {
-    background-color: var(--success-700);
-}
-
-button.delete-btn-flat {
-    background-color: var(--danger);
-    color: white;
-    margin: 2px;
-    font-weight: 600;
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-button.delete-btn-flat:hover {
-    background-color: var(--danger-700);
-}
-
-/* Form - 2 Column Grid Layout */
+/* Form */
 form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px 20px;
-    background-color: var(--surface);
+    gap: 16px;
+    margin-top: 20px;
+    background: var(--surface);
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    margin-top: 20px;
 }
 
 form h2 {
     grid-column: 1 / -1;
-    color: var(--text-secondary);
+    color: var(--primary);
     margin: 0 0 10px 0;
     font-size: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
 }
 
-/* Form field wrapper: keeps label above input in each column */
 .form-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-/* helper to make a field span full width */
 .form-field.full {
     grid-column: 1 / -1;
 }
@@ -168,18 +191,18 @@ form h2 {
 
 form label {
     font-weight: 600;
+    margin-bottom: 6px;
     color: var(--text-secondary);
-    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 form input[type="text"],
 form input[type="email"],
 form select {
-    padding: 8px 10px;
-    border: 1px solid var(--border-dark);
+    padding: 8px;
     border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    width: 100%;
 }
 
 form input[type="checkbox"] {
@@ -188,69 +211,235 @@ form input[type="checkbox"] {
     cursor: pointer;
 }
 
-/* Checkbox label: inline with checkbox */
-form label:has(> input[type="checkbox"]) {
-    display: flex;
-    align-items: center;
-    grid-column: 1 / -1;
-    margin-bottom: 0;
-    cursor: pointer;
-}
-
-/* Button group: full width, flex layout */
+/* Button group */
 .button-group {
-    grid-column: 1 / -1;
     display: flex;
     gap: 12px;
-    margin-top: 10px;
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    align-items: stretch;
 }
 
 .button-group button {
     flex: 1;
     padding: 12px 18px;
+    height: 45px;
     border-radius: 6px;
     font-weight: 600;
     border: none;
-    cursor: pointer;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    vertical-align: middle;
+    margin: 0;
 }
 
-/* Submit button - Success (Green) */
-button[type="submit"],
 .button-group button[type="submit"] {
     background-color: var(--success);
     color: white;
 }
 
-button[type="submit"]:hover,
 .button-group button[type="submit"]:hover {
     background-color: var(--success-700);
-    transform: translateY(-2px);
 }
 
-/* Cancel button - Danger (Red) */
-button[type="button"],
-.button-group button[type="button"] {
+.button-group button[type="button"],
+.cancel-btn {
     background-color: var(--danger);
     color: white;
 }
 
-button[type="button"]:hover,
-.button-group button[type="button"]:hover {
+.button-group button[type="button"]:hover,
+.cancel-btn:hover {
     background-color: var(--danger-700);
-    transform: translateY(-2px);
+}
+
+/* Parking Detail Section */
+.form-section-divider {
+    grid-column: 1 / -1;
+    margin: 20px 0 15px 0;
+    padding-top: 20px;
+    border-top: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.form-section-divider h3 {
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+}
+
+.parking-detail-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr) auto;
+    gap: 16px;
+    padding: 20px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Vehicle Type, Vehicle Number, Parking Slot, Remark - equal width */
+.parking-detail-row .form-field:nth-child(1),
+.parking-detail-row .form-field:nth-child(2),
+.parking-detail-row .form-field:nth-child(3),
+.parking-detail-row .form-field:nth-child(4) {
+    min-width: 150px;
+}
+
+/* Attachment field should take more space (span 2 columns) */
+.parking-detail-row .form-field:nth-child(5) {
+    grid-column: span 2;
+    min-width: 300px;
+}
+
+/* Remove button field */
+.parking-detail-row .form-field:last-child {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    min-width: 100px;
+    max-width: 120px;
+}
+
+.parking-detail-row .form-field label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.parking-detail-row .form-field input,
+.parking-detail-row .form-field select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.parking-detail-row .form-field input[type="file"] {
+    padding: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* File preview styling within parking detail */
+.parking-detail-row .form-field p {
+    margin: 5px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.parking-detail-row .form-field a {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.parking-detail-row .form-field a:hover {
+    text-decoration: underline;
+}
+
+.parking-detail-row .form-field img {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.add-parking-btn {
+    grid-column: 1 / -1;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    width: auto;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.add-parking-btn:hover {
+    background-color: var(--primary-700);
+}
+
+.remove-btn {
+    background-color: var(--danger);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.remove-btn:hover {
+    background-color: var(--danger-700);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: var(--primary-700);
+}
+
+.pagination button:disabled {
+    background: var(--border-dark);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 /* Responsive */
 @media screen and (max-width: 768px) {
-    .flat-owner-container>h1 {
+    .flat-owner-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .flat-owner-container h1,
+    .flat-owner-container h2 {
         font-size: 24px;
         margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: none;
     }
 
     .table-header {
@@ -259,28 +448,57 @@ button[type="button"]:hover,
         gap: 10px;
     }
 
-    .table-header input[type="text"] {
+    .new-entry-btn {
         width: 100%;
     }
 
-    /* Form: 1 column on mobile */
+    .search-bar {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .search-bar input {
+        width: 100%;
+    }
+
     form {
         grid-template-columns: 1fr;
         gap: 12px;
         padding: 15px;
     }
 
-    form label {
-        width: 100%;
-    }
-
-    /* Button group: stack on mobile */
     .button-group {
         flex-direction: column;
         gap: 10px;
     }
 
     .button-group button {
+        width: 100%;
+    }
+
+    .parking-detail-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .parking-detail-row .form-field:nth-child(1),
+    .parking-detail-row .form-field:nth-child(2),
+    .parking-detail-row .form-field:nth-child(3),
+    .parking-detail-row .form-field:nth-child(4),
+    .parking-detail-row .form-field:nth-child(5) {
+        min-width: auto;
+        grid-column: span 1;
+    }
+
+    .parking-detail-row .form-field:last-child {
+        justify-content: flex-start;
+        align-items: flex-start;
+        min-width: auto;
+        max-width: none;
+    }
+
+    .remove-btn {
         width: 100%;
     }
 }

@@ -4,10 +4,11 @@ import {
     createExpense,
     updateExpense,
     deleteExpense,
-    restoreExpense,
     getWings,
     getCategories,
 } from "../services/api";
+import { getCurrentUserWingId, filterByWing } from "../utils/wingFilter";
+import { canEdit, canDelete } from "../utils/ownerFilter";
 import "../css/ExpenseEntry.css";
 
 const ExpenseEntry = () => {
@@ -15,6 +16,7 @@ const ExpenseEntry = () => {
     const [wings, setWings] = useState([]);
     const [categories, setCategories] = useState([]);
     const [filteredSubcategories, setFilteredSubcategories] = useState([]);
+    const [uniqueCategories, setUniqueCategories] = useState([]); // Categories grouped by name
 
     const [form, setForm] = useState({
         wing_id: "",
@@ -33,7 +35,12 @@ const ExpenseEntry = () => {
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [filePreview, setFilePreview] = useState(null);
+
+    // Get current user's wing_id
+    const currentUserWingId = getCurrentUserWingId();
 
     // ===== Fetch Data =====
     useEffect(() => {
@@ -45,7 +52,15 @@ const ExpenseEntry = () => {
     const fetchExpenses = async () => {
         try {
             const res = await getExpenses();
-            setExpenses(res.data);
+            const rawExpenses = res.data || [];
+
+            // Filter expenses by current user's wing
+            if (currentUserWingId !== null) {
+                const filteredExpenses = filterByWing(rawExpenses, currentUserWingId, 'wing_id');
+                setExpenses(filteredExpenses);
+            } else {
+                setExpenses(rawExpenses);
+            }
         } catch (err) {
             console.error("Error fetching expenses:", err);
         }
@@ -54,7 +69,14 @@ const ExpenseEntry = () => {
     const fetchWings = async () => {
         try {
             const res = await getWings();
-            setWings(res.data);
+            // Filter wings by current user's wing_id
+            const allWings = res.data || [];
+            if (currentUserWingId !== null) {
+                const filteredWings = allWings.filter(wing => Number(wing.wing_id) === Number(currentUserWingId));
+                setWings(filteredWings);
+            } else {
+                setWings(allWings);
+            }
         } catch (err) {
             console.error("Error fetching wings:", err);
         }
@@ -63,7 +85,37 @@ const ExpenseEntry = () => {
     const fetchCategories = async () => {
         try {
             const res = await getCategories();
-            setCategories(res.data);
+            const allCategories = res.data || [];
+            setCategories(allCategories);
+
+            // Group categories by catg_name to get unique category names
+            const categoryMap = new Map();
+            allCategories.forEach(cat => {
+                if (cat.catg_name) {
+                    if (!categoryMap.has(cat.catg_name)) {
+                        categoryMap.set(cat.catg_name, {
+                            catg_name: cat.catg_name,
+                            catg_ids: [],
+                            subcategories: []
+                        });
+                    }
+                    const categoryGroup = categoryMap.get(cat.catg_name);
+                    if (!categoryGroup.catg_ids.includes(cat.catg_id)) {
+                        categoryGroup.catg_ids.push(cat.catg_id);
+                    }
+                    if (cat.subcatg_name && !categoryGroup.subcategories.some(s => s.subcatg_name === cat.subcatg_name && s.catg_id === cat.catg_id)) {
+                        categoryGroup.subcategories.push({
+                            subcatg_name: cat.subcatg_name,
+                            catg_id: cat.catg_id,
+                            subcatg_id: cat.subcatg_id
+                        });
+                    }
+                }
+            });
+
+            // Convert map to array
+            const uniqueCats = Array.from(categoryMap.values());
+            setUniqueCategories(uniqueCats);
         } catch (err) {
             console.error("Error fetching categories:", err);
         }
@@ -91,14 +143,36 @@ const ExpenseEntry = () => {
         setFilteredSubcategories(subs);
     }; */
     const handleCategoryChange = (e) => {
-        const selectedCatgId = parseInt(e.target.value);
-        setForm({ ...form, catg_id: selectedCatgId, subcatg_name: "" });
+        const selectedCatgName = e.target.value;
+        setForm({ ...form, catg_id: "", subcatg_name: "" });
 
-        // Show only subcategories for that catg_id
-        const subs = categories.filter(
-            (c) => c.catg_id === selectedCatgId && c.subcatg_name
+        // Find the category group by name
+        const categoryGroup = uniqueCategories.find(c => c.catg_name === selectedCatgName);
+
+        if (categoryGroup) {
+            // Show all subcategories from all categories with this name
+            setFilteredSubcategories(categoryGroup.subcategories);
+        } else {
+            setFilteredSubcategories([]);
+        }
+    };
+
+    // Handle subcategory change - set the catg_id based on selected subcategory
+    const handleSubcategoryChange = (e) => {
+        const selectedSubcatgName = e.target.value;
+        const selectedSubcategory = filteredSubcategories.find(
+            s => s.subcatg_name === selectedSubcatgName
         );
-        setFilteredSubcategories(subs);
+
+        if (selectedSubcategory) {
+            setForm({
+                ...form,
+                subcatg_name: selectedSubcatgName,
+                catg_id: selectedSubcategory.catg_id
+            });
+        } else {
+            setForm({ ...form, subcatg_name: selectedSubcatgName });
+        }
     };
 
     // ===== Handle Input =====
@@ -106,19 +180,48 @@ const ExpenseEntry = () => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a PDF or JPEG/PNG image file.');
+                e.target.value = '';
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size should be less than 10MB.');
+                e.target.value = '';
+                return;
+            }
+            setSelectedFile(file);
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setFilePreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setFilePreview(null);
+            }
+        }
+    };
+
     // ===== Submit Form =====
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (editingId) {
-                await updateExpense(editingId, form);
+                await updateExpense(editingId, form, selectedFile);
                 alert("Expense updated successfully");
             } else {
-                await createExpense(form);
+                await createExpense(form, selectedFile);
                 alert("Expense added successfully");
             }
             clearForm();
             setShowForm(false);
+            setSelectedFile(null);
+            setFilePreview(null);
             fetchExpenses();
         } catch (err) {
             console.error(err);
@@ -160,15 +263,28 @@ const ExpenseEntry = () => {
             paid_to: exp.paid_to,
             payment_mode: exp.payment_mode,
             payment_status: exp.payment_status,
+            attachment_url: exp.attachment_url || null,
         });
         setEditingId(exp.exp_id);
+        setSelectedFile(null);
+        setFilePreview(exp.attachment_url && exp.attachment_url.startsWith('http') ? exp.attachment_url : null);
         setShowForm(true);
 
-        // Filter subcategories for this category
-        const subs = categories.filter(
-            (c) => c.catg_id === exp.catg_id && c.subcatg_name
-        );
-        setFilteredSubcategories(subs);
+        // Find the category name for this catg_id
+        const category = categories.find(c => c.catg_id === exp.catg_id);
+        if (category && category.catg_name) {
+            // Find all subcategories for categories with the same name
+            const categoryGroup = uniqueCategories.find(c => c.catg_name === category.catg_name);
+            if (categoryGroup) {
+                setFilteredSubcategories(categoryGroup.subcategories);
+            } else {
+                // Fallback: show subcategories for this catg_id only
+                const subs = categories.filter(
+                    (c) => c.catg_id === exp.catg_id && c.subcatg_name
+                );
+                setFilteredSubcategories(subs);
+            }
+        }
     };
 
     // ===== Delete =====
@@ -184,21 +300,24 @@ const ExpenseEntry = () => {
         }
     };
 
-    // ===== Restore =====
-    const handleRestore = async (id) => {
-        try {
-            await restoreExpense(id);
-            alert("Expense restored");
-            fetchExpenses();
-        } catch (err) {
-            console.error("Error restoring:", err);
-        }
+    // ===== Handle Cancel =====
+    const handleCancel = () => {
+        clearForm();
+        setShowForm(false);
     };
 
     // ===== Clear Form =====
     const clearForm = () => {
+        // Auto-set wing_id to current user's wing when resetting for new entry
+        let defaultWingId = "";
+        if (wings.length > 0) {
+            defaultWingId = wings[0].wing_id;
+        } else if (currentUserWingId !== null) {
+            defaultWingId = currentUserWingId;
+        }
+        
         setForm({
-            wing_id: "",
+            wing_id: defaultWingId,
             catg_id: "",
             subcatg_name: "",
             date: "",
@@ -211,6 +330,8 @@ const ExpenseEntry = () => {
         });
         setEditingId(null);
         setFilteredSubcategories([]);
+        setSelectedFile(null);
+        setFilePreview(null);
     };
 
     // ===== Filter + Pagination =====
@@ -231,22 +352,32 @@ const ExpenseEntry = () => {
 
     return (
         <div className="expense-container">
-            <div className="expense-header">
-                <h2>Expense Entry</h2>
-                <button className="new-entry-btn" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "Cancel" : "Add Entry"}
-                </button>
-            </div>
+            <h2>Expense Entry</h2>
 
-            {/* ===== Search Bar ===== */}
+            {/* Controls (New Entry + Search) - Only show when form is not visible */}
             {!showForm && (
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="Search by description..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                <div className="expense-controls">
+                    {canEdit() && (
+                        <button className="new-entry-btn" onClick={() => {
+                            // Auto-set wing_id to current user's wing when creating new entry
+                            if (wings.length > 0) {
+                                setForm(prev => ({ ...prev, wing_id: wings[0].wing_id }));
+                            } else if (currentUserWingId !== null) {
+                                setForm(prev => ({ ...prev, wing_id: currentUserWingId }));
+                            }
+                            setShowForm(true);
+                        }}>
+                            New Entry
+                        </button>
+                    )}
+                    <div className="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Search by description..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -254,7 +385,13 @@ const ExpenseEntry = () => {
             {showForm && (
                 <form className="expense-form" onSubmit={handleSubmit}>
                     <div className="form-grid">
-                        <select name="wing_id" value={form.wing_id} onChange={handleChange} required>
+                        <select 
+                            name="wing_id" 
+                            value={form.wing_id} 
+                            onChange={handleChange} 
+                            required
+                            disabled={currentUserWingId !== null && wings.length === 1}
+                        >
                             <option value="">Select Wing</option>
                             {wings.map((w) => (
                                 <option key={w.wing_id} value={w.wing_id}>
@@ -263,19 +400,28 @@ const ExpenseEntry = () => {
                             ))}
                         </select>
 
-                        <select name="catg_id" value={form.catg_id} onChange={handleCategoryChange} required>
+                        <select
+                            name="catg_name"
+                            value={uniqueCategories.find(c => c.catg_ids.includes(parseInt(form.catg_id)))?.catg_name || ""}
+                            onChange={handleCategoryChange}
+                            required
+                        >
                             <option value="">Select Category</option>
-                            {categories.map((c) => (
-                                <option key={c.catg_id} value={c.catg_id}>
+                            {uniqueCategories.map((c) => (
+                                <option key={c.catg_name} value={c.catg_name}>
                                     {c.catg_name}
                                 </option>
                             ))}
                         </select>
 
-                        <select name="subcatg_name" value={form.subcatg_name} onChange={handleChange}>
+                        <select
+                            name="subcatg_name"
+                            value={form.subcatg_name}
+                            onChange={handleSubcategoryChange}
+                        >
                             <option value="">Select Subcategory</option>
-                            {filteredSubcategories.map((s) => (
-                                <option key={s.subcatg_id} value={s.subcatg_name}>
+                            {filteredSubcategories.map((s, index) => (
+                                <option key={`${s.catg_id}-${s.subcatg_name}-${index}`} value={s.subcatg_name}>
                                     {s.subcatg_name}
                                 </option>
                             ))}
@@ -295,7 +441,50 @@ const ExpenseEntry = () => {
                         </select>
                     </div>
 
-                    <button type="submit">{editingId ? "Update Expense" : "Add Expense"}</button>
+                    <div className="form-group full-width">
+                        <label>Attachment (PDF/JPEG):</label>
+                        <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={handleFileChange}
+                        />
+                        {selectedFile && (
+                            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                                Selected: {selectedFile.name}
+                            </p>
+                        )}
+                        {filePreview && !selectedFile && form.attachment_url && (
+                            <div style={{ marginTop: '10px' }}>
+                                <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
+                                {form.attachment_url.endsWith('.pdf') || form.attachment_url.includes('pdf') ? (
+                                    <a href={form.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                        View PDF
+                                    </a>
+                                ) : (
+                                    <img src={form.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                )}
+                            </div>
+                        )}
+                        {filePreview && selectedFile && (
+                            <div style={{ marginTop: '10px' }}>
+                                <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
+                                {selectedFile.type === 'application/pdf' ? (
+                                    <p style={{ color: '#007bff' }}>PDF file selected</p>
+                                ) : (
+                                    <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="button-group">
+                        <button type="submit" className="submit-btn">
+                            {editingId ? "Update Expense" : "Add Expense"}
+                        </button>
+                        <button type="button" className="cancel-btn" onClick={handleCancel}>
+                            Cancel
+                        </button>
+                    </div>
                 </form>
             )}
 
@@ -314,7 +503,8 @@ const ExpenseEntry = () => {
                                 <th>Description</th>
                                 <th>Paid To</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th>Attachment</th>
+                                {(canEdit() || canDelete()) && <th>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -325,7 +515,7 @@ const ExpenseEntry = () => {
                                     {/* <td>{categories.find((c) => c.catg_id === e.catg_id)?.catg_name || "-"}</td>
                                     <td>{e.subcatg_name || "-"}</td> */}
 
-                                    <td>{categories.find(c => c.catg_id === e.catg_id)?.catg_name || "-"}</td>
+                                    <td>{e.catg_name || categories.find(c => c.catg_id === e.catg_id)?.catg_name || "-"}</td>
                                     <td>{e.subcatg_name || "-"}</td>
                                     {/* <td>
                                         {
@@ -350,15 +540,29 @@ const ExpenseEntry = () => {
                                     <td>{e.paid_to}</td>
                                     <td>{e.payment_status}</td>
                                     <td>
-                                        {!e.is_deleted ? (
-                                            <>
-                                                <button onClick={() => handleEdit(e)}>✏️</button>
-                                                <button onClick={() => handleDelete(e.exp_id)}>🗑️</button>
-                                            </>
+                                        {e.attachment_url ? (
+                                            <a
+                                                href={e.attachment_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: '#007bff', textDecoration: 'none' }}
+                                            >
+                                                {e.attachment_url.endsWith('.pdf') || e.attachment_url.includes('pdf') ? '📄 View PDF' : '🖼️ View Image'}
+                                            </a>
                                         ) : (
-                                            <button onClick={() => handleRestore(e.exp_id)}>♻️</button>
+                                            <span style={{ color: '#999' }}>No attachment</span>
                                         )}
                                     </td>
+                                    {(canEdit() || canDelete()) && (
+                                        <td>
+                                            {canEdit() && (
+                                                <button onClick={() => handleEdit(e)}>Edit</button>
+                                            )}
+                                            {canDelete() && (
+                                                <button onClick={() => handleDelete(e.exp_id)}>Delete</button>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

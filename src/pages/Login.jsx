@@ -79,25 +79,7 @@ const Login = () => {
                     />
                     <i className="inputicon fa-solid fa-lock" />
                 </div>
-                /*<div className="inputwrapper">
-                    <label className="loginlabel" htmlFor="wing">Wing</label>
-                    <select
-                        id="wing"
-                        name="wing_id"
-                        className="loginselect"
-                        value={formData.wing_id}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Select your wing</option>
-                        {wings.map((wing) => (
-                            <option key={wing.wing_id} value={wing.wing_id}>
-                                {wing.wing_name}
-                            </option>
-                        ))}
-                    </select>
-                    <i className="inputicon fa-solid fa-building" />
-                </div>*/
+               
                 <button type="submit" className="loginbtn">Login</button>
             </form>
 

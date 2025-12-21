@@ -68,39 +68,167 @@ const FlatOwner = () => {
 
     const fetchData = async () => {
         try {
-            const [wingRes, floorRes, flatTypeRes, ownerRes] = await Promise.all([
+            console.log('🔄 [FlatOwner] fetchData - Starting to fetch data...');
+            
+            const [wingRes, floorRes, flatTypeRes, ownerRes] = await Promise.allSettled([
                 getWings(),
                 getFloors(),
                 getFlatTypes(),
                 getOwners(),
             ]);
             
-            // Filter wings by current user's wing_id
-            const allWings = wingRes.data || [];
-            if (currentUserWingId !== null) {
-                const filteredWings = allWings.filter(wing => Number(wing.wing_id) === Number(currentUserWingId));
-                setWings(filteredWings);
+            // Process wings
+            if (wingRes.status === 'fulfilled') {
+                try {
+                    console.log('📊 [FlatOwner] fetchData - Wings API Response:', {
+                        status: wingRes.value.status,
+                        data: wingRes.value.data,
+                        dataType: typeof wingRes.value.data,
+                        isArray: Array.isArray(wingRes.value.data)
+                    });
+                    
+                    let allWings = [];
+                    if (Array.isArray(wingRes.value.data)) {
+                        allWings = wingRes.value.data;
+                    } else if (wingRes.value.data && Array.isArray(wingRes.value.data.data)) {
+                        allWings = wingRes.value.data.data;
+                    } else {
+                        console.warn('⚠️ [FlatOwner] fetchData - Wings data is not an array:', wingRes.value.data);
+                        allWings = [];
+                    }
+                    
+                    if (currentUserWingId !== null) {
+                        const filteredWings = allWings.filter(wing => Number(wing.wing_id) === Number(currentUserWingId));
+                        setWings(filteredWings);
+                        console.log('✅ [FlatOwner] fetchData - Wings filtered by wing_id:', filteredWings.length);
+                    } else {
+                        setWings(allWings);
+                        console.log('✅ [FlatOwner] fetchData - All wings loaded:', allWings.length);
+                    }
+                } catch (err) {
+                    console.error('❌ [FlatOwner] fetchData - Error processing wings:', err);
+                    setWings([]);
+                }
             } else {
-                setWings(allWings);
+                console.error('❌ [FlatOwner] fetchData - Wings API failed:', wingRes.reason);
+                setWings([]);
             }
             
-            setFloors(floorRes.data);
-            setFlatTypes(flatTypeRes.data);
+            // Process floors
+            if (floorRes.status === 'fulfilled') {
+                try {
+                    console.log('📊 [FlatOwner] fetchData - Floors API Response:', {
+                        status: floorRes.value.status,
+                        data: floorRes.value.data,
+                        dataType: typeof floorRes.value.data,
+                        isArray: Array.isArray(floorRes.value.data)
+                    });
+                    
+                    let floorsData = [];
+                    if (Array.isArray(floorRes.value.data)) {
+                        floorsData = floorRes.value.data;
+                    } else if (floorRes.value.data && Array.isArray(floorRes.value.data.data)) {
+                        floorsData = floorRes.value.data.data;
+                    } else {
+                        console.warn('⚠️ [FlatOwner] fetchData - Floors data is not an array:', floorRes.value.data);
+                        floorsData = [];
+                    }
+                    
+                    setFloors(floorsData);
+                    console.log('✅ [FlatOwner] fetchData - Floors loaded:', floorsData.length);
+                } catch (err) {
+                    console.error('❌ [FlatOwner] fetchData - Error processing floors:', err);
+                    setFloors([]);
+                }
+            } else {
+                console.error('❌ [FlatOwner] fetchData - Floors API failed:', floorRes.reason);
+                setFloors([]);
+            }
+            
+            // Process flat types
+            if (flatTypeRes.status === 'fulfilled') {
+                try {
+                    console.log('📊 [FlatOwner] fetchData - FlatTypes API Response:', {
+                        status: flatTypeRes.value.status,
+                        data: flatTypeRes.value.data,
+                        dataType: typeof flatTypeRes.value.data,
+                        isArray: Array.isArray(flatTypeRes.value.data)
+                    });
+                    
+                    let flatTypesData = [];
+                    if (Array.isArray(flatTypeRes.value.data)) {
+                        flatTypesData = flatTypeRes.value.data;
+                    } else if (flatTypeRes.value.data && Array.isArray(flatTypeRes.value.data.data)) {
+                        flatTypesData = flatTypeRes.value.data.data;
+                    } else {
+                        console.warn('⚠️ [FlatOwner] fetchData - FlatTypes data is not an array:', flatTypeRes.value.data);
+                        flatTypesData = [];
+                    }
+                    
+                    setFlatTypes(flatTypesData);
+                    console.log('✅ [FlatOwner] fetchData - FlatTypes loaded:', flatTypesData.length);
+                } catch (err) {
+                    console.error('❌ [FlatOwner] fetchData - Error processing flat types:', err);
+                    setFlatTypes([]);
+                }
+            } else {
+                console.error('❌ [FlatOwner] fetchData - FlatTypes API failed:', flatTypeRes.reason);
+                setFlatTypes([]);
+            }
 
-            // Filter owners by current user's wing
-            let rawOwners = ownerRes.data || [];
-            if (currentUserWingId !== null) {
-                rawOwners = filterOwnersByWing(rawOwners, currentUserWingId);
+            // Process owners
+            if (ownerRes.status === 'fulfilled') {
+                try {
+                    console.log('📊 [FlatOwner] fetchData - Owners API Response:', {
+                        status: ownerRes.value.status,
+                        data: ownerRes.value.data,
+                        dataType: typeof ownerRes.value.data,
+                        isArray: Array.isArray(ownerRes.value.data)
+                    });
+                    
+                    let rawOwners = [];
+                    if (Array.isArray(ownerRes.value.data)) {
+                        rawOwners = ownerRes.value.data;
+                    } else if (ownerRes.value.data && Array.isArray(ownerRes.value.data.data)) {
+                        rawOwners = ownerRes.value.data.data;
+                    } else {
+                        console.warn('⚠️ [FlatOwner] fetchData - Owners data is not an array:', ownerRes.value.data);
+                        rawOwners = [];
+                    }
+                    
+                    if (currentUserWingId !== null) {
+                        rawOwners = filterOwnersByWing(rawOwners, currentUserWingId);
+                        console.log('✅ [FlatOwner] fetchData - Owners filtered by wing_id:', rawOwners.length);
+                    }
+                    
+                    if (isOwnerRole()) {
+                        rawOwners = filterOwnersByCurrentOwner(rawOwners);
+                        console.log('✅ [FlatOwner] fetchData - Owners filtered by owner_id:', rawOwners.length);
+                    }
+                    
+                    setOwners(rawOwners);
+                    console.log('✅ [FlatOwner] fetchData - Owners loaded:', rawOwners.length);
+                } catch (err) {
+                    console.error('❌ [FlatOwner] fetchData - Error processing owners:', err);
+                    setOwners([]);
+                }
+            } else {
+                console.error('❌ [FlatOwner] fetchData - Owners API failed:', ownerRes.reason);
+                setOwners([]);
             }
             
-            // Filter by owner_id if user is owner role
-            if (isOwnerRole()) {
-                rawOwners = filterOwnersByCurrentOwner(rawOwners);
-            }
-            
-            setOwners(rawOwners);
+            console.log('✅ [FlatOwner] fetchData - Data fetch completed');
         } catch (err) {
-            console.error(err);
+            console.error('❌ [FlatOwner] fetchData - Unexpected error:', {
+                message: err.message,
+                stack: err.stack,
+                name: err.name
+            });
+            alert("Error loading data. Please refresh the page.");
+            setWings([]);
+            setFloors([]);
+            setFlatTypes([]);
+            setOwners([]);
         }
     };
 
@@ -148,15 +276,66 @@ const FlatOwner = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            console.log('🔄 [FlatOwner] handleSubmit - Starting form submission...', {
+                editMode,
+                editId,
+                formData: { ...formData, owner_adhar_no: '[REDACTED]', owner_pan: '[REDACTED]' }
+            });
+            
+            // Helper function to safely check if string value exists
+            const hasValue = (value) => {
+                if (value === null || value === undefined) return false;
+                return String(value).trim().length > 0;
+            };
+            
+            // Validation
+            if (!hasValue(formData.flat_no)) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: flat_no is required');
+                alert("Flat number is required");
+                return;
+            }
+            
+            if (!formData.wing_id) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: wing_id is required');
+                alert("Please select a wing");
+                return;
+            }
+            
+            if (!formData.floor_id) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: floor_id is required');
+                alert("Please select a floor");
+                return;
+            }
+            
+            if (!formData.flat_type_id) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: flat_type_id is required');
+                alert("Please select a flat type");
+                return;
+            }
+            
+            if (!hasValue(formData.owner_name)) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: owner_name is required');
+                alert("Owner name is required");
+                return;
+            }
+            
+            if (!hasValue(formData.owner_contactno)) {
+                console.error('❌ [FlatOwner] handleSubmit - Validation failed: owner_contactno is required');
+                alert("Contact number is required");
+                return;
+            }
+            
             // Check for duplicate flat number
+            const flatNoToCheck = String(formData.flat_no || '').toLowerCase().trim();
             const duplicateOwner = owners.find(
                 (owner) =>
                     owner.flat_no &&
-                    owner.flat_no.toLowerCase() === formData.flat_no.toLowerCase() &&
+                    String(owner.flat_no).toLowerCase().trim() === flatNoToCheck &&
                     (!editMode || owner.flat_id !== formData.flat_id)
             );
 
             if (duplicateOwner) {
+                console.warn('⚠️ [FlatOwner] handleSubmit - Duplicate flat number detected:', formData.flat_no);
                 alert(`Flat number "${formData.flat_no}" already exists. Please use a different flat number.`);
                 return;
             }
@@ -166,41 +345,147 @@ const FlatOwner = () => {
 
             if (!editMode) {
                 // Create Flat first
+                console.log('🔄 [FlatOwner] handleSubmit - Creating flat...');
                 const flatPayload = {
-                    flat_no: formData.flat_no,
+                    flat_no: String(formData.flat_no || '').trim(),
                     wing_id: formData.wing_id,
                     floor_id: formData.floor_id,
                     flat_type_id: formData.flat_type_id,
                     soc_id: 1,
                 };
-                const flatRes = await createFlat(flatPayload);
-                flatId = flatRes.data.insertId;
+                
+                try {
+                    const flatRes = await createFlat(flatPayload);
+                    console.log('📊 [FlatOwner] handleSubmit - Flat creation response:', {
+                        fullResponse: flatRes,
+                        data: flatRes.data,
+                        dataKeys: flatRes.data ? Object.keys(flatRes.data) : 'no data',
+                        insertId: flatRes.data?.insertId,
+                        flat_id: flatRes.data?.flat_id
+                    });
+                    
+                    if (!flatRes || !flatRes.data) {
+                        console.error('❌ [FlatOwner] handleSubmit - Invalid response structure:', flatRes);
+                        throw new Error('Invalid response from flat creation API');
+                    }
+                    
+                    // Try multiple possible field names
+                    flatId = flatRes.data.insertId || 
+                             flatRes.data.flat_id || 
+                             flatRes.data.id ||
+                             flatRes.data.flatId;
+                    
+                    if (!flatId) {
+                        console.error('❌ [FlatOwner] handleSubmit - Flat ID not found in response:', {
+                            responseData: flatRes.data,
+                            availableKeys: Object.keys(flatRes.data || {})
+                        });
+                        throw new Error('Flat ID not returned from API. Response: ' + JSON.stringify(flatRes.data));
+                    }
+                    
+                    console.log('✅ [FlatOwner] handleSubmit - Flat created successfully:', flatId);
+                } catch (err) {
+                    console.error('❌ [FlatOwner] handleSubmit - Error creating flat:', {
+                        message: err.message,
+                        response: err.response?.data,
+                        status: err.response?.status,
+                        fullError: err
+                    });
+                    alert("Error creating flat: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
+                    return;
+                }
             } else {
                 flatId = formData.flat_id;
                 
                 // If flat number changed, update the flat record
                 if (originalFlatNo && originalFlatNo !== formData.flat_no) {
+                    console.log('🔄 [FlatOwner] handleSubmit - Updating flat number...');
                     const flatPayload = {
-                        flat_no: formData.flat_no,
+                        flat_no: String(formData.flat_no || '').trim(),
                         wing_id: formData.wing_id,
                         floor_id: formData.floor_id,
                         flat_type_id: formData.flat_type_id,
                         soc_id: 1,
                     };
-                    await updateFlat(flatId, flatPayload);
+                    
+                    try {
+                        await updateFlat(flatId, flatPayload);
+                        console.log('✅ [FlatOwner] handleSubmit - Flat updated successfully');
+                    } catch (err) {
+                        console.error('❌ [FlatOwner] handleSubmit - Error updating flat:', {
+                            message: err.message,
+                            response: err.response?.data,
+                            status: err.response?.status
+                        });
+                        alert("Error updating flat: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
+                        return;
+                    }
                 }
             }
 
-            const ownerPayload = { ...formData, flat_id: flatId };
+            console.log('🔄 [FlatOwner] handleSubmit - Processing owner...');
+            
+            // Helper function to safely convert to string and trim
+            const safeTrim = (value) => {
+                if (value === null || value === undefined) return null;
+                return String(value).trim() || null;
+            };
+            
+            const ownerPayload = { 
+                ...formData, 
+                flat_id: flatId,
+                owner_name: safeTrim(formData.owner_name),
+                owner_contactno: safeTrim(formData.owner_contactno),
+                owner_altercontactno: safeTrim(formData.owner_altercontactno),
+                owner_email: safeTrim(formData.owner_email),
+                owner_adhar_no: safeTrim(formData.owner_adhar_no),
+                owner_pan: safeTrim(formData.owner_pan),
+                ownership_type: safeTrim(formData.ownership_type),
+            };
 
             if (editMode && editId) {
-                await updateOwner(editId, ownerPayload, selectedFile);
-                ownerId = editId;
-                alert("Owner updated successfully");
+                try {
+                    console.log('🔄 [FlatOwner] handleSubmit - Updating owner...');
+                    await updateOwner(editId, ownerPayload, selectedFile);
+                    ownerId = editId;
+                    console.log('✅ [FlatOwner] handleSubmit - Owner updated successfully');
+                    alert("Owner updated successfully");
+                } catch (err) {
+                    console.error('❌ [FlatOwner] handleSubmit - Error updating owner:', {
+                        message: err.message,
+                        response: err.response?.data,
+                        status: err.response?.status
+                    });
+                    alert("Error updating owner: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
+                    return;
+                }
             } else {
-                const ownerRes = await addOwner(ownerPayload, selectedFile);
-                ownerId = ownerRes.data.id || ownerRes.data.insertId || ownerRes.data.owner_id;
-                alert("Owner added successfully");
+                try {
+                    console.log('🔄 [FlatOwner] handleSubmit - Creating owner...');
+                    const ownerRes = await addOwner(ownerPayload, selectedFile);
+                    console.log('📊 [FlatOwner] handleSubmit - Owner creation response:', ownerRes.data);
+                    
+                    if (!ownerRes || !ownerRes.data) {
+                        throw new Error('Invalid response from owner creation API');
+                    }
+                    
+                    ownerId = ownerRes.data.id || ownerRes.data.insertId || ownerRes.data.owner_id;
+                    
+                    if (!ownerId) {
+                        throw new Error('Owner ID not returned from API');
+                    }
+                    
+                    console.log('✅ [FlatOwner] handleSubmit - Owner created successfully:', ownerId);
+                    alert("Owner added successfully");
+                } catch (err) {
+                    console.error('❌ [FlatOwner] handleSubmit - Error creating owner:', {
+                        message: err.message,
+                        response: err.response?.data,
+                        status: err.response?.status
+                    });
+                    alert("Error adding owner: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
+                    return;
+                }
             }
 
             // Handle parking details
@@ -267,12 +552,105 @@ const FlatOwner = () => {
                 }
             }
 
+            // Handle parking details
+            if (ownerId) {
+                try {
+                    console.log('🔄 [FlatOwner] handleSubmit - Processing parking details...');
+                    if (editMode) {
+                        // In edit mode: update existing or add new parking
+                        const existingParkingIds = existingParking.map(p => p.parking_id);
+                        const updatedParkingIds = parkingDetails
+                            .filter(p => p.parking_id)
+                            .map(p => p.parking_id);
+
+                        // Delete parking that was removed
+                        for (const existing of existingParking) {
+                            if (!updatedParkingIds.includes(existing.parking_id)) {
+                                try {
+                                    await deleteParking(existing.parking_id, "Removed from owner form");
+                                    console.log('✅ [FlatOwner] handleSubmit - Parking deleted:', existing.parking_id);
+                                } catch (err) {
+                                    console.error("❌ [FlatOwner] handleSubmit - Error deleting parking:", err);
+                                }
+                            }
+                        }
+
+                        // Update or add parking
+                        for (let i = 0; i < parkingDetails.length; i++) {
+                            const parking = parkingDetails[i];
+                            if (parking.vehical_type && parking.vehical_no) {
+                                const parkingFile = parkingFiles[i] || null;
+                                if (parking.parking_id && existingParkingIds.includes(parking.parking_id)) {
+                                    // Update existing parking
+                                    try {
+                                        await updateParking(parking.parking_id, {
+                                            vehical_type: parking.vehical_type,
+                                            vehical_no: parking.vehical_no,
+                                            parking_slot_no: parking.parking_slot_no || "",
+                                            remark: parking.remark || "",
+                                            attachment_url: parking.attachment_url || null,
+                                        }, parkingFile);
+                                        console.log('✅ [FlatOwner] handleSubmit - Parking updated:', parking.parking_id);
+                                    } catch (err) {
+                                        console.error('❌ [FlatOwner] handleSubmit - Error updating parking:', err);
+                                    }
+                                } else {
+                                    // Add new parking
+                                    try {
+                                        await addParking({
+                                            owner_id: ownerId,
+                                            vehical_type: parking.vehical_type,
+                                            vehical_no: parking.vehical_no,
+                                            parking_slot_no: parking.parking_slot_no || "",
+                                            remark: parking.remark || "",
+                                        }, parkingFile);
+                                        console.log('✅ [FlatOwner] handleSubmit - Parking added');
+                                    } catch (err) {
+                                        console.error('❌ [FlatOwner] handleSubmit - Error adding parking:', err);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // In add mode: just add new parking
+                        for (let i = 0; i < parkingDetails.length; i++) {
+                            const parking = parkingDetails[i];
+                            if (parking.vehical_type && parking.vehical_no) {
+                                const parkingFile = parkingFiles[i] || null;
+                                try {
+                                    await addParking({
+                                        owner_id: ownerId,
+                                        vehical_type: parking.vehical_type,
+                                        vehical_no: parking.vehical_no,
+                                        parking_slot_no: parking.parking_slot_no || "",
+                                        remark: parking.remark || "",
+                                    }, parkingFile);
+                                    console.log('✅ [FlatOwner] handleSubmit - Parking added');
+                                } catch (err) {
+                                    console.error('❌ [FlatOwner] handleSubmit - Error adding parking:', err);
+                                }
+                            }
+                        }
+                    }
+                    console.log('✅ [FlatOwner] handleSubmit - Parking details processed');
+                } catch (err) {
+                    console.error('❌ [FlatOwner] handleSubmit - Error processing parking details:', err);
+                    // Don't fail the whole operation if parking fails
+                }
+            }
+
+            console.log('✅ [FlatOwner] handleSubmit - Form submission completed successfully');
             resetForm();
             fetchData();
             setShowForm(false);
         } catch (err) {
-            console.error(err);
-            alert("Error: " + (err.response?.data?.error || err.message));
+            console.error('❌ [FlatOwner] handleSubmit - Unexpected error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            alert("Error: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error occurred"));
         }
     };
 
@@ -313,20 +691,26 @@ const FlatOwner = () => {
     };
 
     const handleEdit = async (owner) => {
+        // Helper function to safely convert to string
+        const safeString = (value) => {
+            if (value === null || value === undefined) return "";
+            return String(value);
+        };
+        
         setFormData({
             flat_id: owner.flat_id,
-            flat_no: owner.flat_no,
+            flat_no: safeString(owner.flat_no),
             wing_id: owner.wing_id,
             floor_id: owner.floor_id,
             flat_type_id: owner.flat_type_id,
-            owner_name: owner.owner_name,
-            owner_contactno: owner.owner_contactno,
-            owner_altercontactno: owner.owner_altercontactno,
-            owner_email: owner.owner_email,
+            owner_name: safeString(owner.owner_name),
+            owner_contactno: safeString(owner.owner_contactno),
+            owner_altercontactno: safeString(owner.owner_altercontactno),
+            owner_email: safeString(owner.owner_email),
             is_residence: !!owner.is_residence,
-            owner_adhar_no: owner.owner_adhar_no,
-            owner_pan: owner.owner_pan,
-            ownership_type: owner.ownership_type,
+            owner_adhar_no: safeString(owner.owner_adhar_no),
+            owner_pan: safeString(owner.owner_pan),
+            ownership_type: safeString(owner.ownership_type),
             attachment_url: owner.attachment_url || null,
         });
         setEditMode(true);
@@ -337,9 +721,30 @@ const FlatOwner = () => {
 
         // Load existing parking details for this owner
         try {
+            console.log('🔄 [FlatOwner] handleEdit - Loading parking details...', {
+                owner_id: owner.owner_id
+            });
             const parkingRes = await getParking();
-            const allParking = parkingRes.data || [];
+            console.log('📊 [FlatOwner] handleEdit - Parking API Response:', {
+                status: parkingRes.status,
+                data: parkingRes.data,
+                dataType: typeof parkingRes.data,
+                isArray: Array.isArray(parkingRes.data)
+            });
+            
+            let allParking = [];
+            if (Array.isArray(parkingRes.data)) {
+                allParking = parkingRes.data;
+            } else if (parkingRes.data && Array.isArray(parkingRes.data.data)) {
+                allParking = parkingRes.data.data;
+            } else {
+                console.warn('⚠️ [FlatOwner] handleEdit - Parking data is not an array:', parkingRes.data);
+                allParking = [];
+            }
+            
             const ownerParking = allParking.filter(p => p.owner_id === owner.owner_id && !p.is_deleted);
+            console.log('✅ [FlatOwner] handleEdit - Parking details loaded:', ownerParking.length);
+            
             setExistingParking(ownerParking);
             const parkingData = ownerParking.map(p => ({
                 parking_id: p.parking_id,
@@ -356,7 +761,12 @@ const FlatOwner = () => {
                 p.attachment_url && p.attachment_url.startsWith('http') ? p.attachment_url : null
             ));
         } catch (err) {
-            console.error("Error loading parking details:", err);
+            console.error("❌ [FlatOwner] handleEdit - Error loading parking details:", {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
             setExistingParking([]);
             setParkingDetails([]);
             setParkingFiles([]);
@@ -370,13 +780,27 @@ const FlatOwner = () => {
         if (!window.confirm(`Are you sure you want to delete ${owner.owner_name}?`))
             return;
         const reason = prompt("Enter deletion reason:");
-        if (!reason) return;
+        if (!reason || !reason.trim()) {
+            alert("Deletion reason is required");
+            return;
+        }
         try {
-            await deleteOwner(owner.owner_id, reason);
+            console.log('🔄 [FlatOwner] handleDelete - Deleting owner...', {
+                owner_id: owner.owner_id,
+                owner_name: owner.owner_name
+            });
+            await deleteOwner(owner.owner_id, reason.trim());
+            console.log('✅ [FlatOwner] handleDelete - Owner deleted successfully');
             alert("Owner deleted successfully");
             fetchData();
         } catch (err) {
-            console.error(err);
+            console.error('❌ [FlatOwner] handleDelete - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            alert("Error deleting owner: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
         }
     };
 

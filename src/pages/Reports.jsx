@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
     getOwners,
     getMaintenanceDetails,
@@ -15,7 +15,14 @@ import { getCurrentUserWingId, filterOwnersByWing, filterMaintenanceDetailsByWin
 import "../css/Reports.css";
 
 const Reports = ({ reportType }) => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const [user, setUser] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("user") || "{}");
+        } catch (err) {
+            console.error('❌ [Reports] Error parsing user from localStorage:', err);
+            return {};
+        }
+    });
 
     // Map report type from sidebar to internal ID
     const getReportIdFromType = (type) => {
@@ -34,7 +41,9 @@ const Reports = ({ reportType }) => {
         return reportType ? getReportIdFromType(reportType) : "owner";
     });
     const [loading, setLoading] = useState(false);
+    const [wingsLoading, setWingsLoading] = useState(true);
     const [wings, setWings] = useState([]);
+    const [error, setError] = useState("");
 
     // Date filters
     const [dateFilter, setDateFilter] = useState({
@@ -53,87 +62,258 @@ const Reports = ({ reportType }) => {
     const [completeReportData, setCompleteReportData] = useState(null);
     const [isFormulaExpanded, setIsFormulaExpanded] = useState(false); // Track formula section expansion
 
+    // Cache for shared data to minimize API calls
+    const dataCache = useRef({
+        owners: null,
+        maintenanceDetails: null,
+        expenses: null,
+        rentals: null,
+        meetings: null,
+        flats: null,
+        activityPayments: null,
+        activityExpenses: null,
+        lastFetch: null,
+        cacheTimeout: 60000, // 1 minute cache
+    });
+
     const reportRef = useRef(null);
+    const isMounted = useRef(true);
     const currentUserWingId = getCurrentUserWingId();
 
-    // Update activeReport when reportType prop changes and fetch data
+    // Helper to safely parse array from API response
+    const parseArrayResponse = (data, endpointName) => {
+        try {
+            if (Array.isArray(data)) {
+                return data;
+            } else if (data && Array.isArray(data.data)) {
+                return data.data;
+            } else if (data && typeof data === 'object') {
+                const arrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
+                if (arrayKey) {
+                    return data[arrayKey];
+                }
+            }
+            console.warn(`⚠️ [Reports] ${endpointName} response is not an array:`, data);
+            return [];
+        } catch (err) {
+            console.error(`❌ [Reports] Error parsing ${endpointName} response:`, err);
+            return [];
+        }
+    };
+
+    // Fetch wings on mount only
+    const fetchWings = useCallback(async () => {
+        if (!isMounted.current) return;
+        try {
+            console.log('🔄 [Reports] fetchWings - Starting...');
+            setWingsLoading(true);
+            setError("");
+
+            const res = await getWings();
+            console.log('📊 [Reports] fetchWings - API Response:', {
+                status: res.status,
+                data: res.data,
+                dataType: typeof res.data,
+                isArray: Array.isArray(res.data)
+            });
+
+            const wingsData = parseArrayResponse(res.data, 'Wings');
+            if (isMounted.current) {
+                setWings(wingsData);
+                console.log('✅ [Reports] fetchWings - Success:', wingsData.length);
+            }
+        } catch (err) {
+            console.error('❌ [Reports] fetchWings - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                let errorMessage = "Unknown error";
+                if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+                    errorMessage = "Network Error: Cannot connect to server.";
+                } else if (err.response?.status === 500) {
+                    errorMessage = "Server Error: The server encountered an error.";
+                } else if (err.response?.data) {
+                    errorMessage = typeof err.response.data === 'string'
+                        ? err.response.data
+                        : (err.response.data.error || err.response.data.message || JSON.stringify(err.response.data));
+                } else if (err.message) {
+                    errorMessage = err.message;
+                }
+                setError(`Error fetching wings: ${errorMessage}`);
+                setWings([]);
+            }
+        } finally {
+            if (isMounted.current) {
+                setWingsLoading(false);
+            }
+        }
+    }, []);
+
+    // Update activeReport when reportType prop changes
     useEffect(() => {
         if (reportType) {
             const reportId = getReportIdFromType(reportType);
             setActiveReport(reportId);
-            // Fetch data when reportType changes
-            fetchWings();
-            fetchAllReports();
         }
     }, [reportType]);
 
+    // Set mounted flag on mount
     useEffect(() => {
-        fetchWings();
-        fetchAllReports();
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
     }, []);
 
+    // Fetch wings on mount
     useEffect(() => {
-        fetchAllReports();
-    }, [dateFilter]);
+        fetchWings();
+    }, [fetchWings]);
 
-    const fetchWings = async () => {
-        try {
-            const res = await getWings();
-            setWings(res.data || []);
-        } catch (err) {
-            console.error("Error fetching wings:", err);
-        }
-    };
-
-    const fetchAllReports = async () => {
+    // Fetch only the active report to minimize API calls
+    const fetchActiveReport = async () => {
+        console.log('🔄 [Reports] fetchActiveReport - Starting fetch for:', activeReport);
         setLoading(true);
+        setError("");
+
         try {
-            await Promise.all([
-                fetchOwnerReport(),
-                fetchMaintenanceReport(),
-                fetchExpenseReport(),
-                fetchRentalReport(),
-                fetchMeetingReport(),
-                fetchCompleteReport(),
-            ]);
+            console.log('🔄 [Reports] fetchActiveReport - Fetching report:', activeReport);
+
+            switch (activeReport) {
+                case "owner":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchOwnerReport');
+                    await fetchOwnerReport();
+                    break;
+                case "maintenance":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchMaintenanceReport');
+                    await fetchMaintenanceReport();
+                    break;
+                case "expense":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchExpenseReport');
+                    await fetchExpenseReport();
+                    break;
+                case "rental":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchRentalReport');
+                    await fetchRentalReport();
+                    break;
+                case "meeting":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchMeetingReport');
+                    await fetchMeetingReport();
+                    break;
+                case "complete":
+                    console.log('📊 [Reports] fetchActiveReport - Calling fetchCompleteReport');
+                    await fetchCompleteReport();
+                    break;
+                default:
+                    console.warn('⚠️ [Reports] Unknown report type:', activeReport);
+            }
+            console.log('✅ [Reports] fetchActiveReport - Completed successfully for:', activeReport);
         } catch (err) {
-            console.error("Error fetching reports:", err);
+            console.error('❌ [Reports] fetchActiveReport - Error:', {
+                message: err.message,
+                stack: err.stack,
+                activeReport
+            });
+            if (isMounted.current) {
+                setError(`Error fetching ${activeReport} report: ${err.message || "Unknown error"}`);
+            }
         } finally {
+            // Always clear loading state to prevent UI from being stuck
+            // React will handle the warning if component is unmounted, but it's better than stuck UI
+            console.log('🔄 [Reports] fetchActiveReport - Setting loading to false');
             setLoading(false);
         }
     };
 
-    const fetchOwnerReport = async () => {
+    // Fetch owner report with caching
+    const fetchOwnerReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            const res = await getOwners();
-            let owners = res.data || [];
+            console.log('🔄 [Reports] fetchOwnerReport - Starting...');
 
-            // Filter by wing if selected
-            if (dateFilter.wing_id) {
-                owners = owners.filter(o => o.wing_id === parseInt(dateFilter.wing_id));
-            } else if (currentUserWingId !== null) {
-                owners = filterOwnersByWing(owners, currentUserWingId);
+            // Check cache first
+            const now = Date.now();
+            let owners = dataCache.current.owners;
+
+            if (!owners || !dataCache.current.lastFetch || (now - dataCache.current.lastFetch) > dataCache.current.cacheTimeout) {
+                console.log('📡 [Reports] fetchOwnerReport - Fetching from API...');
+                const res = await getOwners();
+                owners = parseArrayResponse(res.data, 'Owners');
+                dataCache.current.owners = owners;
+                dataCache.current.lastFetch = now;
+                console.log('✅ [Reports] fetchOwnerReport - Fetched from API:', owners.length);
+            } else {
+                console.log('✅ [Reports] fetchOwnerReport - Using cached data:', owners.length);
             }
 
-            setOwnerReportData(owners);
+            // Filter by wing if selected
+            let filteredOwners = owners;
+            if (dateFilter.wing_id) {
+                filteredOwners = owners.filter(o => o.wing_id && parseInt(o.wing_id) === parseInt(dateFilter.wing_id));
+            } else if (currentUserWingId !== null) {
+                filteredOwners = filterOwnersByWing(owners, currentUserWingId);
+            }
+
+            if (isMounted.current) {
+                setOwnerReportData(filteredOwners);
+                console.log('✅ [Reports] fetchOwnerReport - Success:', filteredOwners.length);
+            }
         } catch (err) {
-            console.error("Error fetching owner report:", err);
+            console.error('❌ [Reports] fetchOwnerReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setOwnerReportData([]);
+                setError(`Error fetching owner report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter, currentUserWingId]);
 
-    const fetchMaintenanceReport = async () => {
+    // Fetch maintenance report with caching
+    const fetchMaintenanceReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            const res = await getMaintenanceDetails();
-            let maintenance = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+            console.log('🔄 [Reports] fetchMaintenanceReport - Starting...');
 
-            console.log("Maintenance data fetched:", maintenance.length, "records");
+            // Check cache first
+            const now = Date.now();
+            let maintenance = dataCache.current.maintenanceDetails;
 
-            // Fetch owners for wing filtering (if needed)
-            const ownersRes = await getOwners();
-            let allOwners = Array.isArray(ownersRes.data) ? ownersRes.data : (Array.isArray(ownersRes) ? ownersRes : []);
+            if (!maintenance || !dataCache.current.lastFetch || (now - dataCache.current.lastFetch) > dataCache.current.cacheTimeout) {
+                console.log('📡 [Reports] fetchMaintenanceReport - Fetching from API...');
+                const res = await getMaintenanceDetails();
+                maintenance = parseArrayResponse(res.data, 'MaintenanceDetails');
+                dataCache.current.maintenanceDetails = maintenance;
+                dataCache.current.lastFetch = now;
+                console.log('✅ [Reports] fetchMaintenanceReport - Fetched from API:', maintenance.length);
+            } else {
+                console.log('✅ [Reports] fetchMaintenanceReport - Using cached data:', maintenance.length);
+            }
+
+            // Get owners from cache or fetch if needed
+            let allOwners = dataCache.current.owners;
+            if (!allOwners) {
+                try {
+                    console.log('📡 [Reports] fetchMaintenanceReport - Fetching owners for filtering...');
+                    const ownersRes = await getOwners();
+                    allOwners = parseArrayResponse(ownersRes.data, 'Owners');
+                    dataCache.current.owners = allOwners;
+                } catch (err) {
+                    console.error('❌ [Reports] fetchMaintenanceReport - Error fetching owners:', err);
+                    allOwners = [];
+                }
+            }
 
             // Store all owners for maintenance report to use in rendering
-            setAllOwnersForMaintenance(allOwners);
+            if (isMounted.current) {
+                setAllOwnersForMaintenance(allOwners);
+            }
 
             // Filter by wing if selected (use wing_id from maintenance data)
             if (dateFilter.wing_id) {
@@ -146,7 +326,7 @@ const Reports = ({ reportType }) => {
                     }
                     return parseInt(m.wing_id) === parseInt(dateFilter.wing_id);
                 });
-                console.log(`Filtered by wing ${dateFilter.wing_id}: ${filteredCount} -> ${maintenance.length} records`);
+                console.log(`✅ [Reports] fetchMaintenanceReport - Filtered by wing ${dateFilter.wing_id}: ${filteredCount} -> ${maintenance.length} records`);
             } else if (currentUserWingId !== null) {
                 // Filter by current user's wing
                 const filteredCount = maintenance.length;
@@ -158,121 +338,298 @@ const Reports = ({ reportType }) => {
                     }
                     return parseInt(m.wing_id) === parseInt(currentUserWingId);
                 });
-                console.log(`Filtered by user wing ${currentUserWingId}: ${filteredCount} -> ${maintenance.length} records`);
+                console.log(`✅ [Reports] fetchMaintenanceReport - Filtered by user wing ${currentUserWingId}: ${filteredCount} -> ${maintenance.length} records`);
             }
 
             // Filter by date range
             if (dateFilter.startDate && dateFilter.endDate) {
                 const dateFilterCount = maintenance.length;
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = new Date(dateFilter.endDate);
+                endDate.setHours(23, 59, 59, 999); // Include entire end date
+
                 maintenance = maintenance.filter(m => {
-                    const billDate = new Date(m.bill_start_date || m.created_at);
-                    const startDate = new Date(dateFilter.startDate);
-                    const endDate = new Date(dateFilter.endDate);
-                    return billDate >= startDate && billDate <= endDate;
+                    try {
+                        const billDate = m.bill_start_date ? new Date(m.bill_start_date) : (m.created_at ? new Date(m.created_at) : null);
+                        if (!billDate || isNaN(billDate.getTime())) return true; // Include if date is invalid
+                        return billDate >= startDate && billDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchMaintenanceReport - Error parsing date:', m.bill_start_date, err);
+                        return true; // Include if date parsing fails
+                    }
                 });
-                console.log(`Filtered by date range: ${dateFilterCount} -> ${maintenance.length} records`);
+                console.log(`✅ [Reports] fetchMaintenanceReport - Filtered by date range: ${dateFilterCount} -> ${maintenance.length} records`);
             }
 
-            console.log("Setting maintenance report data:", maintenance.length, "records");
-            setMaintenanceReportData(maintenance);
+            if (isMounted.current) {
+                setMaintenanceReportData(maintenance);
+                console.log('✅ [Reports] fetchMaintenanceReport - Success:', maintenance.length);
+            }
         } catch (err) {
-            console.error("Error fetching maintenance report:", err);
-            setMaintenanceReportData([]);
+            console.error('❌ [Reports] fetchMaintenanceReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setMaintenanceReportData([]);
+                setError(`Error fetching maintenance report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter, currentUserWingId]);
 
-    const fetchExpenseReport = async () => {
+    // Fetch expense report with caching
+    const fetchExpenseReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            const res = await getExpenses();
-            let expenses = res.data || [];
+            console.log('🔄 [Reports] fetchExpenseReport - Starting...');
+
+            // Check cache first
+            const now = Date.now();
+            let expenses = dataCache.current.expenses;
+
+            if (!expenses || !dataCache.current.lastFetch || (now - dataCache.current.lastFetch) > dataCache.current.cacheTimeout) {
+                console.log('📡 [Reports] fetchExpenseReport - Fetching from API...');
+                const res = await getExpenses();
+                expenses = parseArrayResponse(res.data, 'Expenses');
+                dataCache.current.expenses = expenses;
+                dataCache.current.lastFetch = now;
+                console.log('✅ [Reports] fetchExpenseReport - Fetched from API:', expenses.length);
+            } else {
+                console.log('✅ [Reports] fetchExpenseReport - Using cached data:', expenses.length);
+            }
 
             // Filter by wing if selected
             if (dateFilter.wing_id) {
-                expenses = expenses.filter(e => e.wing_id === parseInt(dateFilter.wing_id));
+                expenses = expenses.filter(e => e.wing_id && parseInt(e.wing_id) === parseInt(dateFilter.wing_id));
             } else if (currentUserWingId !== null) {
                 expenses = filterByWing(expenses, currentUserWingId, 'wing_id');
             }
 
             // Filter by date range
             if (dateFilter.startDate && dateFilter.endDate) {
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = new Date(dateFilter.endDate);
+                endDate.setHours(23, 59, 59, 999);
+
                 expenses = expenses.filter(e => {
-                    const expenseDate = new Date(e.date);
-                    const startDate = new Date(dateFilter.startDate);
-                    const endDate = new Date(dateFilter.endDate);
-                    return expenseDate >= startDate && expenseDate <= endDate;
+                    try {
+                        if (!e.date) return false;
+                        const expenseDate = new Date(e.date);
+                        if (isNaN(expenseDate.getTime())) return false;
+                        return expenseDate >= startDate && expenseDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchExpenseReport - Error parsing date:', e.date, err);
+                        return false;
+                    }
                 });
             }
 
-            setExpenseReportData(expenses);
+            if (isMounted.current) {
+                setExpenseReportData(expenses);
+                console.log('✅ [Reports] fetchExpenseReport - Success:', expenses.length);
+            }
         } catch (err) {
-            console.error("Error fetching expense report:", err);
+            console.error('❌ [Reports] fetchExpenseReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setExpenseReportData([]);
+                setError(`Error fetching expense report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter, currentUserWingId]);
 
-    const fetchRentalReport = async () => {
+    // Fetch rental report with caching
+    const fetchRentalReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            const res = await getRentals();
-            let rentals = res.data || [];
+            console.log('🔄 [Reports] fetchRentalReport - Starting...');
+
+            // Check cache first
+            const now = Date.now();
+            let rentals = dataCache.current.rentals;
+
+            if (!rentals || !dataCache.current.lastFetch || (now - dataCache.current.lastFetch) > dataCache.current.cacheTimeout) {
+                console.log('📡 [Reports] fetchRentalReport - Fetching from API...');
+                const res = await getRentals();
+                rentals = parseArrayResponse(res.data, 'Rentals');
+                dataCache.current.rentals = rentals;
+                dataCache.current.lastFetch = now;
+                console.log('✅ [Reports] fetchRentalReport - Fetched from API:', rentals.length);
+            } else {
+                console.log('✅ [Reports] fetchRentalReport - Using cached data:', rentals.length);
+            }
 
             // Filter by date range
             if (dateFilter.startDate && dateFilter.endDate) {
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = new Date(dateFilter.endDate);
+                endDate.setHours(23, 59, 59, 999);
+
                 rentals = rentals.filter(r => {
-                    const rentalDate = new Date(r.start_date || r.created_at);
-                    const startDate = new Date(dateFilter.startDate);
-                    const endDate = new Date(dateFilter.endDate);
-                    return rentalDate >= startDate && rentalDate <= endDate;
+                    try {
+                        const rentalDate = r.start_date ? new Date(r.start_date) : (r.created_at ? new Date(r.created_at) : null);
+                        if (!rentalDate || isNaN(rentalDate.getTime())) return true; // Include if date is invalid
+                        return rentalDate >= startDate && rentalDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchRentalReport - Error parsing date:', r.start_date, err);
+                        return true; // Include if date parsing fails
+                    }
                 });
             }
 
-            setRentalReportData(rentals);
+            if (isMounted.current) {
+                setRentalReportData(rentals);
+                console.log('✅ [Reports] fetchRentalReport - Success:', rentals.length);
+            }
         } catch (err) {
-            console.error("Error fetching rental report:", err);
+            console.error('❌ [Reports] fetchRentalReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setRentalReportData([]);
+                setError(`Error fetching rental report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter]);
 
-    const fetchMeetingReport = async () => {
+    // Fetch meeting report with caching
+    const fetchMeetingReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            const res = await getMeetings();
-            let meetings = res.data || [];
+            console.log('🔄 [Reports] fetchMeetingReport - Starting...');
+
+            // Check cache first
+            const now = Date.now();
+            let meetings = dataCache.current.meetings;
+
+            if (!meetings || !dataCache.current.lastFetch || (now - dataCache.current.lastFetch) > dataCache.current.cacheTimeout) {
+                console.log('📡 [Reports] fetchMeetingReport - Fetching from API...');
+                const res = await getMeetings();
+                meetings = parseArrayResponse(res.data, 'Meetings');
+                dataCache.current.meetings = meetings;
+                dataCache.current.lastFetch = now;
+                console.log('✅ [Reports] fetchMeetingReport - Fetched from API:', meetings.length);
+            } else {
+                console.log('✅ [Reports] fetchMeetingReport - Using cached data:', meetings.length);
+            }
 
             // Filter by date range
             if (dateFilter.startDate && dateFilter.endDate) {
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = new Date(dateFilter.endDate);
+                endDate.setHours(23, 59, 59, 999);
+
                 meetings = meetings.filter(m => {
-                    const meetingDate = new Date(m.meeting_date || m.created_at);
-                    const startDate = new Date(dateFilter.startDate);
-                    const endDate = new Date(dateFilter.endDate);
-                    return meetingDate >= startDate && meetingDate <= endDate;
+                    try {
+                        const meetingDate = m.meeting_date ? new Date(m.meeting_date) : (m.created_at ? new Date(m.created_at) : null);
+                        if (!meetingDate || isNaN(meetingDate.getTime())) return true; // Include if date is invalid
+                        return meetingDate >= startDate && meetingDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchMeetingReport - Error parsing date:', m.meeting_date, err);
+                        return true; // Include if date parsing fails
+                    }
                 });
             }
 
-            setMeetingReportData(meetings);
+            if (isMounted.current) {
+                setMeetingReportData(meetings);
+                console.log('✅ [Reports] fetchMeetingReport - Success:', meetings.length);
+            }
         } catch (err) {
-            console.error("Error fetching meeting report:", err);
+            console.error('❌ [Reports] fetchMeetingReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setMeetingReportData([]);
+                setError(`Error fetching meeting report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter]);
 
-    const fetchCompleteReport = async () => {
+    // Fetch complete report with caching and error handling
+    const fetchCompleteReport = useCallback(async () => {
+        if (!isMounted.current) return;
         try {
-            // Fetch all required data
-            // NOTE: Maintenance payments are stored in maintenance_detail.paid_amount, not in a separate maintenance_payment table
-            const [maintenanceDetailsRes, activityPaymentsRes, activityExpensesRes, expensesRes, ownersRes, flatsRes] = await Promise.all([
-                getMaintenanceDetails(),
-                getAllPayments(),
-                getAllActivityExpenses(),
-                getExpenses(),
-                getOwners(),
-                getFlats(),
-            ]);
+            console.log('🔄 [Reports] fetchCompleteReport - Starting...');
 
-            // Handle different API response structures (axios wraps responses in .data)
-            let allMaintenanceDetails = Array.isArray(maintenanceDetailsRes)
-                ? maintenanceDetailsRes
-                : (maintenanceDetailsRes?.data || []);
-            let activityPayments = activityPaymentsRes?.data || [];
-            let activityExpenses = activityExpensesRes?.data || [];
-            let expenses = expensesRes?.data || [];
-            let allOwners = ownersRes?.data || [];
-            let allFlats = flatsRes?.data || [];
+            // Use cached data where available, fetch only what's needed
+            const now = Date.now();
+            const useCache = dataCache.current.lastFetch && (now - dataCache.current.lastFetch) <= dataCache.current.cacheTimeout;
+
+            // Prepare API calls - use cache if available
+            const apiCalls = [];
+            const callNames = [];
+
+            if (!useCache || !dataCache.current.maintenanceDetails) {
+                apiCalls.push(getMaintenanceDetails());
+                callNames.push('maintenanceDetails');
+            }
+            if (!useCache || !dataCache.current.activityPayments) {
+                apiCalls.push(getAllPayments());
+                callNames.push('activityPayments');
+            }
+            if (!useCache || !dataCache.current.activityExpenses) {
+                apiCalls.push(getAllActivityExpenses());
+                callNames.push('activityExpenses');
+            }
+            if (!useCache || !dataCache.current.expenses) {
+                apiCalls.push(getExpenses());
+                callNames.push('expenses');
+            }
+            if (!useCache || !dataCache.current.owners) {
+                apiCalls.push(getOwners());
+                callNames.push('owners');
+            }
+            if (!useCache || !dataCache.current.flats) {
+                apiCalls.push(getFlats());
+                callNames.push('flats');
+            }
+
+            // Fetch only what's needed using Promise.allSettled to handle partial failures
+            let results = [];
+            if (apiCalls.length > 0) {
+                console.log(`📡 [Reports] fetchCompleteReport - Fetching ${apiCalls.length} APIs...`);
+                results = await Promise.allSettled(apiCalls);
+
+                // Process results and update cache
+                results.forEach((result, index) => {
+                    const callName = callNames[index];
+                    if (result.status === 'fulfilled') {
+                        const data = parseArrayResponse(result.value.data, callName);
+                        dataCache.current[callName] = data;
+                        console.log(`✅ [Reports] fetchCompleteReport - ${callName} fetched:`, data.length);
+                    } else {
+                        console.error(`❌ [Reports] fetchCompleteReport - ${callName} failed:`, result.reason);
+                        // Use cached data if available, otherwise empty array
+                        if (!dataCache.current[callName]) {
+                            dataCache.current[callName] = [];
+                        }
+                    }
+                });
+                dataCache.current.lastFetch = now;
+            } else {
+                console.log('✅ [Reports] fetchCompleteReport - Using all cached data');
+            }
+
+            // Get data from cache
+            let allMaintenanceDetails = dataCache.current.maintenanceDetails || [];
+            let activityPayments = dataCache.current.activityPayments || [];
+            let activityExpenses = dataCache.current.activityExpenses || [];
+            let expenses = dataCache.current.expenses || [];
+            let allOwners = dataCache.current.owners || [];
+            let allFlats = dataCache.current.flats || [];
 
             // Ensure we have arrays
             if (!Array.isArray(allMaintenanceDetails)) allMaintenanceDetails = [];
@@ -282,7 +639,7 @@ const Reports = ({ reportType }) => {
             if (!Array.isArray(allOwners)) allOwners = [];
             if (!Array.isArray(allFlats)) allFlats = [];
 
-            console.log("Complete Report - Raw data counts:", {
+            console.log("✅ [Reports] fetchCompleteReport - Raw data counts:", {
                 maintenanceDetails: allMaintenanceDetails.length,
                 activityPayments: activityPayments.length,
                 activityExpenses: activityExpenses.length,
@@ -346,28 +703,50 @@ const Reports = ({ reportType }) => {
 
                 // Filter maintenance details by bill date
                 filteredMaintenanceDetails = filteredMaintenanceDetails.filter(m => {
-                    const billDate = m.bill_start_date ? new Date(m.bill_start_date) : (m.created_at ? new Date(m.created_at) : null);
-                    if (!billDate) return true; // Include if no date available
-                    return billDate >= startDate && billDate <= endDate;
+                    try {
+                        const billDate = m.bill_start_date ? new Date(m.bill_start_date) : (m.created_at ? new Date(m.created_at) : null);
+                        if (!billDate || isNaN(billDate.getTime())) return true; // Include if no date available
+                        return billDate >= startDate && billDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchCompleteReport - Error parsing maintenance date:', m.bill_start_date, err);
+                        return true;
+                    }
                 });
 
                 activityPayments = activityPayments.filter(p => {
-                    if (!p.payment_date) return false;
-                    const paymentDate = new Date(p.payment_date);
-                    return paymentDate >= startDate && paymentDate <= endDate;
+                    try {
+                        if (!p.payment_date) return false;
+                        const paymentDate = new Date(p.payment_date);
+                        if (isNaN(paymentDate.getTime())) return false;
+                        return paymentDate >= startDate && paymentDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchCompleteReport - Error parsing payment date:', p.payment_date, err);
+                        return false;
+                    }
                 });
 
                 // Activity expenses don't have a date field, use created_at if available, otherwise include all
                 activityExpenses = activityExpenses.filter(e => {
-                    const expenseDate = e.date ? new Date(e.date) : (e.created_at ? new Date(e.created_at) : null);
-                    if (!expenseDate) return true; // Include if no date available
-                    return expenseDate >= startDate && expenseDate <= endDate;
+                    try {
+                        const expenseDate = e.date ? new Date(e.date) : (e.created_at ? new Date(e.created_at) : null);
+                        if (!expenseDate || isNaN(expenseDate.getTime())) return true; // Include if no date available
+                        return expenseDate >= startDate && expenseDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchCompleteReport - Error parsing activity expense date:', e.date, err);
+                        return true;
+                    }
                 });
 
                 expenses = expenses.filter(e => {
-                    if (!e.date) return false;
-                    const expenseDate = new Date(e.date);
-                    return expenseDate >= startDate && expenseDate <= endDate;
+                    try {
+                        if (!e.date) return false;
+                        const expenseDate = new Date(e.date);
+                        if (isNaN(expenseDate.getTime())) return false;
+                        return expenseDate >= startDate && expenseDate <= endDate;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchCompleteReport - Error parsing expense date:', e.date, err);
+                        return false;
+                    }
                 });
             }
 
@@ -466,32 +845,53 @@ const Reports = ({ reportType }) => {
             const totalActivityBalance = totalActivityPayment - totalActivityExpense;
             const grandTotalBalance = totalMaintenanceBalance + totalActivityBalance;
 
-            setCompleteReportData({
-                maintenanceCollectedByMode,
-                expenseByMode,
-                maintenanceBalanceByMode,
-                activityPaymentByMode,
-                activityExpenseByMode,
-                activityBalanceByMode,
-                totalBalanceByMode,
-                totalMaintenanceCollected,
-                totalExpense,
-                totalMaintenanceBalance,
-                totalActivityPayment,
-                totalActivityExpense,
-                totalActivityBalance,
-                grandTotalBalance,
-                allModes: Array.from(allModes).sort(),
-            });
+            if (isMounted.current) {
+                setCompleteReportData({
+                    maintenanceCollectedByMode,
+                    expenseByMode,
+                    maintenanceBalanceByMode,
+                    activityPaymentByMode,
+                    activityExpenseByMode,
+                    activityBalanceByMode,
+                    totalBalanceByMode,
+                    totalMaintenanceCollected,
+                    totalExpense,
+                    totalMaintenanceBalance,
+                    totalActivityPayment,
+                    totalActivityExpense,
+                    totalActivityBalance,
+                    grandTotalBalance,
+                    allModes: Array.from(allModes).sort(),
+                });
+                console.log('✅ [Reports] fetchCompleteReport - Success');
+            }
         } catch (err) {
-            console.error("Error fetching complete report:", err);
-            setCompleteReportData(null);
+            console.error('❌ [Reports] fetchCompleteReport - Error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                stack: err.stack
+            });
+            if (isMounted.current) {
+                setCompleteReportData(null);
+                setError(`Error fetching complete report: ${err.message || "Unknown error"}`);
+            }
         }
-    };
+    }, [dateFilter, currentUserWingId]);
+
+    // Fetch active report when activeReport or dateFilter changes
+    useEffect(() => {
+        fetchActiveReport();
+    }, [activeReport, dateFilter, currentUserWingId]);
 
     const handleDateFilterChange = (e) => {
-        const { name, value } = e.target;
-        setDateFilter(prev => ({ ...prev, [name]: value }));
+        try {
+            const { name, value } = e.target;
+            setDateFilter(prev => ({ ...prev, [name]: value }));
+            setError(""); // Clear error on filter change
+        } catch (err) {
+            console.error('❌ [Reports] handleDateFilterChange - Error:', err);
+        }
     };
 
     const handlePrint = () => {
@@ -520,58 +920,84 @@ const Reports = ({ reportType }) => {
     };
 
     const getCurrentReportData = () => {
-        switch (activeReport) {
-            case "owner":
-                return ownerReportData;
-            case "maintenance":
-                return maintenanceReportData;
-            case "expense":
-                return expenseReportData;
-            case "rental":
-                return rentalReportData;
-            case "meeting":
-                return meetingReportData;
-            case "complete":
-                return completeReportData;
-            default:
-                return [];
+        try {
+            switch (activeReport) {
+                case "owner":
+                    return Array.isArray(ownerReportData) ? ownerReportData : [];
+                case "maintenance":
+                    return Array.isArray(maintenanceReportData) ? maintenanceReportData : [];
+                case "expense":
+                    return Array.isArray(expenseReportData) ? expenseReportData : [];
+                case "rental":
+                    return Array.isArray(rentalReportData) ? rentalReportData : [];
+                case "meeting":
+                    return Array.isArray(meetingReportData) ? meetingReportData : [];
+                case "complete":
+                    return completeReportData; // This is an object, not an array
+                default:
+                    return [];
+            }
+        } catch (err) {
+            console.error('❌ [Reports] getCurrentReportData - Error:', err);
+            return [];
         }
     };
 
     const getReportSummary = () => {
-        const data = getCurrentReportData();
-        switch (activeReport) {
-            case "owner":
-                return {
-                    total: data.length,
-                    totalFlats: data.reduce((sum, o) => sum + (o.flat_no ? 1 : 0), 0),
-                };
-            case "maintenance":
-                const totalAmount = data.reduce((sum, m) => sum + parseFloat(m.total_amount || 0), 0);
-                const paidAmount = data.reduce((sum, m) => sum + parseFloat(m.paid_amount || 0), 0);
-                const pendingAmount = totalAmount - paidAmount;
-                return {
-                    total: data.length,
-                    totalAmount: totalAmount,
-                    paidAmount: paidAmount,
-                    pendingAmount: pendingAmount,
-                };
-            case "expense":
-                const totalExpense = data.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-                return {
-                    total: data.length,
-                    totalAmount: totalExpense,
-                };
-            case "rental":
-                return {
-                    total: data.length,
-                };
-            case "meeting":
-                return {
-                    total: data.length,
-                };
-            default:
-                return {};
+        try {
+            const data = getCurrentReportData();
+
+            // Handle complete report separately (it's an object, not an array)
+            if (activeReport === "complete") {
+                return completeReportData ? {
+                    totalMaintenanceCollected: completeReportData.totalMaintenanceCollected || 0,
+                    totalExpense: completeReportData.totalExpense || 0,
+                    grandTotalBalance: completeReportData.grandTotalBalance || 0,
+                } : {};
+            }
+
+            // Ensure data is an array for other reports
+            if (!Array.isArray(data)) {
+                console.warn('⚠️ [Reports] getReportSummary - Data is not an array:', { activeReport, data });
+                return { total: 0 };
+            }
+
+            switch (activeReport) {
+                case "owner":
+                    return {
+                        total: data.length,
+                        totalFlats: data.reduce((sum, o) => sum + (o.flat_no ? 1 : 0), 0),
+                    };
+                case "maintenance":
+                    const totalAmount = data.reduce((sum, m) => sum + parseFloat(m.total_amount || 0), 0);
+                    const paidAmount = data.reduce((sum, m) => sum + parseFloat(m.paid_amount || 0), 0);
+                    const pendingAmount = totalAmount - paidAmount;
+                    return {
+                        total: data.length,
+                        totalAmount: totalAmount,
+                        paidAmount: paidAmount,
+                        pendingAmount: pendingAmount,
+                    };
+                case "expense":
+                    const totalExpense = data.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                    return {
+                        total: data.length,
+                        totalAmount: totalExpense,
+                    };
+                case "rental":
+                    return {
+                        total: data.length,
+                    };
+                case "meeting":
+                    return {
+                        total: data.length,
+                    };
+                default:
+                    return {};
+            }
+        } catch (err) {
+            console.error('❌ [Reports] getReportSummary - Error:', err);
+            return {};
         }
     };
 
@@ -617,6 +1043,20 @@ const Reports = ({ reportType }) => {
                 </div>
             </div>
 
+            {/* Error Display */}
+            {error && (
+                <div style={{
+                    color: 'red',
+                    marginBottom: '15px',
+                    padding: '10px',
+                    backgroundColor: '#ffe6e6',
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                }}>
+                    ⚠️ {error}
+                </div>
+            )}
+
             {/* Filters */}
             <div className="reports-filters">
                 <div className="filter-group">
@@ -653,7 +1093,7 @@ const Reports = ({ reportType }) => {
                     </select>
                 </div>
                 <div className="filter-group">
-                    <button className="btn-filter" onClick={fetchAllReports}>
+                    <button className="btn-filter" onClick={fetchActiveReport}>
                         🔍 Apply Filters
                     </button>
                     <button

@@ -6,12 +6,151 @@ import axios from "axios";
 
 const API = axios.create({
     baseURL: "https://impendent-dormant-lakeshia.ngrok-free.dev/api",
+    headers: {
+        'ngrok-skip-browser-warning': 'true',
+        'Content-Type': 'application/json',
+    },
 });
 
-// ================= Wings =================locah
+// Add request interceptor to ensure ngrok header is always sent
+API.interceptors.request.use(
+    (config) => {
+        // Ensure ngrok header is always present
+        if (!config.headers['ngrok-skip-browser-warning']) {
+            config.headers['ngrok-skip-browser-warning'] = 'true';
+        }
+        return config;
+    },
+    (error) => {
+        console.error('❌ [API] Request interceptor error:', error);
+        return Promise.reject(error);
+    }
+);
+
+// Add response interceptor to handle HTML responses (ngrok warning pages) and ensure data is always in expected format
+API.interceptors.response.use(
+    (response) => {
+        // Check if response is HTML (ngrok warning page)
+        if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+            console.error('⚠️ [API] Received HTML instead of JSON - ngrok warning page detected for:', response.config?.url);
+            return Promise.reject(new Error('Received HTML response. Please check ngrok configuration.'));
+        }
+
+        // Ensure array responses are always arrays
+        const url = response.config?.url || '';
+
+        // Handle wings endpoint
+        if (url.includes('/wings')) {
+            if (!Array.isArray(response.data)) {
+                console.warn(`⚠️ [API] Wings response is not an array, converting:`, {
+                    url,
+                    dataType: typeof response.data,
+                    data: response.data
+                });
+                if (response.data && Array.isArray(response.data.data)) {
+                    response.data = response.data.data;
+                } else if (response.data && typeof response.data === 'object') {
+                    const arrayKey = Object.keys(response.data).find(key => Array.isArray(response.data[key]));
+                    if (arrayKey) {
+                        response.data = response.data[arrayKey];
+                    } else {
+                        response.data = [];
+                    }
+                } else {
+                    response.data = [];
+                }
+                console.log(`✅ [API] Converted wings response to array:`, response.data);
+            }
+        }
+
+        // Handle owners endpoint
+        if (url.includes('/owners') && !url.includes('/add') && !url.includes('/update') && !url.includes('/delete') && !url.includes('/restore')) {
+            if (!Array.isArray(response.data)) {
+                console.warn(`⚠️ [API] Owners response is not an array, converting:`, {
+                    url,
+                    dataType: typeof response.data,
+                    data: response.data
+                });
+                if (response.data && Array.isArray(response.data.data)) {
+                    response.data = response.data.data;
+                } else if (response.data && typeof response.data === 'object') {
+                    const arrayKey = Object.keys(response.data).find(key => Array.isArray(response.data[key]));
+                    if (arrayKey) {
+                        response.data = response.data[arrayKey];
+                    } else {
+                        response.data = [];
+                    }
+                } else {
+                    response.data = [];
+                }
+                console.log(`✅ [API] Converted owners response to array:`, response.data);
+            }
+        }
+
+        // Handle floors endpoint
+        if (url.includes('/floors') && !url.includes('/update') && !url.includes('/delete') && !url.includes('/restore')) {
+            if (!Array.isArray(response.data)) {
+                console.warn(`⚠️ [API] Floors response is not an array, converting:`, {
+                    url,
+                    dataType: typeof response.data,
+                    data: response.data
+                });
+                if (response.data && Array.isArray(response.data.data)) {
+                    response.data = response.data.data;
+                } else if (response.data && typeof response.data === 'object') {
+                    const arrayKey = Object.keys(response.data).find(key => Array.isArray(response.data[key]));
+                    if (arrayKey) {
+                        response.data = response.data[arrayKey];
+                    } else {
+                        response.data = [];
+                    }
+                } else {
+                    response.data = [];
+                }
+                console.log(`✅ [API] Converted floors response to array:`, response.data);
+            }
+        }
+
+        // Handle flattype endpoint
+        if (url.includes('/flattype') && !url.includes('/update') && !url.includes('/delete') && !url.includes('/restore')) {
+            if (!Array.isArray(response.data)) {
+                console.warn(`⚠️ [API] FlatTypes response is not an array, converting:`, {
+                    url,
+                    dataType: typeof response.data,
+                    data: response.data
+                });
+                if (response.data && Array.isArray(response.data.data)) {
+                    response.data = response.data.data;
+                } else if (response.data && typeof response.data === 'object') {
+                    const arrayKey = Object.keys(response.data).find(key => Array.isArray(response.data[key]));
+                    if (arrayKey) {
+                        response.data = response.data[arrayKey];
+                    } else {
+                        response.data = [];
+                    }
+                } else {
+                    response.data = [];
+                }
+                console.log(`✅ [API] Converted flattypes response to array:`, response.data);
+            }
+        }
+
+        return response;
+    },
+    (error) => {
+        // Handle errors
+        if (error.response && typeof error.response.data === 'string' && error.response.data.includes('<!DOCTYPE html>')) {
+            console.error('❌ [API] Error response is HTML - ngrok warning page for:', error.config?.url);
+            error.message = 'Received HTML response. Please check ngrok configuration.';
+        }
+        return Promise.reject(error);
+    }
+);
+
+// ================= Wings =================
 // Fetch wings
 
-export const getWings = () => API.get("/wings");
+export const getWings = () => API.post("/wings");
 
 // ================= Users =================
 // Register user
@@ -49,7 +188,7 @@ export const deleteFloor = (id, reason) => API.put(`/floors/delete/${id}`, { rea
 export const restoreFloor = (id) => API.patch(`/floors/restore/${id}`);
 
 // ================= Owner =================
-export const getOwners = () => API.get("/owners");
+export const getOwners = () => API.post("/owners");
 export const addOwner = (data, file = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {

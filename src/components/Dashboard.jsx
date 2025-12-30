@@ -15,12 +15,15 @@ import MaintenanceComponent from "../pages/MaintenanceComponent";
 import MaintenanceRate from "../pages/MaintenanceRate";
 import MaintenanceDetail from "../pages/MaintenanceDetail";
 //import MaintenancePayment from "../pages/MaintenancePayment";
+import ComplaintBox from "../pages/ComplaintBox";
+import ParkingDetails from "../pages/ParkingDetails";
 import RoleAssignment from "../pages/RoleAssignment";
 import DashboardContent from "./DashboardContent";
 import Settings from "../pages/Settings";
 import Reports from "../pages/Reports";
 import OwnerReport from "../pages/OwnerReport";
 import MaintenanceReport from "../pages/MaintenanceReport";
+import Announcements from "../pages/Announcements";
 import { initializeReminderService } from "../utils/monthlyReminderService";
 import { sendMonthlyReminders, getMyDelegations } from "../services/api";
 import { hasModuleAccess, getModuleIdFromMenuLabel, canManageDelegations } from "../utils/permissionChecker";
@@ -192,6 +195,10 @@ const Dashboard = () => {
                 return <MaintenanceRate />;
             case "Maintenance Detail":
                 return <MaintenanceDetail />;
+            case "Complaint Box":
+                return <ComplaintBox />;
+            case "Parking Details":
+                return <ParkingDetails />;
             case "Settings":
                 return <Settings />;
             // case "Maintenance Payment":
@@ -208,6 +215,8 @@ const Dashboard = () => {
                 return <Reports key="meeting" reportType="Meeting Report" />;
             case "Complete Report":
                 return <Reports key="complete" reportType="Complete Report" />;
+            case "Announcements":
+                return <Announcements />;
             default:
                 return <p>Module "{activeMenu}" is under construction.</p>;
         }

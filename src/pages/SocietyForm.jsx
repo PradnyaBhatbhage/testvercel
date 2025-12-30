@@ -8,6 +8,8 @@ const SocietyForm = () => {
     const [wings, setWings] = useState([]);
     const [isEditMode, setIsEditMode] = useState(false);
     const [originalData, setOriginalData] = useState({});
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -15,8 +17,10 @@ const SocietyForm = () => {
                 const [wingRes, societyRes] = await Promise.all([getWings(), getSocieties()]);
                 setWings(wingRes.data);
                 if (societyRes.data.length > 0) {
-                    setFormData(societyRes.data[0]);
-                    setOriginalData(societyRes.data[0]);
+                    const society = societyRes.data[0];
+                    setFormData(society);
+                    setOriginalData(society);
+                    setLogoPreview(society.soc_logo || society.logo_url || null);
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -33,11 +37,53 @@ const SocietyForm = () => {
         }));
     };
 
+    const handleLogoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size should be less than 5MB');
+                return;
+            }
+            setLogoFile(file);
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveLogo = () => {
+        setLogoFile(null);
+        setLogoPreview(null);
+        // Also clear the logo URL from formData if it exists
+        setFormData((prev) => ({
+            ...prev,
+            soc_logo: null,
+            logo_url: null,
+        }));
+    };
+
     const handleUpdateClick = async () => {
         try {
-            await updateSociety(formData.soc_id, formData);
+            await updateSociety(formData.soc_id, formData, logoFile);
             alert("Society updated successfully!");
-            setOriginalData(formData);
+            // Refresh society data to get updated logo URL
+            const societyRes = await getSocieties();
+            if (societyRes.data.length > 0) {
+                const updatedSociety = societyRes.data[0];
+                setFormData(updatedSociety);
+                setOriginalData(updatedSociety);
+                setLogoPreview(updatedSociety.soc_logo || updatedSociety.logo_url || null);
+            }
+            setLogoFile(null);
             setIsEditMode(false);
         } catch (err) {
             console.error(err);
@@ -47,6 +93,8 @@ const SocietyForm = () => {
 
     const handleCancel = () => {
         setFormData(originalData);
+        setLogoFile(null);
+        setLogoPreview(originalData.soc_logo || originalData.logo_url || null);
         setIsEditMode(false);
     };
 
@@ -56,6 +104,58 @@ const SocietyForm = () => {
 
     return (
         <div className="society-form">
+            {/* Logo Section */}
+            <div className="logo-section">
+                <label>Society Logo</label>
+                {(logoPreview || formData.soc_logo || formData.logo_url) ? (
+                    <div className="logo-display">
+                        <img 
+                            src={logoPreview || formData.soc_logo || formData.logo_url} 
+                            alt={`${formData.soc_name || 'Society'} Logo`}
+                            className="society-logo"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                                const placeholder = e.target.nextElementSibling;
+                                if (placeholder) placeholder.style.display = 'flex';
+                            }}
+                        />
+                        <div className="logo-placeholder" style={{ display: 'none' }}>
+                            <span>No Logo Available</span>
+                        </div>
+                        {isEditMode && (
+                            <button 
+                                type="button" 
+                                className="remove-logo-btn"
+                                onClick={handleRemoveLogo}
+                                title="Remove logo"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="logo-placeholder">
+                        <span>No Logo Uploaded</span>
+                    </div>
+                )}
+                {isEditMode && (
+                    <div className="logo-upload-controls">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoChange}
+                            id="logo-upload"
+                            style={{ display: 'none' }}
+                        />
+                        <label htmlFor="logo-upload" className="upload-logo-btn">
+                            {logoFile || formData.soc_logo || formData.logo_url ? 'Change Logo' : 'Upload Logo'}
+                        </label>
+                        {logoFile && (
+                            <span className="logo-file-name">{logoFile.name}</span>
+                        )}
+                    </div>
+                )}
+            </div>
             <select
                 value={formData.wing_id || ""}
                 onChange={handleChange}

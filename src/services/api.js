@@ -161,7 +161,30 @@ export const loginUser = (credentials) => API.post("/auth/login", credentials);
 
 // ================= Society =================
 export const createSociety = (data) => API.post("/societies", data);
-export const updateSociety = (id, data) => API.put(`/societies/${id}`, data);
+export const updateSociety = (id, data, file = null) => {
+    if (file) {
+        const formData = new FormData();
+        // Append all form fields as strings
+        Object.keys(data).forEach(key => {
+            if (data[key] !== null && data[key] !== undefined) {
+                // Convert booleans to strings for FormData
+                if (typeof data[key] === 'boolean') {
+                    formData.append(key, data[key] ? '1' : '0');
+                } else {
+                    formData.append(key, String(data[key]));
+                }
+            }
+        });
+        formData.append('logo', file);
+        return API.put(`/societies/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    }
+    // Send as JSON when no file
+    return API.put(`/societies/${id}`, data);
+};
 export const deleteSociety = (id, reason) => API.delete(`/societies/${id}`, { data: { deleted_reason: reason } });
 export const restoreSociety = (id) => API.patch(`/societies/restore/${id}`);
 export const getSocieties = () => API.get("/societies"); // if you ever need list
@@ -548,9 +571,54 @@ export const updateParking = (id, data, file = null) => {
 export const deleteParking = (id, reason) => API.put(`/parking/delete/${id}`, { reason });
 export const restoreParking = (id) => API.put(`/parking/restore/${id}`);
 
+// ================= Complaints =================
+export const getComplaints = () => API.get("/complaints/get");
+export const addComplaint = (data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.post("/complaints/add", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateComplaint = (id, data, file = null) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (file) {
+        formData.append('attachment', file);
+    }
+    return API.put(`/complaints/update/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const deleteComplaint = (id, reason) => API.put(`/complaints/delete/${id}`, { reason });
+export const restoreComplaint = (id) => API.put(`/complaints/restore/${id}`);
+
 // ================= Subscription =================
 export const getSubscriptionStatus = (socId) => API.get(`/subscription/status/${socId}`);
 export const getSubscriptionByWing = (wingId) => API.get(`/subscription/status-by-wing/${wingId}`);
 export const getAllSubscriptions = () => API.get("/subscription");
 export const createOrUpdateSubscription = (data) => API.post("/subscription", data);
 export const checkAndCreateLockFile = (socId) => API.post(`/subscription/check-lock/${socId}`);
+
+// ================= Notifications =================
+export const getNotifications = (userData) => API.post("/notifications/get", userData);
+export const getUnreadNotificationCount = (userData) => API.post("/notifications/unread-count", userData);
+export const markNotificationAsRead = (data) => API.post("/notifications/mark-read", data);
+export const markAllNotificationsAsRead = (userData) => API.post("/notifications/mark-all-read", userData);
+export const createNotification = (data) => API.post("/notifications/create", data);
+export const deleteNotification = (id) => API.delete(`/notifications/${id}`);

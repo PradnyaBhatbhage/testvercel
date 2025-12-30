@@ -66,6 +66,122 @@
     grid-column: 1 / -1;
 }
 
+/* Logo Section */
+.society-form .logo-section {
+    grid-column: 1 / -1;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: rgba(2, 62, 138, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(2, 62, 138, 0.1);
+}
+
+.society-form .logo-section label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.society-form .logo-display {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+}
+
+.society-form .society-logo {
+    max-width: 200px;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 10px;
+}
+
+.society-form .logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    background: rgba(2, 62, 138, 0.05);
+    border: 2px dashed rgba(2, 62, 138, 0.2);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-style: italic;
+}
+
+.society-form .logo-display {
+    position: relative;
+}
+
+.society-form .remove-logo-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: white;
+    border: none;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    line-height: 1;
+    padding: 0;
+}
+
+.society-form .remove-logo-btn:hover {
+    background: var(--danger-700);
+    transform: scale(1.1);
+}
+
+.society-form .logo-upload-controls {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.society-form .upload-logo-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    text-align: center;
+}
+
+.society-form .upload-logo-btn:hover {
+    background: #023e8a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.society-form .logo-file-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 .society-form .checkbox-group {
     display: flex;
     gap: 25px;

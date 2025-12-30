@@ -621,29 +621,23 @@ const MaintenanceDetail = () => {
         }));
     };
 
-    // Calculate summary statistics
+    // Calculate summary statistics based on grouped details (to match displayed data)
     const calculateSummary = () => {
         let totalCollected = 0;
         let totalPending = 0;
         let totalAdvance = 0;
 
+        // Calculate from all records for total collected (sum of all paid amounts)
         filteredDetails.forEach((row) => {
-            const total = Number(row.total_amount || 0);
             const paid = Number(row.paid_amount || 0);
-            const remaining = total - paid;
-
-            // Total collected (paid amount)
             totalCollected += paid;
+        });
 
-            // Total pending (positive remaining)
-            if (remaining > 0) {
-                totalPending += remaining;
-            }
-
-            // Total advance (negative remaining)
-            if (remaining < 0) {
-                totalAdvance += Math.abs(remaining);
-            }
+        // Calculate pending and advance from grouped details (matches what's displayed)
+        groupedDetails.forEach((group) => {
+            // Use the calculated pending and advance from the group (based on most recent record)
+            totalPending += Number(group.totalPending || 0);
+            totalAdvance += Number(group.totalAdvance || 0);
         });
 
         return {

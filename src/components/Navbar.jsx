@@ -1,4 +1,5 @@
 import React from "react";
+import NotificationPanel from "./NotificationPanel";
 import "../css/Navbar.css";
 
 const Navbar = ({ user, onLogout, toggleSidebar }) => {
@@ -11,6 +12,7 @@ const Navbar = ({ user, onLogout, toggleSidebar }) => {
                 <h2>SocietySync Dashboard</h2>
             </div>
             <div className="navbar-right">
+                <NotificationPanel user={user} />
                 <span className="user-info">{user?.user_name || "Guest"}</span>
                 <button className="logout-btn" onClick={onLogout}>
                     Logout

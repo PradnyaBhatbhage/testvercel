@@ -39,6 +39,53 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.welcome-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+}
+
+.welcome-text {
+    flex: 1;
+}
+
+.welcome-logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.society-logo-dashboard {
+    max-width: 120px;
+    max-height: 120px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .welcome-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .welcome-logo {
+        align-self: center;
+    }
+
+    .society-logo-dashboard {
+        max-width: 100px;
+        max-height: 100px;
+    }
+}
+
 .role-badge {
     display: inline-block;
     padding: 6px 12px;

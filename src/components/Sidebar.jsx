@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "../css/Sidebar.css";
-import { 
-    hasModuleAccess, 
+import {
+    hasModuleAccess,
     canManageDelegations
 } from "../utils/permissionChecker";
 
@@ -16,12 +16,12 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
     const menuItems = useMemo(() => {
         const isAdminOrSecretary = canManageDelegations();
         const isOwner = user?.role_type?.toLowerCase() === "owner";
-        
+
         const allMenuItems = [
             { label: "Home", icon: "🏠", alwaysVisible: true },
             { label: "Society", icon: "🏢", moduleId: "society" },
             {
-                label: "Flat Master", icon: "🏘️", 
+                label: "Flat Master", icon: "🏘️",
                 subItems: [
                     { label: "Flat Owner", moduleId: "flat_owner" },
                     { label: "Rental Detail", moduleId: "rental_detail" }
@@ -30,7 +30,7 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
             { label: "Category", icon: "📂", moduleId: "category", hideForOwner: true },
             { label: "Meetings", icon: "🗓️", moduleId: "meetings", hideForOwner: true },
             {
-                label: "Activity Data", icon: "🎯", 
+                label: "Activity Data", icon: "🎯",
                 subItems: [
                     { label: "Activity Details", moduleId: "activity_details" },
                     { label: "Activity Payment", moduleId: "activity_payment" },
@@ -46,8 +46,11 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                     { label: "Maintenance Detail", moduleId: "maintenance_detail" },
                 ]
             },
+            { label: "Complaint Box", icon: "📋", moduleId: "complaint_box" },
+            { label: "Parking Details", icon: "🚗", moduleId: "parking_details" },
+            { label: "Announcements", icon: "📢", alwaysVisible: true },
             {
-                label: "Reports", icon: "📊", 
+                label: "Reports", icon: "📊",
                 subItems: [
                     { label: "Owner Report" },
                     { label: "Maintenance Report" },
@@ -70,15 +73,15 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                 if (isOwner && item.hideForOwner) {
                     return null;
                 }
-                
+
                 // Always show Home and Settings
                 if (item.alwaysVisible) return item;
-                
+
                 // Role Assignment only for Admin/Secretary
                 if (item.requiresAdmin) {
                     return isAdminOrSecretary ? item : null;
                 }
-                
+
                 // For items with subItems, check if at least one subItem is accessible
                 if (item.subItems) {
                     const accessibleSubItems = item.subItems.filter(subItem => {
@@ -89,7 +92,7 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                         if (!subItem.moduleId) return true; // Show if no module restriction
                         return isAdminOrSecretary || hasModuleAccess(subItem.moduleId, activeDelegations);
                     });
-                    
+
                     // Only show parent if it has accessible subItems
                     if (accessibleSubItems.length > 0) {
                         // Create a new item object with filtered subItems
@@ -97,12 +100,12 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                     }
                     return null;
                 }
-                
+
                 // For regular items, check module access
                 if (item.moduleId) {
                     return (isAdminOrSecretary || hasModuleAccess(item.moduleId, activeDelegations)) ? item : null;
                 }
-                
+
                 // Default: show if no restrictions
                 return item;
             })
@@ -112,8 +115,8 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
     return (
         <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
             <h3 className="sidebar-title">
-                {user?.role_type?.toLowerCase() === "admin" ? "Admin Panel" : 
-                 user?.role_type?.toLowerCase() === "owner" ? "Owner Panel" : "User Panel"}
+                {user?.role_type?.toLowerCase() === "admin" ? "Admin Panel" :
+                    user?.role_type?.toLowerCase() === "owner" ? "Owner Panel" : "User Panel"}
             </h3>
             <ul className="menu-list">
                 {menuItems.map((item, idx) => (

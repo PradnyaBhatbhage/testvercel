@@ -1,0 +1,228 @@
+.announcements-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.announcements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.announcements-header h2 {
+    color: #023e8a;
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.new-announcement-btn {
+    background: #023e8a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.new-announcement-btn:hover {
+    background: #0353a4;
+}
+
+.announcement-form-container {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.announcement-form h3 {
+    color: #023e8a;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.announcement-form .form-group {
+    margin-bottom: 20px;
+}
+
+.announcement-form label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+}
+
+.announcement-form input[type="text"],
+.announcement-form input[type="date"],
+.announcement-form select,
+.announcement-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.announcement-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.announcement-form input:focus,
+.announcement-form select:focus,
+.announcement-form textarea:focus {
+    outline: none;
+    border-color: #023e8a;
+    box-shadow: 0 0 0 3px rgba(2, 62, 138, 0.1);
+}
+
+.announcement-form small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.submit-btn {
+    background: #023e8a;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #0353a4;
+}
+
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+.announcements-list {
+    display: grid;
+    gap: 20px;
+}
+
+.announcement-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #023e8a;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announcement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.announcement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.announcement-type-badge {
+    background: rgba(2, 62, 138, 0.1);
+    color: #023e8a;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.announcement-date {
+    color: #666;
+    font-size: 13px;
+}
+
+.announcement-card h3 {
+    color: #023e8a;
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.announcement-card p {
+    color: #555;
+    line-height: 1.6;
+    margin: 0 0 10px 0;
+}
+
+.cutoff-info {
+    margin-top: 12px;
+    padding: 10px;
+    background: #fff3cd;
+    border-radius: 6px;
+    color: #856404;
+    font-size: 13px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state p {
+    font-size: 16px;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .announcements-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .new-announcement-btn {
+        width: 100%;
+    }
+
+    .announcement-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+

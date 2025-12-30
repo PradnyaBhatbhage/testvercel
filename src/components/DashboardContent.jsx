@@ -7,6 +7,7 @@ import {
     getAllPayments,
     getAllActivityExpenses,
     getMeetings,
+    getSocieties,
 } from "../services/api";
 import {
     getCurrentUserWingId,
@@ -27,6 +28,8 @@ import "../css/DashboardContent.css";
 
 const DashboardContent = ({ user }) => {
     const [loading, setLoading] = useState(true);
+    const [societyName, setSocietyName] = useState("");
+    const [societyLogo, setSocietyLogo] = useState("");
     const [stats, setStats] = useState({
         totalOwners: 0,
         totalRentals: 0,
@@ -60,6 +63,7 @@ const DashboardContent = ({ user }) => {
                 activityPaymentsRes,
                 activityExpensesRes,
                 meetingsRes,
+                societiesRes,
             ] = await Promise.all([
                 getOwners(),
                 getRentals(),
@@ -68,7 +72,15 @@ const DashboardContent = ({ user }) => {
                 getAllPayments(),
                 getAllActivityExpenses(),
                 getMeetings(),
+                getSocieties(),
             ]);
+
+            // Fetch society name and logo
+            if (societiesRes && societiesRes.data && societiesRes.data.length > 0) {
+                const society = societiesRes.data[0];
+                setSocietyName(society.soc_name || "");
+                setSocietyLogo(society.soc_logo || society.logo_url || "");
+            }
 
             // Get raw data
             const rawOwners = Array.isArray(ownersRes.data) ? ownersRes.data : ownersRes.data?.data || [];
@@ -150,16 +162,16 @@ const DashboardContent = ({ user }) => {
                 if (ownerId) {
                     // Filter owners - show only current owner
                     owners = filterOwnersByCurrentOwner(owners);
-                    
+
                     // Filter rentals - show only rentals for current owner
                     rentals = filterRentalsByCurrentOwner(rentals);
-                    
+
                     // Filter maintenance details - show only current owner's maintenance
                     maintenanceDetails = filterMaintenanceByCurrentOwner(maintenanceDetails);
-                    
+
                     // Filter activity payments - show only for current owner's flat
                     activityPayments = filterActivityPaymentsByCurrentOwner(activityPayments, owners);
-                    
+
                     // Filter expenses - show only expenses related to current owner's flat/wing
                     // Note: Expenses are typically society-wide, but we can filter by wing_id if available
                     const ownerWingId = owners.length > 0 ? owners[0].wing_id : null;
@@ -171,7 +183,7 @@ const DashboardContent = ({ user }) => {
                     } else {
                         expenses = []; // No expenses if no wing_id
                     }
-                    
+
                     // Filter activity expenses - similar to expenses
                     if (ownerWingId) {
                         activityExpenses = activityExpenses.filter(ae => {
@@ -184,7 +196,7 @@ const DashboardContent = ({ user }) => {
                     } else {
                         activityExpenses = [];
                     }
-                    
+
                     // Filter meetings - show only meetings for current owner's wing
                     if (ownerWingId) {
                         meetings = meetings.filter(m => {
@@ -271,6 +283,13 @@ const DashboardContent = ({ user }) => {
 
     useEffect(() => {
         fetchDashboardData();
+        
+        // Set up periodic check for pending maintenance (every 5 minutes)
+        const intervalId = setInterval(() => {
+            fetchDashboardData();
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => clearInterval(intervalId);
     }, [fetchDashboardData]);
 
     // Prepare data for pie charts
@@ -327,9 +346,25 @@ const DashboardContent = ({ user }) => {
     return (
         <div className="dashboard-content">
             <div className="welcome-section">
-                <h2>Welcome, {user?.user_name || "Guest"}! 👋</h2>
-                <div className="role-badge">{user?.role_type || "User"}</div>
-                <p>Here's an overview of your society management system.</p>
+                <div className="welcome-content">
+                    <div className="welcome-text">
+                        <h2>Welcome {societyName || "Society"}! 👋</h2>
+                        <div className="role-badge">{user?.role_type || "User"}</div>
+                        <p>Here's an overview of your society management system.</p>
+                    </div>
+                    {societyLogo && (
+                        <div className="welcome-logo">
+                            <img 
+                                src={societyLogo} 
+                                alt={`${societyName || 'Society'} Logo`}
+                                className="society-logo-dashboard"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Key Statistics Cards */}

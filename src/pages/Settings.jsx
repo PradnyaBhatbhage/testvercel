@@ -151,6 +151,7 @@ const Settings = () => {
         }
     };
 
+
     const tabs = [
         { id: "profile", label: "Profile", icon: "👤" },
         { id: "password", label: "Password", icon: "🔒" },

@@ -679,7 +679,7 @@ const ComplaintBox = () => {
                     <table className="complaint-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Sr. No.</th>
                                 <th>Owner</th>
                                 <th>Title</th>
                                 <th>Type</th>
@@ -699,7 +699,7 @@ const ComplaintBox = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                currentComplaints.map((complaint) => {
+                                currentComplaints.map((complaint, index) => {
                                     const owner = owners.find(o => o.owner_id === complaint.owner_id);
                                     const isClosed = complaint.status === "closed";
                                     return (
@@ -711,7 +711,7 @@ const ComplaintBox = () => {
                                                 opacity: 0.8
                                             } : {}}
                                         >
-                                            <td>{complaint.complaint_id}</td>
+                                            <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                             <td>{owner?.owner_name || "-"}</td>
                                             <td>
                                                 <div style={{ fontWeight: '600' }}>{complaint.complaint_title || "-"}</div>

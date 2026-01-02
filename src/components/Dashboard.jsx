@@ -24,6 +24,8 @@ import Reports from "../pages/Reports";
 import OwnerReport from "../pages/OwnerReport";
 import MaintenanceReport from "../pages/MaintenanceReport";
 import Announcements from "../pages/Announcements";
+import Invitation from "../pages/Invitation";
+import CommitteeMembers from "../pages/CommitteeMembers";
 import { initializeReminderService } from "../utils/monthlyReminderService";
 import { sendMonthlyReminders, getMyDelegations } from "../services/api";
 import { hasModuleAccess, getModuleIdFromMenuLabel, canManageDelegations } from "../utils/permissionChecker";
@@ -66,13 +68,13 @@ const Dashboard = () => {
                 setSubscriptionLoading(true);
 
                 const subscription = await checkCurrentUserSubscription();
-                
+
                 if (!isMounted) return; // Check again after async call
-                
+
                 // Debug logging
                 console.log('Subscription Check Result:', subscription);
                 console.log('Should Lock App:', shouldLockApp(subscription));
-                
+
                 if (shouldLockApp(subscription)) {
                     console.log('🔒 Locking app - subscription expired');
                     setIsLocked(true);
@@ -174,8 +176,10 @@ const Dashboard = () => {
             case "Society":
                 return <SocietyForm />;
             case "Flat Owner":
+            case "My Flat":
                 return <FlatOwner />;
-            case "Rental Detail":
+            case "Tenant Detail":
+            case "My Tenant":
                 return <RentalDetail />;
             case "Category":
                 return <Category />;
@@ -217,6 +221,10 @@ const Dashboard = () => {
                 return <Reports key="complete" reportType="Complete Report" />;
             case "Announcements":
                 return <Announcements />;
+            case "Invitation":
+                return <Invitation />;
+            case "Committee Members":
+                return <CommitteeMembers />;
             default:
                 return <p>Module "{activeMenu}" is under construction.</p>;
         }

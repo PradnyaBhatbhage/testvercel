@@ -1203,7 +1203,7 @@ const Reports = ({ reportType }) => {
                                 <table className="report-table">
                                     <thead>
                                         <tr>
-                                            <th>Owner ID</th>
+                                            <th>Sr. No.</th>
                                             <th>Owner Name</th>
                                             <th>Flat No</th>
                                             <th>Contact</th>
@@ -1218,15 +1218,15 @@ const Reports = ({ reportType }) => {
                                                 <td colSpan="7" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
-                                            reportData.map((owner) => (
+                                            reportData.map((owner, index) => (
                                                 <tr key={owner.owner_id}>
-                                                    <td>{owner.owner_id}</td>
+                                                    <td>{index + 1}</td>
                                                     <td>{owner.owner_name}</td>
                                                     <td>{owner.flat_no || "-"}</td>
                                                     <td>{owner.owner_contactno || "-"}</td>
                                                     <td>{owner.owner_email || "-"}</td>
                                                     <td>{wings.find(w => w.wing_id === owner.wing_id)?.wing_name || "-"}</td>
-                                                    <td>{owner.is_residence ? "Yes" : "No"}</td>
+                                                    <td>{(owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true) ? "Yes" : "No"}</td>
                                                 </tr>
                                             ))
                                         )}
@@ -1238,7 +1238,7 @@ const Reports = ({ reportType }) => {
                                 <table className="report-table">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>Sr. No.</th>
                                             <th>Owner Name</th>
                                             <th>Bill Period</th>
                                             <th>Total Amount</th>
@@ -1253,13 +1253,13 @@ const Reports = ({ reportType }) => {
                                                 <td colSpan="7" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
-                                            reportData.map((maintenance) => {
+                                            reportData.map((maintenance, index) => {
                                                 // Use owner_name directly from maintenance data (now included in backend query)
                                                 const ownerName = maintenance.owner_name || "-";
                                                 const pending = parseFloat(maintenance.total_amount || 0) - parseFloat(maintenance.paid_amount || 0);
                                                 return (
                                                     <tr key={maintenance.maintain_id}>
-                                                        <td>{maintenance.maintain_id}</td>
+                                                        <td>{index + 1}</td>
                                                         <td>{ownerName}</td>
                                                         <td>
                                                             {formatDate(maintenance.bill_start_date)} - {formatDate(maintenance.bill_end_date)}
@@ -1284,7 +1284,7 @@ const Reports = ({ reportType }) => {
                                 <table className="report-table">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>Sr. No.</th>
                                             <th>Date</th>
                                             <th>Category</th>
                                             <th>Description</th>
@@ -1299,9 +1299,9 @@ const Reports = ({ reportType }) => {
                                                 <td colSpan="7" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
-                                            reportData.map((expense) => (
+                                            reportData.map((expense, index) => (
                                                 <tr key={expense.exp_id}>
-                                                    <td>{expense.exp_id}</td>
+                                                    <td>{index + 1}</td>
                                                     <td>{formatDate(expense.date)}</td>
                                                     <td>{expense.catg_name || "-"}</td>
                                                     <td>{expense.description || "-"}</td>
@@ -1323,7 +1323,7 @@ const Reports = ({ reportType }) => {
                                 <table className="report-table">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>Sr. No.</th>
                                             <th>Flat No</th>
                                             <th>Owner</th>
                                             <th>Tenant</th>
@@ -1338,9 +1338,9 @@ const Reports = ({ reportType }) => {
                                                 <td colSpan="7" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
-                                            reportData.map((rental) => (
+                                            reportData.map((rental, index) => (
                                                 <tr key={rental.rental_id}>
-                                                    <td>{rental.rental_id}</td>
+                                                    <td>{index + 1}</td>
                                                     <td>{rental.flat_no || "-"}</td>
                                                     <td>{rental.owner_name || "-"}</td>
                                                     <td>{rental.tenant_name || "-"}</td>
@@ -1358,7 +1358,7 @@ const Reports = ({ reportType }) => {
                                 <table className="report-table">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>Sr. No.</th>
                                             <th>Meeting Date</th>
                                             <th>Title</th>
                                             <th>Agenda</th>
@@ -1372,9 +1372,9 @@ const Reports = ({ reportType }) => {
                                                 <td colSpan="6" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
-                                            reportData.map((meeting) => (
+                                            reportData.map((meeting, index) => (
                                                 <tr key={meeting.meeting_id}>
-                                                    <td>{meeting.meeting_id}</td>
+                                                    <td>{index + 1}</td>
                                                     <td>{formatDate(meeting.meeting_date)}</td>
                                                     <td>{meeting.meeting_name || "-"}</td>
                                                     <td>{meeting.purpose || "-"}</td>

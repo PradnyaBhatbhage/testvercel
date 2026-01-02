@@ -186,7 +186,7 @@ const OwnerReport = () => {
                             <table className="report-table">
                                 <thead>
                                     <tr>
-                                        <th>Owner ID</th>
+                                        <th>Sr. No.</th>
                                         <th>Owner Name</th>
                                         <th>Flat No</th>
                                         <th>Contact</th>
@@ -201,15 +201,15 @@ const OwnerReport = () => {
                                             <td colSpan="7" className="no-data">No data available</td>
                                         </tr>
                                     ) : (
-                                        reportData.map((owner) => (
+                                        reportData.map((owner, index) => (
                                             <tr key={owner.owner_id}>
-                                                <td>{owner.owner_id}</td>
+                                                <td>{index + 1}</td>
                                                 <td>{owner.owner_name}</td>
                                                 <td>{owner.flat_no || "-"}</td>
                                                 <td>{owner.owner_contactno || "-"}</td>
                                                 <td>{owner.owner_email || "-"}</td>
                                                 <td>{wings.find(w => w.wing_id === owner.wing_id)?.wing_name || "-"}</td>
-                                                <td>{owner.is_residence ? "Yes" : "No"}</td>
+                                                <td>{(owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true) ? "Yes" : "No"}</td>
                                             </tr>
                                         ))
                                     )}

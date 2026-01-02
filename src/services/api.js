@@ -159,6 +159,11 @@ export const registerUser = (userData) => API.post("/users", userData);
 // Login user
 export const loginUser = (credentials) => API.post("/auth/login", credentials);
 
+// Forgot Password
+export const requestPasswordReset = (data) => API.post("/auth/forgot-password", data);
+export const verifyResetToken = (token) => API.post("/auth/verify-reset-token", { token });
+export const resetPassword = (data) => API.post("/auth/reset-password", data);
+
 // ================= Society =================
 export const createSociety = (data) => API.post("/societies", data);
 export const updateSociety = (id, data, file = null) => {
@@ -212,15 +217,24 @@ export const restoreFloor = (id) => API.patch(`/floors/restore/${id}`);
 
 // ================= Owner =================
 export const getOwners = () => API.post("/owners");
-export const addOwner = (data, file = null) => {
+export const addOwner = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/owners/add", formData, {
         headers: {
@@ -228,15 +242,24 @@ export const addOwner = (data, file = null) => {
         },
     });
 };
-export const updateOwner = (id, data, file = null) => {
+export const updateOwner = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/owners/update/${id}`, formData, {
         headers: {
@@ -249,7 +272,7 @@ export const restoreOwner = (id) => API.put(`/owners/restore/${id}`);
 
 ///================= Rental =================
 // Create rental
-export const addRental = (data, file = null) => {
+export const addRental = (data, files = []) => {
     const formData = new FormData();
 
     // Append all form fields
@@ -259,9 +282,11 @@ export const addRental = (data, file = null) => {
         }
     });
 
-    // Append file if provided
-    if (file) {
-        formData.append('rental_agreement', file);
+    // Append files if provided (support multiple files)
+    if (files && files.length > 0) {
+        files.forEach((file) => {
+            formData.append('rental_agreement', file);
+        });
     }
 
     return API.post(`/rental/add`, formData, {
@@ -275,7 +300,7 @@ export const addRental = (data, file = null) => {
 export const getRentals = () => API.get(`/rental`);
 
 // Update rental
-export const updateRental = (id, data, file = null) => {
+export const updateRental = (id, data, files = []) => {
     const formData = new FormData();
 
     // Append all form fields
@@ -285,9 +310,11 @@ export const updateRental = (id, data, file = null) => {
         }
     });
 
-    // Append file if provided
-    if (file) {
-        formData.append('rental_agreement', file);
+    // Append files if provided (support multiple files)
+    if (files && files.length > 0) {
+        files.forEach((file) => {
+            formData.append('rental_agreement', file);
+        });
     }
 
     return API.put(`/rental/update/${id}`, formData, {
@@ -536,15 +563,24 @@ export const revokeRoleDelegation = (id) => API.put(`/role-delegations/${id}/rev
 
 // ================= Parking =================
 export const getParking = () => API.get("/parking/get");
-export const addParking = (data, file = null) => {
+export const addParking = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/parking/add", formData, {
         headers: {
@@ -552,15 +588,24 @@ export const addParking = (data, file = null) => {
         },
     });
 };
-export const updateParking = (id, data, file = null) => {
+export const updateParking = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/parking/update/${id}`, formData, {
         headers: {
@@ -622,3 +667,50 @@ export const markNotificationAsRead = (data) => API.post("/notifications/mark-re
 export const markAllNotificationsAsRead = (userData) => API.post("/notifications/mark-all-read", userData);
 export const createNotification = (data) => API.post("/notifications/create", data);
 export const deleteNotification = (id) => API.delete(`/notifications/${id}`);
+
+// ================= Invitations =================
+export const getInvitations = () => API.get("/invitations");
+export const addInvitation = (data, files = []) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (files && files.length > 0) {
+        files.forEach(file => {
+            formData.append('attachment', file);
+        });
+    }
+    return API.post("/invitations/add", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const updateInvitation = (id, data, files = []) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    if (files && files.length > 0) {
+        files.forEach(file => {
+            formData.append('attachment', file);
+        });
+    }
+    return API.put(`/invitations/update/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
+export const deleteInvitation = (id, reason) => API.put(`/invitations/delete/${id}`, { reason });
+export const restoreInvitation = (id) => API.put(`/invitations/restore/${id}`);
+export const sendInvitationEmail = (id, target_audience = 'all', wing_id = null, selected_owner_ids = null) => 
+    API.post(`/invitations/send-email/${id}`, { target_audience, wing_id, selected_owner_ids });
+export const sendInvitationWhatsApp = (id, target_audience = 'all', wing_id = null, selected_owner_ids = null) => 
+    API.post(`/invitations/send-whatsapp/${id}`, { target_audience, wing_id, selected_owner_ids });
+export const sendInvitationNotification = (id, target_audience = 'all', wing_id = null, selected_owner_ids = null) => 
+    API.post(`/invitations/send-notification/${id}`, { target_audience, wing_id, selected_owner_ids });

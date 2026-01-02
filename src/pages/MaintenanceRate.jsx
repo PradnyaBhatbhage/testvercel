@@ -241,7 +241,7 @@ const MaintenanceRate = () => {
                     <table className="maintenance-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Sr. No.</th>
                             <th>Wing</th>
                             <th>Flat Type</th>
                             <th>Component</th>
@@ -251,9 +251,9 @@ const MaintenanceRate = () => {
                     </thead>
                     <tbody>
                         {filtered.length > 0 ? (
-                            currentRates.map((r) => (
+                            currentRates.map((r, index) => (
                                 <tr key={r.rate_id}>
-                                    <td>{r.rate_id}</td>
+                                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td>{wings.find(w => w.wing_id === r.wing_id)?.wing_name || "-"}</td>
                                     <td>{flatTypes.find(f => f.flat_type_id === r.flat_type_id)?.flat_type_name || "-"}</td>
                                     <td>{components.find(c => c.componant_id === r.componant_id)?.componant_name || "-"}</td>

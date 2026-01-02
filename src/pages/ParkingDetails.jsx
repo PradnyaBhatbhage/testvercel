@@ -14,6 +14,7 @@ const ParkingDetails = () => {
     const [rentals, setRentals] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [currentRentalPage, setCurrentRentalPage] = useState(1);
     const itemsPerPage = 10;
 
     // Get current user's wing_id
@@ -48,15 +49,8 @@ const ParkingDetails = () => {
                 });
             }
 
-            // Filter by owner if user is owner role
-            if (isOwnerRole()) {
-                const ownerId = getCurrentOwnerId();
-                if (ownerId) {
-                    filteredParking = filteredParking.filter(p => 
-                        p.owner_id && parseInt(p.owner_id) === parseInt(ownerId)
-                    );
-                }
-            }
+            // Note: Owner users can see all parking records, not just their own
+            // Removed owner filtering to allow owners to view all parking records
 
             setParkingData(filteredParking);
         } catch (err) {
@@ -73,9 +67,9 @@ const ParkingDetails = () => {
                 rawOwners = filterOwnersByWing(rawOwners, currentUserWingId);
             }
             
-            if (isOwnerRole()) {
-                rawOwners = filterOwnersByCurrentOwner(rawOwners);
-            }
+            // Note: For owner users, we need ALL owners (not just current owner) 
+            // to properly display owner information for all parking records
+            // Removed owner filtering to allow proper data joining
             
             setOwners(rawOwners);
         } catch (err) {
@@ -129,7 +123,47 @@ const ParkingDetails = () => {
     };
 
     // Filter parking data based on search
-    const filteredParking = getParkingWithDetails().filter((p) => {
+    const allParkingWithDetails = getParkingWithDetails();
+    
+    // Separate into owner and rental parking
+    const ownerParking = allParkingWithDetails.filter(p => {
+        const ownershipType = p.ownership_type ? String(p.ownership_type).trim() : "";
+        return !ownershipType || ownershipType === "Owner" || ownershipType === "";
+    });
+    const rentalParking = allParkingWithDetails.filter(p => {
+        const ownershipType = p.ownership_type ? String(p.ownership_type).trim() : "";
+        return ownershipType === "Rental";
+    });
+
+    // Debug logging (remove in production)
+    if (allParkingWithDetails.length > 0) {
+        console.log("Parking Details Debug:", {
+            totalParking: allParkingWithDetails.length,
+            ownerParkingCount: ownerParking.length,
+            rentalParkingCount: rentalParking.length,
+            ownershipTypes: allParkingWithDetails.map(p => p.ownership_type),
+            sampleParking: allParkingWithDetails.slice(0, 3).map(p => ({
+                parking_id: p.parking_id,
+                ownership_type: p.ownership_type,
+                owner_id: p.owner_id
+            }))
+        });
+    }
+
+    // Filter owner parking based on search
+    const filteredOwnerParking = ownerParking.filter((p) => {
+        if (!searchText) return true;
+        
+        const searchLower = searchText.toLowerCase();
+        return (
+            (p.owner_name?.toLowerCase().includes(searchLower)) ||
+            (p.vehical_type?.toLowerCase().includes(searchLower)) ||
+            (p.vehical_no?.toLowerCase().includes(searchLower))
+        );
+    });
+
+    // Filter rental parking based on search
+    const filteredRentalParking = rentalParking.filter((p) => {
         if (!searchText) return true;
         
         const searchLower = searchText.toLowerCase();
@@ -141,14 +175,19 @@ const ParkingDetails = () => {
         );
     });
 
-    // Pagination
-    const totalPages = Math.ceil(filteredParking.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const currentParking = filteredParking.slice(startIndex, startIndex + itemsPerPage);
+    // Pagination for owner parking
+    const ownerTotalPages = Math.ceil(filteredOwnerParking.length / itemsPerPage);
+    const ownerStartIndex = (currentPage - 1) * itemsPerPage;
+    const currentOwnerParking = filteredOwnerParking.slice(ownerStartIndex, ownerStartIndex + itemsPerPage);
 
-    // Group by owner to count total vehicles per owner
+    // Pagination for rental parking
+    const rentalTotalPages = Math.ceil(filteredRentalParking.length / itemsPerPage);
+    const rentalStartIndex = (currentRentalPage - 1) * itemsPerPage;
+    const currentRentalParking = filteredRentalParking.slice(rentalStartIndex, rentalStartIndex + itemsPerPage);
+
+    // Group by owner to count total vehicles per owner (for owner parking)
     const ownerVehicleCounts = {};
-    filteredParking.forEach(p => {
+    filteredOwnerParking.forEach(p => {
         const ownerId = p.owner_id;
         if (!ownerVehicleCounts[ownerId]) {
             ownerVehicleCounts[ownerId] = 0;
@@ -156,10 +195,25 @@ const ParkingDetails = () => {
         ownerVehicleCounts[ownerId]++;
     });
 
+    // Group by owner to count total vehicles per owner (for rental parking)
+    const rentalVehicleCounts = {};
+    filteredRentalParking.forEach(p => {
+        const ownerId = p.owner_id;
+        if (!rentalVehicleCounts[ownerId]) {
+            rentalVehicleCounts[ownerId] = 0;
+        }
+        rentalVehicleCounts[ownerId]++;
+    });
+
     // Add vehicle count to each parking record
-    const parkingWithCounts = currentParking.map(p => ({
+    const ownerParkingWithCounts = currentOwnerParking.map(p => ({
         ...p,
         total_vehicles: ownerVehicleCounts[p.owner_id] || 0,
+    }));
+
+    const rentalParkingWithCounts = currentRentalParking.map(p => ({
+        ...p,
+        total_vehicles: rentalVehicleCounts[p.owner_id] || 0,
     }));
 
     return (
@@ -175,90 +229,173 @@ const ParkingDetails = () => {
                     onChange={(e) => {
                         setSearchText(e.target.value);
                         setCurrentPage(1); // Reset to first page on search
+                        setCurrentRentalPage(1); // Reset rental page on search
                     }}
                     className="search-input"
                 />
             </div>
 
-            {/* Table */}
-            <div className="parking-table-container">
-                <table className="parking-table">
-                    <thead>
-                        <tr>
-                            <th>Parking ID</th>
-                            <th>Owner Name</th>
-                            <th>Owner Contact</th>
-                            <th>Tenant Name</th>
-                            <th>Tenant Contact</th>
-                            <th>Vehicle Type</th>
-                            <th>Vehicle Number</th>
-                            <th>Total Vehicles</th>
-                            <th>Parking Slot</th>
-                            <th>Image</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {parkingWithCounts.length === 0 ? (
+            {/* Owner Parking Table */}
+            <div style={{ marginBottom: '40px' }}>
+                <h3 style={{ marginBottom: '15px', color: '#333' }}>🏠 Owner Parking Details</h3>
+                <div className="parking-table-container">
+                    <table className="parking-table">
+                        <thead>
                             <tr>
-                                <td colSpan="10" className="no-data">
-                                    {searchText ? "No parking records found matching your search." : "No parking records found."}
-                                </td>
+                                <th>Sr. No.</th>
+                                <th>Owner Name</th>
+                                <th>Owner Contact</th>
+                                <th>Vehicle Type</th>
+                                <th>Vehicle Number</th>
+                                <th>Total Vehicles</th>
+                                <th>Parking Slot</th>
+                                <th>Image</th>
                             </tr>
-                        ) : (
-                            parkingWithCounts.map((parking) => (
-                                <tr key={parking.parking_id}>
-                                    <td>{parking.parking_id}</td>
-                                    <td>{parking.owner_name || "-"}</td>
-                                    <td>{parking.owner_contactno || "-"}</td>
-                                    <td>{parking.tenant_name || "-"}</td>
-                                    <td>{parking.tenant_contactno || "-"}</td>
-                                    <td>{parking.vehical_type || "-"}</td>
-                                    <td>{parking.vehical_no || "-"}</td>
-                                    <td>{parking.total_vehicles || 0}</td>
-                                    <td>{parking.parking_slot_no || "-"}</td>
-                                    <td>
-                                        {parking.attachment_url ? (
-                                            <a
-                                                href={parking.attachment_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ color: '#007bff', textDecoration: 'none' }}
-                                            >
-                                                {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf')
-                                                    ? '📄 View PDF'
-                                                    : '🖼️ View Image'}
-                                            </a>
-                                        ) : (
-                                            "-"
-                                        )}
+                        </thead>
+                        <tbody>
+                            {ownerParkingWithCounts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" className="no-data">
+                                        {searchText ? "No owner parking records found matching your search." : "No owner parking records found."}
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                ownerParkingWithCounts.map((parking, index) => (
+                                    <tr key={parking.parking_id}>
+                                        <td>{ownerStartIndex + index + 1}</td>
+                                        <td>{parking.owner_name || "-"}</td>
+                                        <td>{parking.owner_contactno || "-"}</td>
+                                        <td>{parking.vehical_type || "-"}</td>
+                                        <td>{parking.vehical_no || "-"}</td>
+                                        <td>{parking.total_vehicles || 0}</td>
+                                        <td>{parking.parking_slot_no || "-"}</td>
+                                        <td>
+                                            {parking.attachment_url ? (
+                                                <a
+                                                    href={parking.attachment_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#007bff', textDecoration: 'none' }}
+                                                >
+                                                    {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf')
+                                                        ? '📄 View PDF'
+                                                        : '🖼️ View Image'}
+                                                </a>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination for Owner Parking */}
+                {ownerTotalPages > 1 && (
+                    <div className="pagination">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </button>
+                        <span>
+                            Page {currentPage} of {ownerTotalPages} ({filteredOwnerParking.length} total records)
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(ownerTotalPages, p + 1))}
+                            disabled={currentPage === ownerTotalPages}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="pagination">
-                    <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </button>
-                    <span>
-                        Page {currentPage} of {totalPages} ({filteredParking.length} total records)
-                    </span>
-                    <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                    >
-                        Next
-                    </button>
+            {/* Rental/Tenant Parking Table */}
+            <div>
+                <h3 style={{ marginBottom: '15px', color: '#333' }}>🏘️ Rental/Tenant Parking Details</h3>
+                <div className="parking-table-container">
+                    <table className="parking-table">
+                        <thead>
+                            <tr>
+                                <th>Sr. No.</th>
+                                <th>Owner Name</th>
+                                <th>Owner Contact</th>
+                                <th>Tenant Name</th>
+                                <th>Tenant Contact</th>
+                                <th>Vehicle Type</th>
+                                <th>Vehicle Number</th>
+                                <th>Total Vehicles</th>
+                                <th>Parking Slot</th>
+                                <th>Image</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rentalParkingWithCounts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="10" className="no-data">
+                                        {searchText ? "No rental parking records found matching your search." : "No rental parking records found."}
+                                    </td>
+                                </tr>
+                            ) : (
+                                rentalParkingWithCounts.map((parking, index) => (
+                                    <tr key={parking.parking_id}>
+                                        <td>{rentalStartIndex + index + 1}</td>
+                                        <td>{parking.owner_name || "-"}</td>
+                                        <td>{parking.owner_contactno || "-"}</td>
+                                        <td>{parking.tenant_name || "-"}</td>
+                                        <td>{parking.tenant_contactno || "-"}</td>
+                                        <td>{parking.vehical_type || "-"}</td>
+                                        <td>{parking.vehical_no || "-"}</td>
+                                        <td>{parking.total_vehicles || 0}</td>
+                                        <td>{parking.parking_slot_no || "-"}</td>
+                                        <td>
+                                            {parking.attachment_url ? (
+                                                <a
+                                                    href={parking.attachment_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#007bff', textDecoration: 'none' }}
+                                                >
+                                                    {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf')
+                                                        ? '📄 View PDF'
+                                                        : '🖼️ View Image'}
+                                                </a>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+
+                {/* Pagination for Rental Parking */}
+                {rentalTotalPages > 1 && (
+                    <div className="pagination">
+                        <button
+                            onClick={() => setCurrentRentalPage(p => Math.max(1, p - 1))}
+                            disabled={currentRentalPage === 1}
+                        >
+                            Previous
+                        </button>
+                        <span>
+                            Page {currentRentalPage} of {rentalTotalPages} ({filteredRentalParking.length} total records)
+                        </span>
+                        <button
+                            onClick={() => setCurrentRentalPage(p => Math.min(rentalTotalPages, p + 1))}
+                            disabled={currentRentalPage === rentalTotalPages}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

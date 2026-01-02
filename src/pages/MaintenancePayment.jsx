@@ -196,7 +196,7 @@ const MaintenancePayment = () => {
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Sr. No.</th>
                         <th>Maintain ID</th>
                         <th>Payment Date</th>
                         <th>Payment Mode</th>
@@ -206,9 +206,9 @@ const MaintenancePayment = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {payments.map((item) => (
+                    {payments.map((item, index) => (
                         <tr key={item.maintain_pay_id}>
-                            <td>{item.maintain_pay_id}</td>
+                            <td>{index + 1}</td>
                             <td>{item.maintain_id}</td>
                             <td>
                                 {item.payment_date

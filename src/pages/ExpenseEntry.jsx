@@ -494,7 +494,7 @@ const ExpenseEntry = () => {
                     <table className="expense-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Sr. No.</th>
                                 <th>Wing</th>
                                 <th>Category</th>
                                 <th>Subcategory</th>
@@ -508,9 +508,9 @@ const ExpenseEntry = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentItems.map((e) => (
+                            {currentItems.map((e, index) => (
                                 <tr key={e.exp_id} className={e.is_deleted ? "deleted-row" : ""}>
-                                    <td>{e.exp_id}</td>
+                                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td>{wings.find((w) => w.wing_id === e.wing_id)?.wing_name || "-"}</td>
                                     {/* <td>{categories.find((c) => c.catg_id === e.catg_id)?.catg_name || "-"}</td>
                                     <td>{e.subcatg_name || "-"}</td> */}

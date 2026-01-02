@@ -7,6 +7,7 @@ const NotificationPanel = ({ user }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const fetchNotifications = async () => {
         if (!user?.user_id) return;
@@ -166,6 +167,35 @@ const NotificationPanel = ({ user }) => {
                                             <div className="notification-message">
                                                 {notification.message}
                                             </div>
+                                            {/* Display images if available */}
+                                            {notification.attachment_url && Array.isArray(notification.attachment_url) && notification.attachment_url.length > 0 && (
+                                                <div className="notification-images">
+                                                    {notification.attachment_url
+                                                        .filter(url => url && url.startsWith('http') && !url.includes('pdf') && !url.includes('.pdf'))
+                                                        .slice(0, 3) // Show max 3 images
+                                                        .map((url, idx) => (
+                                                            <img 
+                                                                key={idx}
+                                                                src={url} 
+                                                                alt={`Notification ${idx + 1}`}
+                                                                className="notification-image"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedImage(url);
+                                                                }}
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ))
+                                                    }
+                                                    {notification.attachment_url.filter(url => url && url.startsWith('http') && !url.includes('pdf') && !url.includes('.pdf')).length > 3 && (
+                                                        <div className="notification-image-more">
+                                                            +{notification.attachment_url.filter(url => url && url.startsWith('http') && !url.includes('pdf') && !url.includes('.pdf')).length - 3}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="notification-date">
                                                 {formatDate(notification.notification_date)}
                                             </div>
@@ -177,6 +207,17 @@ const NotificationPanel = ({ user }) => {
                                 ))
                             )}
                         </div>
+                    </div>
+                </>
+            )}
+
+            {/* Image Modal */}
+            {selectedImage && (
+                <>
+                    <div className="image-modal-overlay" onClick={() => setSelectedImage(null)}></div>
+                    <div className="image-modal">
+                        <button className="image-modal-close" onClick={() => setSelectedImage(null)}>×</button>
+                        <img src={selectedImage} alt="Notification" className="image-modal-content" />
                     </div>
                 </>
             )}

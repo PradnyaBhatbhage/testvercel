@@ -12,11 +12,11 @@ import {
     deleteParking,
 } from "../services/api";
 import { getCurrentUserWingId } from "../utils/wingFilter";
-import { 
-    isOwnerRole, 
-    filterRentalsByCurrentOwner, 
-    canEdit, 
-    canDelete 
+import {
+    isOwnerRole,
+    filterRentalsByCurrentOwner,
+    canEdit,
+    canDelete
 } from "../utils/ownerFilter";
 
 const RentalDetail = () => {
@@ -44,17 +44,20 @@ const RentalDetail = () => {
     const [searchText, setSearchText] = useState("");
     const [loadingFlat, setLoadingFlat] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [modalDocuments, setModalDocuments] = useState([]);
+    const [modalTenantName, setModalTenantName] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
     // Parking details state
     const [parkingDetails, setParkingDetails] = useState([]);
     const [existingParking, setExistingParking] = useState([]);
-    // Parking attachment states (arrays to handle multiple parking entries)
-    const [parkingFiles, setParkingFiles] = useState([]);
-    const [parkingFilePreviews, setParkingFilePreviews] = useState([]);
+    // Parking attachment states (arrays of arrays: [[file1, file2], [file1]] for multiple files per parking entry)
+    const [parkingFiles, setParkingFiles] = useState([]); // Array of arrays: [[file1, file2], [file1]]
+    const [parkingFilePreviews, setParkingFilePreviews] = useState([]); // Array of arrays
 
     // Get current user's wing_id
     const currentUserWingId = getCurrentUserWingId();
@@ -97,12 +100,12 @@ const RentalDetail = () => {
                     return Number(rentalWingId) === Number(currentUserWingId);
                 });
             }
-            
+
             // Filter by owner_id if user is owner role
             if (isOwnerRole()) {
                 filteredData = filterRentalsByCurrentOwner(filteredData);
             }
-            
+
             setRentals(filteredData);
         } catch (err) {
             console.error('Error fetching rentals:', err);
@@ -126,7 +129,7 @@ const RentalDetail = () => {
             setLoadingFlat(true);
             const res = await getFlatDetails(formData.flat_no);
             const flat = res.data;
-            
+
             // Validate that the flat belongs to the current user's wing
             if (currentUserWingId !== null) {
                 const flatWingId = flat.wing_id;
@@ -145,7 +148,7 @@ const RentalDetail = () => {
                     return;
                 }
             }
-            
+
             setFormData((prev) => ({
                 ...prev,
                 wing_id: flat.wing_id || "",
@@ -164,42 +167,39 @@ const RentalDetail = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const validFiles = [];
+        for (const file of files) {
             // Validate file type
             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
-                return;
+                alert(`File "${file.name}" is not a valid PDF or JPEG/PNG image file. Skipping.`);
+                continue;
             }
 
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
-                return;
+                alert(`File "${file.name}" is larger than 10MB. Skipping.`);
+                continue;
             }
 
-            setSelectedFile(file);
+            validFiles.push(file);
+        }
 
-            // Create preview for images
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setFilePreview(reader.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                setFilePreview(null);
-            }
+        if (validFiles.length > 0) {
+            // Append new files to existing selectedFiles
+            setSelectedFiles(prev => [...prev, ...validFiles]);
+            // Reset file input to allow selecting more files
+            e.target.value = '';
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.owner_id) return alert("Fetch flat details first!");
-        
+
         // Validate that the flat belongs to the current user's wing before saving
         if (currentUserWingId !== null) {
             const flatWingId = formData.wing_id;
@@ -208,7 +208,7 @@ const RentalDetail = () => {
                 return;
             }
         }
-        
+
         setSubmitting(true);
         try {
             const payload = {
@@ -225,10 +225,10 @@ const RentalDetail = () => {
             };
 
             if (editing && formData.rental_id) {
-                await updateRental(formData.rental_id, payload, selectedFile);
+                await updateRental(formData.rental_id, payload, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Rental updated successfully!");
             } else {
-                await addRental(payload, selectedFile);
+                await addRental(payload, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Rental added successfully!");
             }
 
@@ -256,41 +256,44 @@ const RentalDetail = () => {
                     for (let i = 0; i < parkingDetails.length; i++) {
                         const parking = parkingDetails[i];
                         if (parking.vehical_type && parking.vehical_no) {
-                            const parkingFile = parkingFiles[i] || null;
+                            const parkingFilesArray = parkingFiles[i] || [];
                             if (parking.parking_id && existingParkingIds.includes(parking.parking_id)) {
-                                // Update existing parking
+                                // Update existing parking (always keep as Rental in Rental Detail form)
                                 await updateParking(parking.parking_id, {
                                     vehical_type: parking.vehical_type,
                                     vehical_no: parking.vehical_no,
                                     parking_slot_no: parking.parking_slot_no || "",
                                     remark: parking.remark || "",
+                                    ownership_type: "Rental", // Always Rental in Rental Detail form
                                     attachment_url: parking.attachment_url || null,
-                                }, parkingFile);
+                                }, parkingFilesArray.length > 0 ? parkingFilesArray : null);
                             } else {
-                                // Add new parking
+                                // Add new parking (always Rental in Rental Detail form)
                                 await addParking({
                                     owner_id: formData.owner_id,
                                     vehical_type: parking.vehical_type,
                                     vehical_no: parking.vehical_no,
                                     parking_slot_no: parking.parking_slot_no || "",
                                     remark: parking.remark || "",
-                                }, parkingFile);
+                                    ownership_type: "Rental", // Always Rental in Rental Detail form
+                                }, parkingFilesArray.length > 0 ? parkingFilesArray : null);
                             }
                         }
                     }
                 } else {
-                    // In add mode: just add new parking
+                    // In add mode: just add new parking (always Rental in Rental Detail form)
                     for (let i = 0; i < parkingDetails.length; i++) {
                         const parking = parkingDetails[i];
                         if (parking.vehical_type && parking.vehical_no) {
-                            const parkingFile = parkingFiles[i] || null;
+                            const parkingFilesArray = parkingFiles[i] || [];
                             await addParking({
                                 owner_id: formData.owner_id,
                                 vehical_type: parking.vehical_type,
                                 vehical_no: parking.vehical_no,
                                 parking_slot_no: parking.parking_slot_no || "",
                                 remark: parking.remark || "",
-                            }, parkingFile);
+                                ownership_type: "Rental", // Always Rental in Rental Detail form
+                            }, parkingFilesArray.length > 0 ? parkingFilesArray : null);
                         }
                     }
                 }
@@ -327,31 +330,113 @@ const RentalDetail = () => {
             deposite: rental.deposite,
             tenant_agrimg: rental.tenant_agrimg || null,
         });
-        setSelectedFile(null);
-        setFilePreview(rental.tenant_agrimg && rental.tenant_agrimg.startsWith('http') ? rental.tenant_agrimg : null);
+        setSelectedFiles([]);
+        // Handle both single URL string and array of URLs
+        if (rental.tenant_agrimg) {
+            let urls = [];
+            if (Array.isArray(rental.tenant_agrimg)) {
+                urls = rental.tenant_agrimg.filter(url => {
+                    if (!url || typeof url !== 'string') return false;
+                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                    if (url.length < 10) return false;
+                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                    return true;
+                });
+            } else if (typeof rental.tenant_agrimg === 'string') {
+                try {
+                    const parsed = JSON.parse(rental.tenant_agrimg);
+                    if (Array.isArray(parsed)) {
+                        urls = parsed.filter(url => {
+                            if (!url || typeof url !== 'string') return false;
+                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                            if (url.length < 10) return false;
+                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                            return true;
+                        });
+                    } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                        if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                            urls = [parsed];
+                        }
+                    }
+                } catch (e) {
+                    if (rental.tenant_agrimg.startsWith('http') || rental.tenant_agrimg.startsWith('https')) {
+                        if (rental.tenant_agrimg.length >= 10 && (!rental.tenant_agrimg.match(/^[A-Za-z0-9+/=]+$/g) || rental.tenant_agrimg.length >= 50)) {
+                            urls = [rental.tenant_agrimg];
+                        }
+                    }
+                }
+            }
+            setFilePreviews(urls);
+        } else {
+            setFilePreviews([]);
+        }
         setEditing(true);
 
         // Load existing parking details for this owner (rental uses owner_id)
+        // Only load parking with ownership_type = "Rental" to keep owner and rental parking separate
         if (rental.owner_id) {
             try {
                 const parkingRes = await getParking();
                 const allParking = parkingRes.data || [];
-                const ownerParking = allParking.filter(p => p.owner_id === rental.owner_id && !p.is_deleted);
-                setExistingParking(ownerParking);
-                const parkingData = ownerParking.map(p => ({
+                // Only load rental parking (ownership_type = "Rental" or NULL/empty for backward compatibility)
+                const rentalParking = allParking.filter(p => {
+                    if (p.owner_id !== rental.owner_id || p.is_deleted) return false;
+                    const ownershipType = p.ownership_type ? String(p.ownership_type).trim() : "";
+                    // Include rental parking or parking without ownership_type (for backward compatibility)
+                    return ownershipType === "Rental" || ownershipType === "";
+                });
+                setExistingParking(rentalParking);
+                const parkingData = rentalParking.map(p => ({
                     parking_id: p.parking_id,
                     vehical_type: p.vehical_type || "",
                     vehical_no: p.vehical_no || "",
                     parking_slot_no: p.parking_slot_no || "",
                     remark: p.remark || "",
+                    ownership_type: "Rental", // Always set to Rental in Rental Detail form
                     attachment_url: p.attachment_url || null,
                 }));
                 setParkingDetails(parkingData);
-                // Initialize parking file states
-                setParkingFiles(new Array(parkingData.length).fill(null));
-                setParkingFilePreviews(parkingData.map(p => 
-                    p.attachment_url && p.attachment_url.startsWith('http') ? p.attachment_url : null
-                ));
+                // Initialize parking file states - support multiple files per parking entry
+                setParkingFiles(new Array(parkingData.length).fill([]));
+                setParkingFilePreviews(parkingData.map(p => {
+                    if (p.attachment_url) {
+                        let urls = [];
+                        if (Array.isArray(p.attachment_url)) {
+                            urls = p.attachment_url.filter(url => {
+                                if (!url || typeof url !== 'string') return false;
+                                if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                if (url.length < 10) return false;
+                                if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                return true;
+                            });
+                        } else if (typeof p.attachment_url === 'string') {
+                            try {
+                                const parsed = JSON.parse(p.attachment_url);
+                                if (Array.isArray(parsed)) {
+                                    urls = parsed.filter(url => {
+                                        if (!url || typeof url !== 'string') return false;
+                                        if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                        if (url.length < 10) return false;
+                                        if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                        return true;
+                                    });
+                                } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                                    if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                                        urls = [parsed];
+                                    }
+                                }
+                            } catch (e) {
+                                if (p.attachment_url.startsWith('http') || p.attachment_url.startsWith('https')) {
+                                    if (p.attachment_url.length >= 10 && (!p.attachment_url.match(/^[A-Za-z0-9+/=]+$/g) || p.attachment_url.length >= 50)) {
+                                        urls = [p.attachment_url];
+                                    }
+                                }
+                            }
+                        }
+                        return urls;
+                    }
+                    return [];
+                }));
             } catch (err) {
                 console.error("Error loading parking details:", err);
                 setExistingParking([]);
@@ -394,8 +479,8 @@ const RentalDetail = () => {
             deposite: "",
             tenant_agrimg: null,
         });
-        setSelectedFile(null);
-        setFilePreview(null);
+        setSelectedFiles([]);
+        setFilePreviews([]);
         setParkingDetails([]);
         setExistingParking([]);
         setParkingFiles([]);
@@ -427,10 +512,11 @@ const RentalDetail = () => {
             vehical_no: "",
             parking_slot_no: "",
             remark: "",
+            ownership_type: "Rental", // Default to Rental since this is in Rental Detail form
             attachment_url: null,
         }]);
-        setParkingFiles([...parkingFiles, null]);
-        setParkingFilePreviews([...parkingFilePreviews, null]);
+        setParkingFiles([...parkingFiles, []]); // Initialize with empty array for multiple files
+        setParkingFilePreviews([...parkingFilePreviews, []]); // Initialize with empty array
     };
 
     const handleRemoveParking = (index) => {
@@ -452,40 +538,37 @@ const RentalDetail = () => {
     };
 
     const handleParkingFileChange = (index, e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const validFiles = [];
+        for (const file of files) {
             // Validate file type
             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
-                return;
+                alert(`File "${file.name}" is not a valid PDF or JPEG/PNG image file. Skipping.`);
+                continue;
             }
 
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
-                return;
+                alert(`File "${file.name}" is larger than 10MB. Skipping.`);
+                continue;
             }
 
+            validFiles.push(file);
+        }
+
+        if (validFiles.length > 0) {
+            // Append new files to existing parkingFiles[index] array
             const updatedFiles = [...parkingFiles];
-            updatedFiles[index] = file;
-            setParkingFiles(updatedFiles);
-
-            // Create preview for images
-            const updatedPreviews = [...parkingFilePreviews];
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    updatedPreviews[index] = reader.result;
-                    setParkingFilePreviews([...updatedPreviews]);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                updatedPreviews[index] = null;
-                setParkingFilePreviews(updatedPreviews);
+            if (!updatedFiles[index]) {
+                updatedFiles[index] = [];
             }
+            updatedFiles[index] = [...updatedFiles[index], ...validFiles];
+            setParkingFiles(updatedFiles);
+            // Reset file input to allow selecting more files
+            e.target.value = '';
         }
     };
 
@@ -509,7 +592,7 @@ const RentalDetail = () => {
 
     return (
         <div className="rental-container">
-            <h2>Rental Details</h2>
+            <h2>Tenant Details</h2>
 
             {!showForm && (
                 <div className="table-header">
@@ -532,6 +615,7 @@ const RentalDetail = () => {
                     <table className="rental-table">
                         <thead>
                             <tr>
+                                <th>Sr. No.</th>
                                 <th>Flat No</th>
                                 <th>Wing</th>
                                 <th>Floor</th>
@@ -547,8 +631,9 @@ const RentalDetail = () => {
                         </thead>
                         <tbody>
                             {filteredRentals.length ? (
-                                currentRentals.map((rental) => (
+                                currentRentals.map((rental, index) => (
                                     <tr key={rental.rental_id}>
+                                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td>{rental.flat_no}</td>
                                         <td>{rental.wing_name}</td>
                                         <td>{rental.floor_name}</td>
@@ -559,18 +644,64 @@ const RentalDetail = () => {
                                         <td>{rental.monthly_rent}</td>
                                         <td>{rental.deposite}</td>
                                         <td>
-                                            {rental.tenant_agrimg ? (
-                                                <a
-                                                    href={rental.tenant_agrimg}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: '#007bff', textDecoration: 'none' }}
-                                                >
-                                                    {rental.tenant_agrimg.endsWith('.pdf') || rental.tenant_agrimg.includes('pdf') ? '📄 View PDF' : '🖼️ View Image'}
-                                                </a>
-                                            ) : (
-                                                <span style={{ color: '#999' }}>No document</span>
-                                            )}
+                                            {(() => {
+                                                let attachmentUrls = [];
+
+                                                if (rental.tenant_agrimg) {
+                                                    if (Array.isArray(rental.tenant_agrimg)) {
+                                                        attachmentUrls = rental.tenant_agrimg.filter(url => {
+                                                            if (!url || typeof url !== 'string') return false;
+                                                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                                            if (url.length < 10) return false;
+                                                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                                            return true;
+                                                        });
+                                                    } else if (typeof rental.tenant_agrimg === 'string') {
+                                                        try {
+                                                            const parsed = JSON.parse(rental.tenant_agrimg);
+                                                            if (Array.isArray(parsed)) {
+                                                                attachmentUrls = parsed.filter(url => {
+                                                                    if (!url || typeof url !== 'string') return false;
+                                                                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                                                    if (url.length < 10) return false;
+                                                                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                                                    return true;
+                                                                });
+                                                            } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                                                                if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                                                                    attachmentUrls = [parsed];
+                                                                }
+                                                            }
+                                                        } catch (e) {
+                                                            if (rental.tenant_agrimg.startsWith('http') || rental.tenant_agrimg.startsWith('https')) {
+                                                                if (rental.tenant_agrimg.length >= 10 && (!rental.tenant_agrimg.match(/^[A-Za-z0-9+/=]+$/g) || rental.tenant_agrimg.length >= 50)) {
+                                                                    attachmentUrls = [rental.tenant_agrimg];
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (attachmentUrls.length === 0) {
+                                                    return <span style={{ color: '#999' }}>No document</span>;
+                                                }
+
+                                                // Show "View Documents" link that opens modal
+                                                return (
+                                                    <a
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setModalDocuments(attachmentUrls);
+                                                            setModalTenantName(rental.tenant_name || 'Tenant');
+                                                            setShowDocumentModal(true);
+                                                        }}
+                                                        style={{ color: '#007bff', textDecoration: 'none', cursor: 'pointer', fontWeight: '500' }}
+                                                    >
+                                                        View Documents ({attachmentUrls.length})
+                                                    </a>
+                                                );
+                                            })()}
                                         </td>
                                         <td>
                                             {canEdit() && (
@@ -592,7 +723,7 @@ const RentalDetail = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="11">No rentals found</td>
+                                    <td colSpan="12">No rentals found</td>
                                 </tr>
                             )}
                         </tbody>
@@ -676,38 +807,129 @@ const RentalDetail = () => {
                             <label>Deposit:</label>
                             <input type="number" name="deposite" value={formData.deposite} onChange={handleChange} />
                         </div>
-                        <div className="form-field">
-                            <label>Rental Agreement Document (PDF/JPEG):</label>
+                        <div className="form-field full">
+                            <label>Rental Agreement Documents (PDF/JPEG) - Multiple files allowed:</label>
                             <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
+                                multiple
                                 onChange={handleFileChange}
                             />
-                            {selectedFile && (
-                                <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                    Selected: {selectedFile.name}
-                                </p>
-                            )}
-                            {filePreview && !selectedFile && formData.tenant_agrimg && (
+                            {(filePreviews.length > 0 || selectedFiles.length > 0) && (
                                 <div style={{ marginTop: '10px' }}>
-                                    <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
-                                    {formData.tenant_agrimg.endsWith('.pdf') || formData.tenant_agrimg.includes('application/pdf') ? (
-                                        <a href={formData.tenant_agrimg} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                            View PDF
-                                        </a>
-                                    ) : (
-                                        <img src={formData.tenant_agrimg} alt="Rental Agreement" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                    )}
-                                </div>
-                            )}
-                            {filePreview && selectedFile && (
-                                <div style={{ marginTop: '10px' }}>
-                                    <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
-                                    {selectedFile.type === 'application/pdf' ? (
-                                        <p style={{ color: '#007bff' }}>PDF file selected</p>
-                                    ) : (
-                                        <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                    )}
+                                    <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                        All documents ({filePreviews.length + selectedFiles.length}):
+                                    </p>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f5f5f5' }}>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {/* Show existing documents first */}
+                                            {filePreviews.length > 0 && filePreviews.map((preview, idx) => {
+                                                if (!preview) return null;
+
+                                                // Validate URL - skip invalid URLs
+                                                if (typeof preview !== 'string' || preview.length < 10) return null;
+                                                if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                if (preview.match(/^[A-Za-z0-9+/=]+$/g) && preview.length < 50) return null;
+
+                                                // Extract file name from URL
+                                                let fileName = `Document ${idx + 1}`;
+                                                try {
+                                                    const url = new URL(preview);
+                                                    const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                    if (pathParts.length > 0) {
+                                                        fileName = pathParts[pathParts.length - 1];
+                                                        try {
+                                                            fileName = decodeURIComponent(fileName);
+                                                        } catch (decodeErr) { }
+                                                        fileName = fileName.split('?')[0].split('#')[0];
+                                                        if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                            fileName = `Document ${idx + 1}`;
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    try {
+                                                        const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                        if (parts.length > 0) {
+                                                            fileName = parts[parts.length - 1].split('?')[0].split('#')[0];
+                                                            try {
+                                                                fileName = decodeURIComponent(fileName);
+                                                            } catch (decodeErr) { }
+                                                            if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            }
+                                                        }
+                                                    } catch (splitErr) {
+                                                        fileName = `Document ${idx + 1}`;
+                                                    }
+                                                }
+
+                                                const lowerFileName = fileName.toLowerCase();
+                                                const lowerUrl = preview.toLowerCase();
+                                                const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf');
+                                                const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                                return (
+                                                    <tr key={`existing-${idx}`}>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                            {fileName}
+                                                        </td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                            <a
+                                                                href={preview}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                            >
+                                                                View
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {/* Show newly selected files */}
+                                            {selectedFiles.map((file, idx) => (
+                                                <tr key={`new-${idx}`}>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{filePreviews.length + idx + 1}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updated = selectedFiles.filter((_, i) => i !== idx);
+                                                                setSelectedFiles(updated);
+                                                            }}
+                                                            style={{
+                                                                background: '#dc3545',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '11px'
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
                         </div>
@@ -753,6 +975,9 @@ const RentalDetail = () => {
                                     />
                                 </div>
 
+                                {/* Ownership Type is always "Rental" for parking managed from Rental Detail form */}
+                                <input type="hidden" value="Rental" />
+
                                 <div className="form-field">
                                     <label>Remark</label>
                                     <input
@@ -763,38 +988,132 @@ const RentalDetail = () => {
                                     />
                                 </div>
 
-                                <div className="form-field">
-                                    <label>Attachment (PDF/JPEG):</label>
+                                <div className="form-field full">
+                                    <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                                     <input
                                         type="file"
                                         accept=".pdf,.jpg,.jpeg,.png"
+                                        multiple
                                         onChange={(e) => handleParkingFileChange(index, e)}
                                     />
-                                    {parkingFiles[index] && (
-                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                            Selected: {parkingFiles[index].name}
-                                        </p>
-                                    )}
-                                    {parkingFilePreviews[index] && !parkingFiles[index] && parking.attachment_url && (
+                                    {((parkingFilePreviews[index] && parkingFilePreviews[index].length > 0) || (parkingFiles[index] && parkingFiles[index].length > 0)) && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
-                                            {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf') ? (
-                                                <a href={parking.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                                    View PDF
-                                                </a>
-                                            ) : (
-                                                <img src={parking.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                            )}
-                                        </div>
-                                    )}
-                                    {parkingFilePreviews[index] && parkingFiles[index] && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
-                                            {parkingFiles[index].type === 'application/pdf' ? (
-                                                <p style={{ color: '#007bff' }}>PDF file selected</p>
-                                            ) : (
-                                                <img src={parkingFilePreviews[index]} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                            )}
+                                            <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                                All documents ({(parkingFilePreviews[index]?.length || 0) + (parkingFiles[index]?.length || 0)}):
+                                            </p>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                                <thead>
+                                                    <tr style={{ background: '#f5f5f5' }}>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {/* Show existing documents first */}
+                                                    {parkingFilePreviews[index] && parkingFilePreviews[index].length > 0 && parkingFilePreviews[index].map((preview, idx) => {
+                                                        if (!preview) return null;
+
+                                                        // Validate URL - skip invalid URLs
+                                                        if (typeof preview !== 'string' || preview.length < 10) return null;
+                                                        if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                        if (preview.match(/^[A-Za-z0-9+/=]+$/g) && preview.length < 50) return null;
+
+                                                        // Extract file name from URL
+                                                        let fileName = `Document ${idx + 1}`;
+                                                        try {
+                                                            const url = new URL(preview);
+                                                            const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                            if (pathParts.length > 0) {
+                                                                fileName = pathParts[pathParts.length - 1];
+                                                                try {
+                                                                    fileName = decodeURIComponent(fileName);
+                                                                } catch (decodeErr) { }
+                                                                fileName = fileName.split('?')[0].split('#')[0];
+                                                                if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                    fileName = `Document ${idx + 1}`;
+                                                                }
+                                                            }
+                                                        } catch (e) {
+                                                            try {
+                                                                const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                                if (parts.length > 0) {
+                                                                    fileName = parts[parts.length - 1].split('?')[0].split('#')[0];
+                                                                    try {
+                                                                        fileName = decodeURIComponent(fileName);
+                                                                    } catch (decodeErr) { }
+                                                                    if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                        fileName = `Document ${idx + 1}`;
+                                                                    }
+                                                                }
+                                                            } catch (splitErr) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            }
+                                                        }
+
+                                                        const lowerFileName = fileName.toLowerCase();
+                                                        const lowerUrl = preview.toLowerCase();
+                                                        const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf');
+                                                        const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                        const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                                        return (
+                                                            <tr key={`existing-${idx}`}>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                                    {fileName}
+                                                                </td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                    <a
+                                                                        href={preview}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                    >
+                                                                        View
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                    {/* Show newly selected files */}
+                                                    {parkingFiles[index] && parkingFiles[index].length > 0 && parkingFiles[index].map((file, idx) => (
+                                                        <tr key={`new-${idx}`}>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                {(parkingFilePreviews[index]?.length || 0) + idx + 1}
+                                                            </td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const updated = [...parkingFiles];
+                                                                        updated[index] = updated[index].filter((_, i) => i !== idx);
+                                                                        setParkingFiles(updated);
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '4px 8px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '11px'
+                                                                    }}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     )}
                                 </div>
@@ -860,6 +1179,146 @@ const RentalDetail = () => {
                             >
                                 Cancel
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Document Modal */}
+            {showDocumentModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000
+                    }}
+                    onClick={() => setShowDocumentModal(false)}
+                >
+                    <div
+                        style={{
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            padding: '20px',
+                            maxWidth: '600px',
+                            width: '90%',
+                            maxHeight: '80vh',
+                            overflow: 'auto',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ margin: 0, color: '#333' }}>Documents - {modalTenantName}</h2>
+                            <button
+                                onClick={() => setShowDocumentModal(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#666',
+                                    padding: '0',
+                                    width: '30px',
+                                    height: '30px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div>
+                            {modalDocuments.length === 0 ? (
+                                <p style={{ color: '#999', textAlign: 'center' }}>No documents available</p>
+                            ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                    <thead>
+                                        <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Sr. No.</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>File Name</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Type</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {modalDocuments.map((url, idx) => {
+                                            // Extract file name from URL
+                                            let fileName = `Document ${idx + 1}`;
+                                            try {
+                                                const urlObj = new URL(url);
+                                                const pathParts = urlObj.pathname.split('/').filter(part => part && part.length > 0);
+                                                if (pathParts.length > 0) {
+                                                    fileName = pathParts[pathParts.length - 1];
+                                                    try {
+                                                        fileName = decodeURIComponent(fileName);
+                                                    } catch (e) { }
+                                                    fileName = fileName.split('?')[0].split('#')[0];
+                                                    if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                        fileName = `Document ${idx + 1}`;
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                try {
+                                                    const parts = url.split('/').filter(part => part && part.length > 0);
+                                                    if (parts.length > 0) {
+                                                        fileName = parts[parts.length - 1].split('?')[0].split('#')[0];
+                                                        try {
+                                                            fileName = decodeURIComponent(fileName);
+                                                        } catch (e) { }
+                                                        if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                            fileName = `Document ${idx + 1}`;
+                                                        }
+                                                    }
+                                                } catch (err) {
+                                                    fileName = `Document ${idx + 1}`;
+                                                }
+                                            }
+
+                                            const lowerFileName = fileName.toLowerCase();
+                                            const lowerUrl = url.toLowerCase();
+                                            const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf');
+                                            const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                            const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                            return (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                                    <td style={{ padding: '12px' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '12px', wordBreak: 'break-word', maxWidth: '300px' }} title={fileName}>
+                                                        {fileName}
+                                                    </td>
+                                                    <td style={{ padding: '12px' }}>{fileType}</td>
+                                                    <td style={{ padding: '12px' }}>
+                                                        <a
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{
+                                                                color: '#007bff',
+                                                                textDecoration: 'none',
+                                                                fontWeight: '500',
+                                                                padding: '6px 12px',
+                                                                border: '1px solid #007bff',
+                                                                borderRadius: '4px',
+                                                                display: 'inline-block'
+                                                            }}
+                                                        >
+                                                            View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
                     </div>
                 </div>

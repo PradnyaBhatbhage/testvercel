@@ -182,7 +182,7 @@ const Activity = () => {
                     <table className="activity-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Sr. No.</th>
                             <th>Activity Name</th>
                             <th>Plan Date</th>
                             <th>Activity Date</th>
@@ -192,9 +192,9 @@ const Activity = () => {
                     </thead>
                     <tbody>
                         {filtered.length > 0 ? (
-                            currentActivities.map((a) => (
+                            currentActivities.map((a, index) => (
                                 <tr key={a.activity_id}>
-                                    <td>{a.activity_id}</td>
+                                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td>{a.activity_name}</td>
                                     <td>{a.plan_date?.split("T")[0]}</td>
                                     <td>{a.activity_date?.split("T")[0]}</td>

@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                 label: "Flat Master", icon: "🏘️",
                 subItems: [
                     { label: "Flat Owner", moduleId: "flat_owner" },
-                    { label: "Rental Detail", moduleId: "rental_detail" }
+                    { label: "Tenant Detail", moduleId: "rental_detail" }
                 ]
             },
             { label: "Category", icon: "📂", moduleId: "category", hideForOwner: true },
@@ -49,6 +49,8 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
             { label: "Complaint Box", icon: "📋", moduleId: "complaint_box" },
             { label: "Parking Details", icon: "🚗", moduleId: "parking_details" },
             { label: "Announcements", icon: "📢", alwaysVisible: true },
+            { label: "Invitation", icon: "🎉", moduleId: "invitation" },
+            { label: "Committee Members", icon: "👨‍👩‍👧‍👦", moduleId: "committee_members" },
             {
                 label: "Reports", icon: "📊",
                 subItems: [
@@ -91,6 +93,17 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
                         }
                         if (!subItem.moduleId) return true; // Show if no module restriction
                         return isAdminOrSecretary || hasModuleAccess(subItem.moduleId, activeDelegations);
+                    }).map(subItem => {
+                        // Change labels for owner users
+                        if (isOwner) {
+                            if (subItem.label === "Flat Owner") {
+                                return { ...subItem, label: "My Flat" };
+                            }
+                            if (subItem.label === "Tenant Detail") {
+                                return { ...subItem, label: "My Tenant" };
+                            }
+                        }
+                        return subItem;
                     });
 
                     // Only show parent if it has accessible subItems
@@ -116,7 +129,7 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
         <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
             <h3 className="sidebar-title">
                 {user?.role_type?.toLowerCase() === "admin" ? "Admin Panel" :
-                    user?.role_type?.toLowerCase() === "owner" ? "Owner Panel" : "User Panel"}
+                    user?.role_type?.toLowerCase() === "owner" ? "Owner Panel" : "Committee Members Panel"}
             </h3>
             <ul className="menu-list">
                 {menuItems.map((item, idx) => (

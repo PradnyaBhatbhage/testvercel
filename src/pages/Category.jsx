@@ -202,7 +202,7 @@ const Category = () => {
                     <table className="category-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Sr. No.</th>
                                 <th>Category</th>
                                 <th>Subcategory</th>
                                 <th>Description</th>
@@ -212,9 +212,9 @@ const Category = () => {
                         </thead>
                         <tbody>
                             {filteredCategories.length > 0 ? (
-                                currentCategories.map((cat) => (
+                                currentCategories.map((cat, index) => (
                                     <tr key={cat.catg_id}>
-                                        <td>{cat.catg_id}</td>
+                                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td>{cat.catg_name}</td>
                                         <td>{cat.subcatg_name}</td>
                                         <td>{cat.description}</td>

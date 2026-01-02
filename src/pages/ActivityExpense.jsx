@@ -423,7 +423,7 @@ const ActivityExpense = () => {
                                                 <table className="expense-table" style={{ width: '100%' }}>
                                                     <thead>
                                                         <tr>
-                                                            <th>ID</th>
+                                                            <th>Sr. No.</th>
                                                             <th>Bill No</th>
                                                             <th>Particulars</th>
                                                             <th>Amount</th>
@@ -441,9 +441,9 @@ const ActivityExpense = () => {
                                                                 </td>
                                                             </tr>
                                                         ) : (
-                                                            group.expenses.map((e) => (
+                                                            group.expenses.map((e, idx) => (
                                                                 <tr key={e.activity_exp_id}>
-                                                                    <td>{e.activity_exp_id}</td>
+                                                                    <td>{idx + 1}</td>
                                                                     <td>{e.bill_no}</td>
                                                                     <td>{e.particulars}</td>
                                                                     <td style={{ color: '#dc3545', fontWeight: 'bold' }}>₹{Number(e.amount || 0).toFixed(2)}</td>

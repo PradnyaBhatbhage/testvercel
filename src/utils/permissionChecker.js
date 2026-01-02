@@ -131,6 +131,7 @@ export const MODULE_IDS = {
     MAINTENANCE_COMPONENT: "maintenance_component",
     MAINTENANCE_RATE: "maintenance_rate",
     MAINTENANCE_DETAIL: "maintenance_detail",
+    COMMITTEE_MEMBERS: "committee_members",
 };
 
 /**
@@ -151,6 +152,7 @@ export const getModuleIdFromMenuLabel = (menuLabel) => {
         "Maintenance Component": MODULE_IDS.MAINTENANCE_COMPONENT,
         "Maintenance Rate": MODULE_IDS.MAINTENANCE_RATE,
         "Maintenance Detail": MODULE_IDS.MAINTENANCE_DETAIL,
+        "Committee Members": MODULE_IDS.COMMITTEE_MEMBERS,
     };
 
     return mapping[menuLabel] || null;

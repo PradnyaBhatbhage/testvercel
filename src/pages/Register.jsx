@@ -421,7 +421,7 @@ const Register = () => {
                         disabled={loading}
                     >
                         <option value="admin">Admin</option>
-                        <option value="user">User</option>
+                        <option value="user">Committee Members</option>
                         <option value="owner">Owner</option>
                     </select>
 

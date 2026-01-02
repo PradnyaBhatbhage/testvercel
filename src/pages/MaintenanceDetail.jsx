@@ -52,6 +52,7 @@ const MaintenanceDetail = () => {
         payment_mode: "",
         status: "Pending",
         prev_balance_amount: 0,
+        penalty: 0,
         total_amount: 0,
     });
 
@@ -151,11 +152,12 @@ const MaintenanceDetail = () => {
 
                 // Total = (rates per month * duration) + previous balance
                 const duration = Number(form.bill_duration) || 1;
+                const penalty = Number(form.penalty) || 0;
                 const monthlyTotal = totalRate * duration;
-                setFinalTotal(monthlyTotal + lastMonthBalance);
+                setFinalTotal(monthlyTotal + lastMonthBalance + penalty);
             }
         }
-    }, [form.owner_id, form.bill_duration, rates, owners, lastMonthBalance]);
+    }, [form.owner_id, form.bill_duration, form.penalty, rates, owners, lastMonthBalance]);
 
 
 
@@ -330,7 +332,8 @@ const MaintenanceDetail = () => {
 
         // Calculate prev_balance_amount (from last record) and total_amount
         const prevBalance = lastMonthBalance; // This is already calculated from last record
-        const totalAmount = finalTotal; // totalRateAmount + prevBalance
+        const penalty = Number(form.penalty) || 0;
+        const totalAmount = finalTotal; // (totalRateAmount * duration) + prevBalance + penalty
         const paidAmount = Number(form.paid_amount) || 0;
 
         // Auto-update status based on payment
@@ -440,6 +443,7 @@ const MaintenanceDetail = () => {
             payment_mode: "",
             status: "Pending",
             prev_balance_amount: 0,
+            penalty: 0,
             total_amount: 0,
         });
         setTotalRateAmount(0);
@@ -486,6 +490,7 @@ const MaintenanceDetail = () => {
             payment_mode: row.payment_mode || "",
             status: row.status,
             prev_balance_amount: row.prev_balance_amount,
+            penalty: row.penalty || 0,
             total_amount: row.total_amount,
         });
 
@@ -495,14 +500,15 @@ const MaintenanceDetail = () => {
         const total = Number(row.total_amount) || 0;
         const duration = Number(row.bill_duration) || 1;
 
-        // Calculate total_rate_amount: if not stored, calculate from total and prev_balance
+        // Calculate total_rate_amount: if not stored, calculate from total, prev_balance, and penalty
+        const penalty = Number(row.penalty) || 0;
         let totalRate = 0;
         if (row.total_rate_amount !== undefined && row.total_rate_amount !== null) {
             totalRate = Number(row.total_rate_amount);
         } else {
-            // Calculate: total = (rates * duration) + prev_balance
-            // So: rates = (total - prev_balance) / duration
-            totalRate = duration > 0 ? (total - prevBalance) / duration : (total - prevBalance);
+            // Calculate: total = (rates * duration) + prev_balance + penalty
+            // So: rates = (total - prev_balance - penalty) / duration
+            totalRate = duration > 0 ? (total - prevBalance - penalty) / duration : (total - prevBalance - penalty);
         }
 
         setLastMonthBalance(prevBalance);
@@ -669,6 +675,7 @@ const MaintenanceDetail = () => {
                                 paid_amount: 0,
                                 status: "Pending",
                                 prev_balance_amount: 0,
+                                penalty: 0,
                                 total_amount: 0,
                             });
                             setTotalRateAmount(0);
@@ -794,11 +801,25 @@ const MaintenanceDetail = () => {
                             onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
                         />
 
+                        <label>Penalty</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Enter penalty amount"
+                            value={form.penalty || 0}
+                            onChange={(e) => {
+                                const penalty = Number(e.target.value) || 0;
+                                setForm({ ...form, penalty });
+                            }}
+                        />
+
                         <div className="summary-box">
                             <p><b>Rate Amount (per month):</b> ₹{totalRateAmount.toFixed(2)}</p>
                             <p><b>Duration:</b> {form.bill_duration || 1} month(s)</p>
                             <p><b>Rate Amount (total):</b> ₹{(totalRateAmount * (form.bill_duration || 1)).toFixed(2)}</p>
                             <p><b>Previous Balance:</b> ₹{lastMonthBalance.toFixed(2)}</p>
+                            <p><b>Penalty:</b> ₹{(Number(form.penalty) || 0).toFixed(2)}</p>
                             <p><b>Total Amount:</b> ₹{finalTotal.toFixed(2)}</p>
                             {form.paid_amount > 0 && (
                                 <>

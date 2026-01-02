@@ -458,7 +458,7 @@ const ActivityPayment = () => {
                                                 <table className="payment-table" style={{ width: '100%' }}>
                                                     <thead>
                                                         <tr>
-                                                            <th>ID</th>
+                                                            <th>Sr. No.</th>
                                                             <th>Flat No</th>
                                                             <th>Owner Name</th>
                                                             <th>Date</th>
@@ -477,9 +477,9 @@ const ActivityPayment = () => {
                                                                 </td>
                                                             </tr>
                                                         ) : (
-                                                            group.payments.map((p) => (
+                                                            group.payments.map((p, idx) => (
                                                                 <tr key={p.activity_pay_id}>
-                                                                    <td>{p.activity_pay_id}</td>
+                                                                    <td>{idx + 1}</td>
                                                                     <td>{p.flat_no || '-'}</td>
                                                                     <td>{p.owner_name || '-'}</td>
                                                                     <td>{p.payment_date?.split("T")[0]}</td>

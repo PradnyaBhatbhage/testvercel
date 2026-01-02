@@ -349,7 +349,7 @@ const DashboardContent = ({ user }) => {
                 <div className="welcome-content">
                     <div className="welcome-text">
                         <h2>Welcome {societyName || "Society"}! 👋</h2>
-                        <div className="role-badge">{user?.role_type || "User"}</div>
+                        <div className="role-badge">{user?.role_type === "user" ? "Committee Members" : (user?.role_type || "Committee Members")}</div>
                         <p>Here's an overview of your society management system.</p>
                     </div>
                     {societyLogo && (

@@ -240,7 +240,7 @@ const Settings = () => {
                                     <label>Role</label>
                                     <input
                                         type="text"
-                                        value={user?.role_type || "User"}
+                                        value={user?.role_type === "user" ? "Committee Members" : (user?.role_type || "Committee Members")}
                                         disabled
                                         className="disabled-input"
                                     />

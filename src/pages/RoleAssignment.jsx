@@ -861,7 +861,7 @@ const RoleAssignment = () => {
                             <table className="delegations-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>Sr. No.</th>
                                         <th>Delegated To</th>
                                         <th>Delegated By</th>
                                         <th>Start Date</th>
@@ -882,12 +882,12 @@ const RoleAssignment = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        currentDelegations.map((d) => {
+                                        currentDelegations.map((d, index) => {
                                             try {
                                                 const isActive = isDelegationActive(d);
                                                 return (
                                                     <tr key={d.delegation_id} className={!d.is_active ? "revoked" : ""}>
-                                                        <td>{d.delegation_id}</td>
+                                                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                                         <td>{String(d.delegated_to_user_name || "-")}</td>
                                                         <td>{String(d.delegated_by_user_name || "-")}</td>
                                                         <td>

@@ -478,7 +478,7 @@ const Meeting = () => {
                     <table className="meeting-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Sr. No.</th>
                             <th>Wing</th>
                             <th>Meeting Name</th>
                             <th>Purpose</th>
@@ -490,9 +490,9 @@ const Meeting = () => {
                     </thead>
                     <tbody>
                         {filteredMeetings.length > 0 ? (
-                            currentMeetings.map((m) => (
+                            currentMeetings.map((m, index) => (
                                 <tr key={m.meeting_id}>
-                                    <td>{m.meeting_id}</td>
+                                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td>
                                         {wings.find((w) => w.wing_id === m.wing_id)?.wing_name || m.wing_id}
                                     </td>
@@ -733,7 +733,8 @@ const Meeting = () => {
                                 <thead>
                                     <tr style={{ backgroundColor: '#f5f5f5' }}>
                                         <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Flat No</th>
-                                        <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Owner/Tenant</th>
+                                        <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Owner Name</th>
+                                        <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Tenant Name</th>
                                         <th style={{ padding: '10px', textAlign: 'center', border: '1px solid #ddd' }}>Present</th>
                                         <th style={{ padding: '10px', textAlign: 'center', border: '1px solid #ddd' }}>Absent</th>
                                     </tr>
@@ -747,7 +748,23 @@ const Meeting = () => {
                                         const flatMap = {};
                                         wingOwners.forEach(owner => {
                                             if (owner.flat_id && !owner.is_deleted) {
-                                                const rental = rentals.find(r => r.flat_id === owner.flat_id && !r.is_deleted);
+                                                // Match rental by owner_id (rental_detail doesn't have flat_id, it uses owner_id)
+                                                // Also check if rental is currently active (within date range)
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const rental = rentals.find(r => {
+                                                    if (r.owner_id !== owner.owner_id || r.is_deleted) return false;
+                                                    // Check if rental is active (current date is between start_date and end_date)
+                                                    if (r.start_date && r.end_date) {
+                                                        const startDate = new Date(r.start_date);
+                                                        const endDate = new Date(r.end_date);
+                                                        startDate.setHours(0, 0, 0, 0);
+                                                        endDate.setHours(23, 59, 59, 999);
+                                                        return today >= startDate && today <= endDate;
+                                                    }
+                                                    // If no dates, consider it active
+                                                    return true;
+                                                });
                                                 flatMap[owner.flat_id] = {
                                                     flat_no: owner.flat_no || 'N/A',
                                                     owner_name: owner.owner_name,
@@ -766,16 +783,8 @@ const Meeting = () => {
                                         return sortedFlats.map(([flatId, info]) => (
                                             <tr key={flatId}>
                                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>{info.flat_no}</td>
-                                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                                                    {info.is_rental ? (
-                                                        <span>
-                                                            <strong>Tenant:</strong> {info.tenant_name}<br />
-                                                            <small>(Owner: {info.owner_name})</small>
-                                                        </span>
-                                                    ) : (
-                                                        <span><strong>Owner:</strong> {info.owner_name}</span>
-                                                    )}
-                                                </td>
+                                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{info.owner_name || '-'}</td>
+                                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{info.tenant_name || '-'}</td>
                                                 <td style={{ padding: '10px', textAlign: 'center', border: '1px solid #ddd' }}>
                                                     <input
                                                         type="radio"

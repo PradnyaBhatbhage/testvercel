@@ -154,7 +154,7 @@ const MaintenanceComponent = () => {
                     <table className="maintenance-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Sr. No.</th>
                                 <th>Component Name</th>
                                 <th>Description</th>
                                 {(canEdit() || canDelete()) && <th>Actions</th>}
@@ -162,9 +162,9 @@ const MaintenanceComponent = () => {
                         </thead>
                         <tbody>
                             {filtered.length > 0 ? (
-                                currentComponents.map((item) => (
+                                currentComponents.map((item, index) => (
                                     <tr key={item.componant_id}>
-                                        <td>{item.componant_id}</td>
+                                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td>{item.componant_name}</td>
                                         <td>{item.description}</td>
                                         {(canEdit() || canDelete()) && (

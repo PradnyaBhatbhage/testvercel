@@ -15,11 +15,11 @@ import {
     deleteParking,
 } from "../services/api";
 import { getCurrentUserWingId, filterOwnersByWing } from "../utils/wingFilter";
-import { 
-    isOwnerRole, 
-    filterOwnersByCurrentOwner, 
-    canEdit, 
-    canDelete 
+import {
+    isOwnerRole,
+    filterOwnersByCurrentOwner,
+    canEdit,
+    canDelete
 } from "../utils/ownerFilter";
 import "../css/FlatOwner.css";
 
@@ -47,17 +47,24 @@ const FlatOwner = () => {
     const [showForm, setShowForm] = useState(false);
     const [searchText, setSearchText] = useState("");
     const [originalFlatNo, setOriginalFlatNo] = useState("");
+    const [originalWingId, setOriginalWingId] = useState("");
+    const [originalFloorId, setOriginalFloorId] = useState("");
+    const [originalFlatTypeId, setOriginalFlatTypeId] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
     // Parking details state
     const [parkingDetails, setParkingDetails] = useState([]);
     const [existingParking, setExistingParking] = useState([]);
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
-    // Parking attachment states (arrays to handle multiple parking entries)
-    const [parkingFiles, setParkingFiles] = useState([]);
-    const [parkingFilePreviews, setParkingFilePreviews] = useState([]);
+    // Multiple attachments support
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
+    // Parking attachment states (arrays to handle multiple parking entries and multiple files per entry)
+    const [parkingFiles, setParkingFiles] = useState([]); // Array of arrays: [[file1, file2], [file1]]
+    const [parkingFilePreviews, setParkingFilePreviews] = useState([]); // Array of arrays
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [modalDocuments, setModalDocuments] = useState([]);
+    const [modalOwnerName, setModalOwnerName] = useState("");
 
     // Get current user's wing_id
     const currentUserWingId = getCurrentUserWingId();
@@ -69,14 +76,14 @@ const FlatOwner = () => {
     const fetchData = async () => {
         try {
             console.log('🔄 [FlatOwner] fetchData - Starting to fetch data...');
-            
+
             const [wingRes, floorRes, flatTypeRes, ownerRes] = await Promise.allSettled([
                 getWings(),
                 getFloors(),
                 getFlatTypes(),
                 getOwners(),
             ]);
-            
+
             // Process wings
             if (wingRes.status === 'fulfilled') {
                 try {
@@ -86,7 +93,7 @@ const FlatOwner = () => {
                         dataType: typeof wingRes.value.data,
                         isArray: Array.isArray(wingRes.value.data)
                     });
-                    
+
                     let allWings = [];
                     if (Array.isArray(wingRes.value.data)) {
                         allWings = wingRes.value.data;
@@ -96,7 +103,7 @@ const FlatOwner = () => {
                         console.warn('⚠️ [FlatOwner] fetchData - Wings data is not an array:', wingRes.value.data);
                         allWings = [];
                     }
-                    
+
                     if (currentUserWingId !== null) {
                         const filteredWings = allWings.filter(wing => Number(wing.wing_id) === Number(currentUserWingId));
                         setWings(filteredWings);
@@ -113,7 +120,7 @@ const FlatOwner = () => {
                 console.error('❌ [FlatOwner] fetchData - Wings API failed:', wingRes.reason);
                 setWings([]);
             }
-            
+
             // Process floors
             if (floorRes.status === 'fulfilled') {
                 try {
@@ -123,7 +130,7 @@ const FlatOwner = () => {
                         dataType: typeof floorRes.value.data,
                         isArray: Array.isArray(floorRes.value.data)
                     });
-                    
+
                     let floorsData = [];
                     if (Array.isArray(floorRes.value.data)) {
                         floorsData = floorRes.value.data;
@@ -133,7 +140,7 @@ const FlatOwner = () => {
                         console.warn('⚠️ [FlatOwner] fetchData - Floors data is not an array:', floorRes.value.data);
                         floorsData = [];
                     }
-                    
+
                     setFloors(floorsData);
                     console.log('✅ [FlatOwner] fetchData - Floors loaded:', floorsData.length);
                 } catch (err) {
@@ -144,7 +151,7 @@ const FlatOwner = () => {
                 console.error('❌ [FlatOwner] fetchData - Floors API failed:', floorRes.reason);
                 setFloors([]);
             }
-            
+
             // Process flat types
             if (flatTypeRes.status === 'fulfilled') {
                 try {
@@ -154,7 +161,7 @@ const FlatOwner = () => {
                         dataType: typeof flatTypeRes.value.data,
                         isArray: Array.isArray(flatTypeRes.value.data)
                     });
-                    
+
                     let flatTypesData = [];
                     if (Array.isArray(flatTypeRes.value.data)) {
                         flatTypesData = flatTypeRes.value.data;
@@ -164,7 +171,7 @@ const FlatOwner = () => {
                         console.warn('⚠️ [FlatOwner] fetchData - FlatTypes data is not an array:', flatTypeRes.value.data);
                         flatTypesData = [];
                     }
-                    
+
                     setFlatTypes(flatTypesData);
                     console.log('✅ [FlatOwner] fetchData - FlatTypes loaded:', flatTypesData.length);
                 } catch (err) {
@@ -185,7 +192,7 @@ const FlatOwner = () => {
                         dataType: typeof ownerRes.value.data,
                         isArray: Array.isArray(ownerRes.value.data)
                     });
-                    
+
                     let rawOwners = [];
                     if (Array.isArray(ownerRes.value.data)) {
                         rawOwners = ownerRes.value.data;
@@ -195,17 +202,17 @@ const FlatOwner = () => {
                         console.warn('⚠️ [FlatOwner] fetchData - Owners data is not an array:', ownerRes.value.data);
                         rawOwners = [];
                     }
-                    
+
                     if (currentUserWingId !== null) {
                         rawOwners = filterOwnersByWing(rawOwners, currentUserWingId);
                         console.log('✅ [FlatOwner] fetchData - Owners filtered by wing_id:', rawOwners.length);
                     }
-                    
+
                     if (isOwnerRole()) {
                         rawOwners = filterOwnersByCurrentOwner(rawOwners);
                         console.log('✅ [FlatOwner] fetchData - Owners filtered by owner_id:', rawOwners.length);
                     }
-                    
+
                     setOwners(rawOwners);
                     console.log('✅ [FlatOwner] fetchData - Owners loaded:', rawOwners.length);
                 } catch (err) {
@@ -216,7 +223,7 @@ const FlatOwner = () => {
                 console.error('❌ [FlatOwner] fetchData - Owners API failed:', ownerRes.reason);
                 setOwners([]);
             }
-            
+
             console.log('✅ [FlatOwner] fetchData - Data fetch completed');
         } catch (err) {
             console.error('❌ [FlatOwner] fetchData - Unexpected error:', {
@@ -241,36 +248,54 @@ const FlatOwner = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const validFiles = [];
+        const validPreviews = [];
+
+        files.forEach((file) => {
             // Validate file type
             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
+                alert(`File "${file.name}" is not a valid PDF or JPEG/PNG image file.`);
                 return;
             }
 
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
+                alert(`File "${file.name}" size should be less than 10MB.`);
                 return;
             }
 
-            setSelectedFile(file);
+            validFiles.push(file);
 
             // Create preview for images
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    setFilePreview(reader.result);
+                    validPreviews.push(reader.result);
+                    if (validPreviews.length === validFiles.length) {
+                        // Append new previews to existing ones
+                        setFilePreviews(prev => [...prev, ...validPreviews]);
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
-                setFilePreview(null);
+                validPreviews.push(null);
             }
+        });
+
+        // Append new files to existing selected files (don't replace)
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+
+        // Set previews immediately for non-image files
+        if (validPreviews.length === validFiles.length) {
+            setFilePreviews(prev => [...prev, ...validPreviews]);
         }
+
+        // Reset file input to allow selecting same files again
+        e.target.value = '';
     };
 
     const handleSubmit = async (e) => {
@@ -281,50 +306,50 @@ const FlatOwner = () => {
                 editId,
                 formData: { ...formData, owner_adhar_no: '[REDACTED]', owner_pan: '[REDACTED]' }
             });
-            
+
             // Helper function to safely check if string value exists
             const hasValue = (value) => {
                 if (value === null || value === undefined) return false;
                 return String(value).trim().length > 0;
             };
-            
+
             // Validation
             if (!hasValue(formData.flat_no)) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: flat_no is required');
                 alert("Flat number is required");
                 return;
             }
-            
+
             if (!formData.wing_id) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: wing_id is required');
                 alert("Please select a wing");
                 return;
             }
-            
+
             if (!formData.floor_id) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: floor_id is required');
                 alert("Please select a floor");
                 return;
             }
-            
+
             if (!formData.flat_type_id) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: flat_type_id is required');
                 alert("Please select a flat type");
                 return;
             }
-            
+
             if (!hasValue(formData.owner_name)) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: owner_name is required');
                 alert("Owner name is required");
                 return;
             }
-            
+
             if (!hasValue(formData.owner_contactno)) {
                 console.error('❌ [FlatOwner] handleSubmit - Validation failed: owner_contactno is required');
                 alert("Contact number is required");
                 return;
             }
-            
+
             // Check for duplicate flat number
             const flatNoToCheck = String(formData.flat_no || '').toLowerCase().trim();
             const duplicateOwner = owners.find(
@@ -353,7 +378,7 @@ const FlatOwner = () => {
                     flat_type_id: formData.flat_type_id,
                     soc_id: 1,
                 };
-                
+
                 try {
                     const flatRes = await createFlat(flatPayload);
                     console.log('📊 [FlatOwner] handleSubmit - Flat creation response:', {
@@ -363,18 +388,18 @@ const FlatOwner = () => {
                         insertId: flatRes.data?.insertId,
                         flat_id: flatRes.data?.flat_id
                     });
-                    
+
                     if (!flatRes || !flatRes.data) {
                         console.error('❌ [FlatOwner] handleSubmit - Invalid response structure:', flatRes);
                         throw new Error('Invalid response from flat creation API');
                     }
-                    
+
                     // Try multiple possible field names
-                    flatId = flatRes.data.insertId || 
-                             flatRes.data.flat_id || 
-                             flatRes.data.id ||
-                             flatRes.data.flatId;
-                    
+                    flatId = flatRes.data.insertId ||
+                        flatRes.data.flat_id ||
+                        flatRes.data.id ||
+                        flatRes.data.flatId;
+
                     if (!flatId) {
                         console.error('❌ [FlatOwner] handleSubmit - Flat ID not found in response:', {
                             responseData: flatRes.data,
@@ -382,7 +407,7 @@ const FlatOwner = () => {
                         });
                         throw new Error('Flat ID not returned from API. Response: ' + JSON.stringify(flatRes.data));
                     }
-                    
+
                     console.log('✅ [FlatOwner] handleSubmit - Flat created successfully:', flatId);
                 } catch (err) {
                     console.error('❌ [FlatOwner] handleSubmit - Error creating flat:', {
@@ -396,10 +421,21 @@ const FlatOwner = () => {
                 }
             } else {
                 flatId = formData.flat_id;
-                
-                // If flat number changed, update the flat record
-                if (originalFlatNo && originalFlatNo !== formData.flat_no) {
-                    console.log('🔄 [FlatOwner] handleSubmit - Updating flat number...');
+
+                // Check if any flat-related fields changed
+                const flatNoChanged = originalFlatNo && originalFlatNo !== formData.flat_no;
+                const wingIdChanged = originalWingId && String(originalWingId) !== String(formData.wing_id);
+                const floorIdChanged = originalFloorId && String(originalFloorId) !== String(formData.floor_id);
+                const flatTypeIdChanged = originalFlatTypeId && String(originalFlatTypeId) !== String(formData.flat_type_id);
+
+                // If any flat field changed, update the flat record
+                if (flatNoChanged || wingIdChanged || floorIdChanged || flatTypeIdChanged) {
+                    console.log('🔄 [FlatOwner] handleSubmit - Updating flat record...', {
+                        flatNoChanged,
+                        wingIdChanged,
+                        floorIdChanged,
+                        flatTypeIdChanged
+                    });
                     const flatPayload = {
                         flat_no: String(formData.flat_no || '').trim(),
                         wing_id: formData.wing_id,
@@ -407,7 +443,7 @@ const FlatOwner = () => {
                         flat_type_id: formData.flat_type_id,
                         soc_id: 1,
                     };
-                    
+
                     try {
                         await updateFlat(flatId, flatPayload);
                         console.log('✅ [FlatOwner] handleSubmit - Flat updated successfully');
@@ -424,29 +460,37 @@ const FlatOwner = () => {
             }
 
             console.log('🔄 [FlatOwner] handleSubmit - Processing owner...');
-            
+
             // Helper function to safely convert to string and trim
             const safeTrim = (value) => {
                 if (value === null || value === undefined) return null;
                 return String(value).trim() || null;
             };
-            
-            const ownerPayload = { 
-                ...formData, 
+
+            const ownerPayload = {
+                ...formData,
                 flat_id: flatId,
                 owner_name: safeTrim(formData.owner_name),
                 owner_contactno: safeTrim(formData.owner_contactno),
                 owner_altercontactno: safeTrim(formData.owner_altercontactno),
                 owner_email: safeTrim(formData.owner_email),
+                is_residence: formData.is_residence === true || formData.is_residence === 1 || formData.is_residence === '1' ? 1 : 0, // Explicitly convert to 1 or 0
                 owner_adhar_no: safeTrim(formData.owner_adhar_no),
                 owner_pan: safeTrim(formData.owner_pan),
                 ownership_type: safeTrim(formData.ownership_type),
             };
 
+            console.log('🔄 [FlatOwner] handleSubmit - is_residence value:', {
+                original: formData.is_residence,
+                type: typeof formData.is_residence,
+                converted: ownerPayload.is_residence
+            });
+
             if (editMode && editId) {
                 try {
                     console.log('🔄 [FlatOwner] handleSubmit - Updating owner...');
-                    await updateOwner(editId, ownerPayload, selectedFile);
+                    // Send all selected files
+                    await updateOwner(editId, ownerPayload, selectedFiles.length > 0 ? selectedFiles : null);
                     ownerId = editId;
                     console.log('✅ [FlatOwner] handleSubmit - Owner updated successfully');
                     alert("Owner updated successfully");
@@ -462,19 +506,20 @@ const FlatOwner = () => {
             } else {
                 try {
                     console.log('🔄 [FlatOwner] handleSubmit - Creating owner...');
-                    const ownerRes = await addOwner(ownerPayload, selectedFile);
+                    // Send all selected files
+                    const ownerRes = await addOwner(ownerPayload, selectedFiles.length > 0 ? selectedFiles : null);
                     console.log('📊 [FlatOwner] handleSubmit - Owner creation response:', ownerRes.data);
-                    
+
                     if (!ownerRes || !ownerRes.data) {
                         throw new Error('Invalid response from owner creation API');
                     }
-                    
+
                     ownerId = ownerRes.data.id || ownerRes.data.insertId || ownerRes.data.owner_id;
-                    
+
                     if (!ownerId) {
                         throw new Error('Owner ID not returned from API');
                     }
-                    
+
                     console.log('✅ [FlatOwner] handleSubmit - Owner created successfully:', ownerId);
                     alert("Owner added successfully");
                 } catch (err) {
@@ -485,70 +530,6 @@ const FlatOwner = () => {
                     });
                     alert("Error adding owner: " + (err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error"));
                     return;
-                }
-            }
-
-            // Handle parking details
-            if (ownerId) {
-                if (editMode) {
-                    // In edit mode: update existing or add new parking
-                    const existingParkingIds = existingParking.map(p => p.parking_id);
-                    const updatedParkingIds = parkingDetails
-                        .filter(p => p.parking_id)
-                        .map(p => p.parking_id);
-
-                    // Delete parking that was removed
-                    for (const existing of existingParking) {
-                        if (!updatedParkingIds.includes(existing.parking_id)) {
-                            try {
-                                await deleteParking(existing.parking_id, "Removed from owner form");
-                            } catch (err) {
-                                console.error("Error deleting parking:", err);
-                            }
-                        }
-                    }
-
-                    // Update or add parking
-                    for (let i = 0; i < parkingDetails.length; i++) {
-                        const parking = parkingDetails[i];
-                        if (parking.vehical_type && parking.vehical_no) {
-                            const parkingFile = parkingFiles[i] || null;
-                            if (parking.parking_id && existingParkingIds.includes(parking.parking_id)) {
-                                // Update existing parking
-                                await updateParking(parking.parking_id, {
-                                    vehical_type: parking.vehical_type,
-                                    vehical_no: parking.vehical_no,
-                                    parking_slot_no: parking.parking_slot_no || "",
-                                    remark: parking.remark || "",
-                                    attachment_url: parking.attachment_url || null,
-                                }, parkingFile);
-                            } else {
-                                // Add new parking
-                                await addParking({
-                                    owner_id: ownerId,
-                                    vehical_type: parking.vehical_type,
-                                    vehical_no: parking.vehical_no,
-                                    parking_slot_no: parking.parking_slot_no || "",
-                                    remark: parking.remark || "",
-                                }, parkingFile);
-                            }
-                        }
-                    }
-                } else {
-                    // In add mode: just add new parking
-                    for (let i = 0; i < parkingDetails.length; i++) {
-                        const parking = parkingDetails[i];
-                        if (parking.vehical_type && parking.vehical_no) {
-                            const parkingFile = parkingFiles[i] || null;
-                            await addParking({
-                                owner_id: ownerId,
-                                vehical_type: parking.vehical_type,
-                                vehical_no: parking.vehical_no,
-                                parking_slot_no: parking.parking_slot_no || "",
-                                remark: parking.remark || "",
-                            }, parkingFile);
-                        }
-                    }
                 }
             }
 
@@ -579,7 +560,9 @@ const FlatOwner = () => {
                         for (let i = 0; i < parkingDetails.length; i++) {
                             const parking = parkingDetails[i];
                             if (parking.vehical_type && parking.vehical_no) {
-                                const parkingFile = parkingFiles[i] || null;
+                                // Send all files for this parking entry
+                                const parkingFileArray = parkingFiles[i] || [];
+                                const parkingFilesToSend = parkingFileArray.length > 0 ? parkingFileArray : null;
                                 if (parking.parking_id && existingParkingIds.includes(parking.parking_id)) {
                                     // Update existing parking
                                     try {
@@ -588,8 +571,9 @@ const FlatOwner = () => {
                                             vehical_no: parking.vehical_no,
                                             parking_slot_no: parking.parking_slot_no || "",
                                             remark: parking.remark || "",
+                                            ownership_type: parking.ownership_type || "Owner",
                                             attachment_url: parking.attachment_url || null,
-                                        }, parkingFile);
+                                        }, parkingFilesToSend);
                                         console.log('✅ [FlatOwner] handleSubmit - Parking updated:', parking.parking_id);
                                     } catch (err) {
                                         console.error('❌ [FlatOwner] handleSubmit - Error updating parking:', err);
@@ -603,7 +587,8 @@ const FlatOwner = () => {
                                             vehical_no: parking.vehical_no,
                                             parking_slot_no: parking.parking_slot_no || "",
                                             remark: parking.remark || "",
-                                        }, parkingFile);
+                                            ownership_type: parking.ownership_type || "Owner",
+                                        }, parkingFilesToSend);
                                         console.log('✅ [FlatOwner] handleSubmit - Parking added');
                                     } catch (err) {
                                         console.error('❌ [FlatOwner] handleSubmit - Error adding parking:', err);
@@ -616,7 +601,9 @@ const FlatOwner = () => {
                         for (let i = 0; i < parkingDetails.length; i++) {
                             const parking = parkingDetails[i];
                             if (parking.vehical_type && parking.vehical_no) {
-                                const parkingFile = parkingFiles[i] || null;
+                                // Send all files for this parking entry
+                                const parkingFileArray = parkingFiles[i] || [];
+                                const parkingFilesToSend = parkingFileArray.length > 0 ? parkingFileArray : null;
                                 try {
                                     await addParking({
                                         owner_id: ownerId,
@@ -624,7 +611,8 @@ const FlatOwner = () => {
                                         vehical_no: parking.vehical_no,
                                         parking_slot_no: parking.parking_slot_no || "",
                                         remark: parking.remark || "",
-                                    }, parkingFile);
+                                        ownership_type: parking.ownership_type || "Owner",
+                                    }, parkingFilesToSend);
                                     console.log('✅ [FlatOwner] handleSubmit - Parking added');
                                 } catch (err) {
                                     console.error('❌ [FlatOwner] handleSubmit - Error adding parking:', err);
@@ -641,7 +629,10 @@ const FlatOwner = () => {
 
             console.log('✅ [FlatOwner] handleSubmit - Form submission completed successfully');
             resetForm();
-            fetchData();
+            // Wait a bit for backend to process, then refresh data
+            setTimeout(() => {
+                fetchData();
+            }, 500);
             setShowForm(false);
         } catch (err) {
             console.error('❌ [FlatOwner] handleSubmit - Unexpected error:', {
@@ -664,7 +655,7 @@ const FlatOwner = () => {
             // Fallback to currentUserWingId if wings array is empty
             defaultWingId = currentUserWingId;
         }
-        
+
         setFormData({
             flat_no: "",
             wing_id: defaultWingId,
@@ -686,8 +677,11 @@ const FlatOwner = () => {
         setEditMode(false);
         setEditId(null);
         setOriginalFlatNo("");
-        setSelectedFile(null);
-        setFilePreview(null);
+        setOriginalWingId("");
+        setOriginalFloorId("");
+        setOriginalFlatTypeId("");
+        setSelectedFiles([]);
+        setFilePreviews([]);
     };
 
     const handleEdit = async (owner) => {
@@ -696,7 +690,7 @@ const FlatOwner = () => {
             if (value === null || value === undefined) return "";
             return String(value);
         };
-        
+
         setFormData({
             flat_id: owner.flat_id,
             flat_no: safeString(owner.flat_no),
@@ -707,7 +701,7 @@ const FlatOwner = () => {
             owner_contactno: safeString(owner.owner_contactno),
             owner_altercontactno: safeString(owner.owner_altercontactno),
             owner_email: safeString(owner.owner_email),
-            is_residence: !!owner.is_residence,
+            is_residence: owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true,
             owner_adhar_no: safeString(owner.owner_adhar_no),
             owner_pan: safeString(owner.owner_pan),
             ownership_type: safeString(owner.ownership_type),
@@ -716,8 +710,69 @@ const FlatOwner = () => {
         setEditMode(true);
         setEditId(owner.owner_id);
         setOriginalFlatNo(owner.flat_no || "");
-        setSelectedFile(null);
-        setFilePreview(owner.attachment_url && owner.attachment_url.startsWith('http') ? owner.attachment_url : null);
+        setOriginalWingId(owner.wing_id || "");
+        setOriginalFloorId(owner.floor_id || "");
+        setOriginalFlatTypeId(owner.flat_type_id || "");
+        setSelectedFiles([]);
+        // Handle both single URL string and array of URLs
+        if (owner.attachment_url) {
+            let urls = [];
+            console.log('📋 [FlatOwner] handleEdit - Raw attachment_url:', {
+                type: typeof owner.attachment_url,
+                isArray: Array.isArray(owner.attachment_url),
+                value: owner.attachment_url
+            });
+
+            if (Array.isArray(owner.attachment_url)) {
+                urls = owner.attachment_url.filter(url => {
+                    // Filter out invalid URLs
+                    if (!url || typeof url !== 'string') return false;
+                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                    // Filter out URLs that are too short (likely invalid)
+                    if (url.length < 10) return false;
+                    // Filter out URLs that look like base64 fragments or invalid data
+                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                    return true;
+                });
+            } else if (typeof owner.attachment_url === 'string') {
+                // Try to parse as JSON first (in case it's stored as JSON string)
+                try {
+                    const parsed = JSON.parse(owner.attachment_url);
+                    console.log('📋 [FlatOwner] handleEdit - Parsed JSON:', {
+                        type: typeof parsed,
+                        isArray: Array.isArray(parsed),
+                        value: parsed
+                    });
+                    if (Array.isArray(parsed)) {
+                        urls = parsed.filter(url => {
+                            if (!url || typeof url !== 'string') return false;
+                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                            if (url.length < 10) return false;
+                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                            return true;
+                        });
+                    } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                        // Additional validation for single URL
+                        if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                            urls = [parsed];
+                        }
+                    }
+                } catch (e) {
+                    // Not JSON, treat as single URL string
+                    console.log('📋 [FlatOwner] handleEdit - Not JSON, treating as single URL');
+                    if (owner.attachment_url.startsWith('http') || owner.attachment_url.startsWith('https')) {
+                        if (owner.attachment_url.length >= 10 && (!owner.attachment_url.match(/^[A-Za-z0-9+/=]+$/g) || owner.attachment_url.length >= 50)) {
+                            urls = [owner.attachment_url];
+                        }
+                    }
+                }
+            }
+            setFilePreviews(urls);
+            console.log('📋 [FlatOwner] handleEdit - Loaded existing attachments:', urls.length, urls);
+        } else {
+            setFilePreviews([]);
+            console.log('📋 [FlatOwner] handleEdit - No attachment_url found');
+        }
 
         // Load existing parking details for this owner
         try {
@@ -731,7 +786,7 @@ const FlatOwner = () => {
                 dataType: typeof parkingRes.data,
                 isArray: Array.isArray(parkingRes.data)
             });
-            
+
             let allParking = [];
             if (Array.isArray(parkingRes.data)) {
                 allParking = parkingRes.data;
@@ -741,10 +796,10 @@ const FlatOwner = () => {
                 console.warn('⚠️ [FlatOwner] handleEdit - Parking data is not an array:', parkingRes.data);
                 allParking = [];
             }
-            
+
             const ownerParking = allParking.filter(p => p.owner_id === owner.owner_id && !p.is_deleted);
             console.log('✅ [FlatOwner] handleEdit - Parking details loaded:', ownerParking.length);
-            
+
             setExistingParking(ownerParking);
             const parkingData = ownerParking.map(p => ({
                 parking_id: p.parking_id,
@@ -752,14 +807,57 @@ const FlatOwner = () => {
                 vehical_no: p.vehical_no || "",
                 parking_slot_no: p.parking_slot_no || "",
                 remark: p.remark || "",
+                ownership_type: p.ownership_type || "Owner", // Default to Owner if not set
                 attachment_url: p.attachment_url || null,
             }));
             setParkingDetails(parkingData);
-            // Initialize parking file states
-            setParkingFiles(new Array(parkingData.length).fill(null));
-            setParkingFilePreviews(parkingData.map(p => 
-                p.attachment_url && p.attachment_url.startsWith('http') ? p.attachment_url : null
-            ));
+            // Initialize parking file states - support multiple files per parking entry
+            setParkingFiles(new Array(parkingData.length).fill([]));
+            setParkingFilePreviews(parkingData.map(p => {
+                if (p.attachment_url) {
+                    let urls = [];
+                    if (Array.isArray(p.attachment_url)) {
+                        urls = p.attachment_url.filter(url => {
+                            // Filter out invalid URLs
+                            if (!url || typeof url !== 'string') return false;
+                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                            if (url.length < 10) return false;
+                            // Filter out URLs that look like base64 fragments or invalid data
+                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                            return true;
+                        });
+                    } else if (typeof p.attachment_url === 'string') {
+                        // Try to parse as JSON first (in case it's stored as JSON string)
+                        try {
+                            const parsed = JSON.parse(p.attachment_url);
+                            if (Array.isArray(parsed)) {
+                                urls = parsed.filter(url => {
+                                    if (!url || typeof url !== 'string') return false;
+                                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                    if (url.length < 10) return false;
+                                    // Filter out URLs that look like base64 fragments or invalid data
+                                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                    return true;
+                                });
+                            } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                                // Additional validation for single URL
+                                if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                                    urls = [parsed];
+                                }
+                            }
+                        } catch (e) {
+                            // Not JSON, treat as single URL string
+                            if (p.attachment_url.startsWith('http') || p.attachment_url.startsWith('https')) {
+                                if (p.attachment_url.length >= 10 && (!p.attachment_url.match(/^[A-Za-z0-9+/=]+$/g) || p.attachment_url.length >= 50)) {
+                                    urls = [p.attachment_url];
+                                }
+                            }
+                        }
+                    }
+                    return urls;
+                }
+                return [];
+            }));
         } catch (err) {
             console.error("❌ [FlatOwner] handleEdit - Error loading parking details:", {
                 message: err.message,
@@ -811,10 +909,11 @@ const FlatOwner = () => {
             vehical_no: "",
             parking_slot_no: "",
             remark: "",
+            ownership_type: "Owner", // Default to Owner
             attachment_url: null,
         }]);
-        setParkingFiles([...parkingFiles, null]);
-        setParkingFilePreviews([...parkingFilePreviews, null]);
+        setParkingFiles([...parkingFiles, []]); // Array of files for this parking entry
+        setParkingFilePreviews([...parkingFilePreviews, []]); // Array of previews
     };
 
     const handleRemoveParking = (index) => {
@@ -836,41 +935,63 @@ const FlatOwner = () => {
     };
 
     const handleParkingFileChange = (index, e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const validFiles = [];
+        const validPreviews = [];
+
+        files.forEach((file) => {
             // Validate file type
             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
+                alert(`File "${file.name}" is not a valid PDF or JPEG/PNG image file.`);
                 return;
             }
 
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
+                alert(`File "${file.name}" size should be less than 10MB.`);
                 return;
             }
 
-            const updatedFiles = [...parkingFiles];
-            updatedFiles[index] = file;
-            setParkingFiles(updatedFiles);
+            validFiles.push(file);
 
             // Create preview for images
-            const updatedPreviews = [...parkingFilePreviews];
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    updatedPreviews[index] = reader.result;
-                    setParkingFilePreviews([...updatedPreviews]);
+                    validPreviews.push(reader.result);
+                    if (validPreviews.length === validFiles.length) {
+                        // Append new previews to existing ones for this parking entry
+                        const updatedPreviews = [...parkingFilePreviews];
+                        const existingPreviews = updatedPreviews[index] || [];
+                        updatedPreviews[index] = [...existingPreviews, ...validPreviews];
+                        setParkingFilePreviews(updatedPreviews);
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
-                updatedPreviews[index] = null;
-                setParkingFilePreviews(updatedPreviews);
+                validPreviews.push(null);
             }
+        });
+
+        // Append new files to existing files for this parking entry (don't replace)
+        const updatedFiles = [...parkingFiles];
+        const existingFiles = updatedFiles[index] || [];
+        updatedFiles[index] = [...existingFiles, ...validFiles];
+        setParkingFiles(updatedFiles);
+
+        // Set previews immediately for non-image files
+        if (validPreviews.length === validFiles.length) {
+            const updatedPreviews = [...parkingFilePreviews];
+            const existingPreviews = updatedPreviews[index] || [];
+            updatedPreviews[index] = [...existingPreviews, ...validPreviews];
+            setParkingFilePreviews(updatedPreviews);
         }
+
+        // Reset file input to allow selecting same files again
+        e.target.value = '';
     };
 
     const filteredOwners = owners.filter(
@@ -920,6 +1041,7 @@ const FlatOwner = () => {
                     <table>
                         <thead>
                             <tr>
+                                <th>Sr. No.</th>
                                 <th>Owner Name</th>
                                 <th>Flat No</th>
                                 <th>Wing</th>
@@ -933,47 +1055,116 @@ const FlatOwner = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentOwners.map((owner) => (
-                                <tr key={owner.owner_id}>
-                                    <td>{owner.owner_name}</td>
-                                    <td>{owner.flat_no || "-"}</td>
-                                    <td>{owner.wing_name || "-"}</td>
-                                    <td>{owner.floor_name || "-"}</td>
-                                    <td>{owner.flat_type_name || "-"}</td>
-                                    <td>{owner.owner_contactno}</td>
-                                    <td>{owner.owner_email}</td>
-                                    <td>
-                                        {/* <span className={`status-badge ${owner.is_deleted ? 'status-deleted' : 'status-active'}`}> */}
-                                        {owner.is_deleted ? "Deleted" : "Active"}
+                            {currentOwners.map((owner, index) => {
+                                // Explicitly check is_residence value for status
+                                // Handle all possible formats: 0, 1, "0", "1", true, false, null, undefined
+                                const isResidence = owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true;
+                                const status = owner.is_deleted ? "Deleted" : (isResidence ? "Active" : "Inactive");
 
-                                    </td>
-                                    <td>
-                                        {owner.attachment_url ? (
-                                            <a
-                                                href={owner.attachment_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ color: '#007bff', textDecoration: 'none' }}
-                                            >
-                                                {owner.attachment_url.endsWith('.pdf') || owner.attachment_url.includes('pdf') ? '📄 View PDF' : '🖼️ View Image'}
-                                            </a>
-                                        ) : (
-                                            <span style={{ color: '#999' }}>No attachment</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {!owner.is_deleted && canEdit() && (
-                                            <button className="edit-btn-flat" onClick={() => handleEdit(owner)}>Edit</button>
-                                        )}
-                                        {!owner.is_deleted && canDelete() && (
-                                            <button className="delete-btn-flat" onClick={() => handleDelete(owner)}>Delete</button>
-                                        )}
-                                        {isOwnerRole() && (
-                                            <span style={{ color: '#999', fontSize: '12px' }}>View Only</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
+                                // Debug logging (can be removed later)
+                                if (owner.owner_id === 1 || owner.owner_name === "Keval tiwallekar") {
+                                    console.log('🔍 [FlatOwner] Status check:', {
+                                        owner_id: owner.owner_id,
+                                        owner_name: owner.owner_name,
+                                        is_residence: owner.is_residence,
+                                        is_residence_type: typeof owner.is_residence,
+                                        isResidence: isResidence,
+                                        status: status
+                                    });
+                                }
+
+                                return (
+                                    <tr key={owner.owner_id}>
+                                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                        <td>{owner.owner_name}</td>
+                                        <td>{owner.flat_no || "-"}</td>
+                                        <td>{owner.wing_name || "-"}</td>
+                                        <td>{owner.floor_name || "-"}</td>
+                                        <td>{owner.flat_type_name || "-"}</td>
+                                        <td>{owner.owner_contactno}</td>
+                                        <td>{owner.owner_email}</td>
+                                        <td>
+                                            {status}
+                                        </td>
+                                        <td>
+                                            {(() => {
+                                                let attachmentUrls = [];
+
+                                                if (owner.attachment_url) {
+                                                    if (Array.isArray(owner.attachment_url)) {
+                                                        attachmentUrls = owner.attachment_url.filter(url => {
+                                                            // Filter out invalid URLs
+                                                            if (!url || typeof url !== 'string') return false;
+                                                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                                            if (url.length < 10) return false;
+                                                            // Filter out URLs that look like base64 fragments or invalid data
+                                                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                                            return true;
+                                                        });
+                                                    } else if (typeof owner.attachment_url === 'string') {
+                                                        // Try to parse as JSON first (in case it's stored as JSON string)
+                                                        try {
+                                                            const parsed = JSON.parse(owner.attachment_url);
+                                                            if (Array.isArray(parsed)) {
+                                                                attachmentUrls = parsed.filter(url => {
+                                                                    if (!url || typeof url !== 'string') return false;
+                                                                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
+                                                                    if (url.length < 10) return false;
+                                                                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
+                                                                    return true;
+                                                                });
+                                                            } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
+                                                                // Additional validation for single URL
+                                                                if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
+                                                                    attachmentUrls = [parsed];
+                                                                }
+                                                            }
+                                                        } catch (e) {
+                                                            // Not JSON, treat as single URL string
+                                                            if (owner.attachment_url.startsWith('http') || owner.attachment_url.startsWith('https')) {
+                                                                if (owner.attachment_url.length >= 10 && (!owner.attachment_url.match(/^[A-Za-z0-9+/=]+$/g) || owner.attachment_url.length >= 50)) {
+                                                                    attachmentUrls = [owner.attachment_url];
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (attachmentUrls.length === 0) {
+                                                    return <span style={{ color: '#999' }}>No attachment</span>;
+                                                }
+
+                                                // Show "View Documents" link that opens modal
+                                                return (
+                                                    <a
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setModalDocuments(attachmentUrls);
+                                                            setModalOwnerName(owner.owner_name || 'Owner');
+                                                            setShowDocumentModal(true);
+                                                        }}
+                                                        style={{ color: '#007bff', textDecoration: 'none', cursor: 'pointer', fontWeight: '500' }}
+                                                    >
+                                                        View Documents ({attachmentUrls.length})
+                                                    </a>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td>
+                                            {!owner.is_deleted && canEdit() && (
+                                                <button className="edit-btn-flat" onClick={() => handleEdit(owner)}>Edit</button>
+                                            )}
+                                            {!owner.is_deleted && canDelete() && (
+                                                <button className="delete-btn-flat" onClick={() => handleDelete(owner)}>Delete</button>
+                                            )}
+                                            {isOwnerRole() && (
+                                                <span style={{ color: '#999', fontSize: '12px' }}>View Only</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                     {totalPages > 1 && (
@@ -1135,38 +1326,154 @@ const FlatOwner = () => {
                             />
                         </div>
 
-                        <div className="form-field">
-                            <label>Attachment (PDF/JPEG):</label>
+                        <div className="form-field full">
+                            <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                             <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png"
+                                multiple
                                 onChange={handleFileChange}
                             />
-                            {selectedFile && (
-                                <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                    Selected: {selectedFile.name}
-                                </p>
-                            )}
-                            {filePreview && !selectedFile && formData.attachment_url && (
+                            {(filePreviews.length > 0 || selectedFiles.length > 0) && (
                                 <div style={{ marginTop: '10px' }}>
-                                    <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
-                                    {formData.attachment_url.endsWith('.pdf') || formData.attachment_url.includes('pdf') ? (
-                                        <a href={formData.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                            View PDF
-                                        </a>
-                                    ) : (
-                                        <img src={formData.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                    )}
-                                </div>
-                            )}
-                            {filePreview && selectedFile && (
-                                <div style={{ marginTop: '10px' }}>
-                                    <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
-                                    {selectedFile.type === 'application/pdf' ? (
-                                        <p style={{ color: '#007bff' }}>PDF file selected</p>
-                                    ) : (
-                                        <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                    )}
+                                    <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                        All documents ({filePreviews.length + selectedFiles.length}):
+                                    </p>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f5f5f5' }}>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {/* Show existing documents first */}
+                                            {filePreviews.length > 0 && filePreviews.map((preview, idx) => {
+                                                if (!preview) return null;
+
+                                                // Validate URL - skip invalid URLs
+                                                if (typeof preview !== 'string' || preview.length < 10) return null;
+                                                if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                // Skip URLs that look like base64 fragments or invalid data
+                                                if (preview.match(/^[A-Za-z0-9+/=]+$/g) && preview.length < 50) return null;
+
+                                                // Extract file name from URL (handle query parameters and encoded URLs)
+                                                let fileName = `Document ${idx + 1}`;
+                                                try {
+                                                    const url = new URL(preview);
+                                                    const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                    // Get the last meaningful part (skip empty parts)
+                                                    if (pathParts.length > 0) {
+                                                        fileName = pathParts[pathParts.length - 1];
+                                                        // Decode URL-encoded file names
+                                                        try {
+                                                            fileName = decodeURIComponent(fileName);
+                                                        } catch (decodeErr) {
+                                                            // If decoding fails, use as is
+                                                        }
+                                                        // Remove query parameters and hash fragments
+                                                        fileName = fileName.split('?')[0].split('#')[0];
+                                                        // Validate file name - if it looks invalid, use default
+                                                        if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                            // If it's just base64-like characters and short, it's probably invalid
+                                                            if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            } else if (!fileName || fileName.length < 3) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    // If URL parsing fails, try simple split
+                                                    try {
+                                                        const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                        if (parts.length > 0) {
+                                                            fileName = parts[parts.length - 1];
+                                                            // Remove query parameters and hash fragments
+                                                            fileName = fileName.split('?')[0].split('#')[0];
+                                                            try {
+                                                                fileName = decodeURIComponent(fileName);
+                                                            } catch (decodeErr) {
+                                                                // If decoding fails, use as is
+                                                            }
+                                                            // Validate file name
+                                                            if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            }
+                                                        }
+                                                    } catch (splitErr) {
+                                                        fileName = `Document ${idx + 1}`;
+                                                    }
+                                                }
+
+                                                // Better type detection
+                                                const lowerFileName = fileName.toLowerCase();
+                                                const lowerUrl = preview.toLowerCase();
+                                                const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
+                                                const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                                return (
+                                                    <tr key={`existing-${idx}`}>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                            {fileName}
+                                                        </td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                            <a
+                                                                href={preview}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                            >
+                                                                View
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {/* Show newly selected files */}
+                                            {selectedFiles.map((file, idx) => (
+                                                <tr key={`new-${idx}`}>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{filePreviews.length + idx + 1}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updated = selectedFiles.filter((_, i) => i !== idx);
+                                                                setSelectedFiles(updated);
+                                                                // Also remove corresponding preview if exists
+                                                                const previewIdx = filePreviews.length - selectedFiles.length + idx;
+                                                                if (previewIdx >= 0 && previewIdx < filePreviews.length) {
+                                                                    const updatedPreviews = filePreviews.filter((_, i) => i !== previewIdx);
+                                                                    setFilePreviews(updatedPreviews);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                background: '#dc3545',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '11px'
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
                         </div>
@@ -1213,6 +1520,17 @@ const FlatOwner = () => {
                                 </div>
 
                                 <div className="form-field">
+                                    <label>Ownership Type</label>
+                                    <select
+                                        value={parking.ownership_type || "Owner"}
+                                        onChange={(e) => handleParkingChange(index, "ownership_type", e.target.value)}
+                                    >
+                                        <option value="Owner">Owner</option>
+                                        <option value="Rental">Rental</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-field">
                                     <label>Remark</label>
                                     <input
                                         type="text"
@@ -1222,38 +1540,155 @@ const FlatOwner = () => {
                                     />
                                 </div>
 
-                                <div className="form-field">
-                                    <label>Attachment (PDF/JPEG):</label>
+                                <div className="form-field full">
+                                    <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                                     <input
                                         type="file"
                                         accept=".pdf,.jpg,.jpeg,.png"
+                                        multiple
                                         onChange={(e) => handleParkingFileChange(index, e)}
                                     />
-                                    {parkingFiles[index] && (
-                                        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                            Selected: {parkingFiles[index].name}
-                                        </p>
-                                    )}
-                                    {parkingFilePreviews[index] && !parkingFiles[index] && parking.attachment_url && (
+                                    {((parkingFilePreviews[index] && parkingFilePreviews[index].length > 0) || (parkingFiles[index] && parkingFiles[index].length > 0)) && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
-                                            {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf') ? (
-                                                <a href={parking.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                                    View PDF
-                                                </a>
-                                            ) : (
-                                                <img src={parking.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                            )}
-                                        </div>
-                                    )}
-                                    {parkingFilePreviews[index] && parkingFiles[index] && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
-                                            {parkingFiles[index].type === 'application/pdf' ? (
-                                                <p style={{ color: '#007bff' }}>PDF file selected</p>
-                                            ) : (
-                                                <img src={parkingFilePreviews[index]} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                            )}
+                                            <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                                All documents ({(parkingFilePreviews[index]?.length || 0) + (parkingFiles[index]?.length || 0)}):
+                                            </p>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                                <thead>
+                                                    <tr style={{ background: '#f5f5f5' }}>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {/* Show existing documents first */}
+                                                    {parkingFilePreviews[index] && parkingFilePreviews[index].length > 0 && parkingFilePreviews[index].map((preview, idx) => {
+                                                        if (!preview) return null;
+
+                                                        // Validate URL - skip invalid URLs
+                                                        if (typeof preview !== 'string' || preview.length < 10) return null;
+                                                        if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                        // Skip URLs that look like base64 fragments or invalid data
+                                                        if (preview.match(/^[A-Za-z0-9+/=]+$/g) && preview.length < 50) return null;
+
+                                                        // Extract file name from URL (handle query parameters and encoded URLs)
+                                                        let fileName = `Document ${idx + 1}`;
+                                                        try {
+                                                            const url = new URL(preview);
+                                                            const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                            // Get the last meaningful part (skip empty parts)
+                                                            if (pathParts.length > 0) {
+                                                                fileName = pathParts[pathParts.length - 1];
+                                                                // Decode URL-encoded file names
+                                                                try {
+                                                                    fileName = decodeURIComponent(fileName);
+                                                                } catch (decodeErr) {
+                                                                    // If decoding fails, use as is
+                                                                }
+                                                                // Remove query parameters and hash fragments
+                                                                fileName = fileName.split('?')[0].split('#')[0];
+                                                                // Validate file name - if it looks invalid, use default
+                                                                if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                    // If it's just base64-like characters and short, it's probably invalid
+                                                                    if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                        fileName = `Document ${idx + 1}`;
+                                                                    } else if (!fileName || fileName.length < 3) {
+                                                                        fileName = `Document ${idx + 1}`;
+                                                                    }
+                                                                }
+                                                            }
+                                                        } catch (e) {
+                                                            // If URL parsing fails, try simple split
+                                                            try {
+                                                                const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                                if (parts.length > 0) {
+                                                                    fileName = parts[parts.length - 1];
+                                                                    // Remove query parameters and hash fragments
+                                                                    fileName = fileName.split('?')[0].split('#')[0];
+                                                                    try {
+                                                                        fileName = decodeURIComponent(fileName);
+                                                                    } catch (decodeErr) {
+                                                                        // If decoding fails, use as is
+                                                                    }
+                                                                    // Validate file name
+                                                                    if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                        fileName = `Document ${idx + 1}`;
+                                                                    }
+                                                                }
+                                                            } catch (splitErr) {
+                                                                fileName = `Document ${idx + 1}`;
+                                                            }
+                                                        }
+
+                                                        // Better type detection
+                                                        const lowerFileName = fileName.toLowerCase();
+                                                        const lowerUrl = preview.toLowerCase();
+                                                        const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
+                                                        const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                        const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                                        return (
+                                                            <tr key={`existing-${idx}`}>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                                    {fileName}
+                                                                </td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                    <a
+                                                                        href={preview}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                    >
+                                                                        View
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                    {/* Show newly selected files */}
+                                                    {parkingFiles[index] && parkingFiles[index].map((file, idx) => (
+                                                        <tr key={`new-${idx}`}>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{(parkingFilePreviews[index]?.length || 0) + idx + 1}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const updatedFiles = [...parkingFiles];
+                                                                        const currentFiles = updatedFiles[index] || [];
+                                                                        updatedFiles[index] = currentFiles.filter((_, i) => i !== idx);
+                                                                        setParkingFiles(updatedFiles);
+
+                                                                        const updatedPreviews = [...parkingFilePreviews];
+                                                                        const currentPreviews = updatedPreviews[index] || [];
+                                                                        updatedPreviews[index] = currentPreviews.filter((_, i) => i !== (currentPreviews.length - currentFiles.length + idx));
+                                                                        setParkingFilePreviews(updatedPreviews);
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '4px 8px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontSize: '11px'
+                                                                    }}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     )}
                                 </div>
@@ -1294,6 +1729,146 @@ const FlatOwner = () => {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Document Modal */}
+            {showDocumentModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000
+                    }}
+                    onClick={() => setShowDocumentModal(false)}
+                >
+                    <div
+                        style={{
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            padding: '20px',
+                            maxWidth: '600px',
+                            width: '90%',
+                            maxHeight: '80vh',
+                            overflow: 'auto',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ margin: 0, color: '#333' }}>Documents - {modalOwnerName}</h2>
+                            <button
+                                onClick={() => setShowDocumentModal(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#666',
+                                    padding: '0',
+                                    width: '30px',
+                                    height: '30px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div>
+                            {modalDocuments.length === 0 ? (
+                                <p style={{ color: '#999', textAlign: 'center' }}>No documents available</p>
+                            ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                    <thead>
+                                        <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Sr. No.</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>File Name</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Type</th>
+                                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {modalDocuments.map((url, idx) => {
+                                            // Extract file name from URL
+                                            let fileName = `Document ${idx + 1}`;
+                                            try {
+                                                const urlObj = new URL(url);
+                                                const pathParts = urlObj.pathname.split('/').filter(part => part && part.length > 0);
+                                                if (pathParts.length > 0) {
+                                                    fileName = pathParts[pathParts.length - 1];
+                                                    try {
+                                                        fileName = decodeURIComponent(fileName);
+                                                    } catch (e) { }
+                                                    fileName = fileName.split('?')[0].split('#')[0];
+                                                    if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                        fileName = `Document ${idx + 1}`;
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                try {
+                                                    const parts = url.split('/').filter(part => part && part.length > 0);
+                                                    if (parts.length > 0) {
+                                                        fileName = parts[parts.length - 1].split('?')[0].split('#')[0];
+                                                        try {
+                                                            fileName = decodeURIComponent(fileName);
+                                                        } catch (e) { }
+                                                        if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                            fileName = `Document ${idx + 1}`;
+                                                        }
+                                                    }
+                                                } catch (err) {
+                                                    fileName = `Document ${idx + 1}`;
+                                                }
+                                            }
+
+                                            const lowerFileName = fileName.toLowerCase();
+                                            const lowerUrl = url.toLowerCase();
+                                            const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf');
+                                            const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                            const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+
+                                            return (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                                    <td style={{ padding: '12px' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '12px', wordBreak: 'break-word', maxWidth: '300px' }} title={fileName}>
+                                                        {fileName}
+                                                    </td>
+                                                    <td style={{ padding: '12px' }}>{fileType}</td>
+                                                    <td style={{ padding: '12px' }}>
+                                                        <a
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{
+                                                                color: '#007bff',
+                                                                textDecoration: 'none',
+                                                                fontWeight: '500',
+                                                                padding: '6px 12px',
+                                                                border: '1px solid #007bff',
+                                                                borderRadius: '4px',
+                                                                display: 'inline-block'
+                                                            }}
+                                                        >
+                                                            View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

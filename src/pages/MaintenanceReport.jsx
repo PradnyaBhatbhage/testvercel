@@ -257,7 +257,7 @@ const MaintenanceReport = () => {
                             <table className="report-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>Sr. No.</th>
                                         <th>Owner Name</th>
                                         <th>Flat No</th>
                                         <th>Bill Period</th>
@@ -273,13 +273,13 @@ const MaintenanceReport = () => {
                                             <td colSpan="8" className="no-data">No data available</td>
                                         </tr>
                                     ) : (
-                                        reportData.map((maintenance) => {
+                                        reportData.map((maintenance, index) => {
                                             const ownerName = maintenance.owner_name || "-";
                                             const flatNo = maintenance.flat_no || "-";
                                             const pending = parseFloat(maintenance.total_amount || 0) - parseFloat(maintenance.paid_amount || 0);
                                             return (
                                                 <tr key={maintenance.maintain_id}>
-                                                    <td>{maintenance.maintain_id}</td>
+                                                    <td>{index + 1}</td>
                                                     <td>{ownerName}</td>
                                                     <td>{flatNo}</td>
                                                     <td>

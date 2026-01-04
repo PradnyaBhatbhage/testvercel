@@ -7,6 +7,8 @@ import {
     getActivities,
     getFlats,
     getOwners,
+    getWings,
+    getFlatTypes,
     sendInvitationByEmail,
     sendInvitationByWhatsApp,
 } from "../services/api";
@@ -22,6 +24,9 @@ import "../css/ActivityPayment.css";
 const ActivityPayment = () => {
     const [payments, setPayments] = useState([]);
     const [flats, setFlats] = useState([]);
+    const [owners, setOwners] = useState([]);
+    const [wings, setWings] = useState([]);
+    const [flatTypes, setFlatTypes] = useState([]);
     const [activities, setActivities] = useState([]);
     const [formData, setFormData] = useState({
         activity_id: "",
@@ -77,8 +82,17 @@ const ActivityPayment = () => {
     // ====== Fetch Activities for Dropdown ======
     const fetchDropdowns = async () => {
         try {
-            const [actRes, flatRes] = await Promise.all([getActivities(), getFlats()]);
+            const [actRes, flatRes, ownersRes, wingsRes, flatTypesRes] = await Promise.all([
+                getActivities(), 
+                getFlats(), 
+                getOwners(),
+                getWings(),
+                getFlatTypes()
+            ]);
             setActivities(actRes.data);
+            setOwners(ownersRes.data || []);
+            setWings(wingsRes.data || []);
+            setFlatTypes(flatTypesRes.data || []);
 
             // Filter flats by current user's wing
             const allFlats = flatRes.data || [];
@@ -314,11 +328,28 @@ const ActivityPayment = () => {
                                 required
                             >
                                 <option value="">Select Flat</option>
-                                {flats.map((f) => (
-                                    <option key={f.flat_id} value={f.flat_id}>
-                                        {f.flat_no}
-                                    </option>
-                                ))}
+                                {flats.map((f) => {
+                                    // Find owner for this flat
+                                    const owner = owners.find(o => o.flat_id === f.flat_id);
+                                    
+                                    // Get wing name and flat type name
+                                    const wing = wings.find(w => w.wing_id === f.wing_id);
+                                    const flatType = flatTypes.find(ft => ft.flat_type_id === f.flat_type_id);
+                                    
+                                    const wingName = owner?.wing_name || wing?.wing_name || 'N/A';
+                                    const flatTypeName = owner?.flat_type_name || flatType?.flat_type_name || 'N/A';
+                                    
+                                    // Format: "Owner Name - Flat No (Wing Name - Flat Type Name)"
+                                    const displayText = owner 
+                                        ? `${owner.owner_name} - ${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`
+                                        : `${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`;
+                                    
+                                    return (
+                                        <option key={f.flat_id} value={f.flat_id}>
+                                            {displayText}
+                                        </option>
+                                    );
+                                })}
                             </select>
                         </div>
 
@@ -362,14 +393,21 @@ const ActivityPayment = () => {
 
                         <div className="form-group">
                             <label>Payment Mode:</label>
-                            <input
-                                type="text"
+                            <select
                                 name="payment_mode"
                                 value={formData.payment_mode}
                                 onChange={handleChange}
-                                placeholder="Cash / UPI / Bank Transfer"
                                 required
-                            />
+                            >
+                                <option value="">Select Payment Mode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                            </select>
                         </div>
                     </div>
 

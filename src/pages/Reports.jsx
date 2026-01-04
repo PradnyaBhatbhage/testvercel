@@ -50,6 +50,15 @@ const Reports = ({ reportType }) => {
         startDate: "",
         endDate: "",
         wing_id: "",
+        month: "", // Month filter (YYYY-MM format)
+    });
+
+    // Search filters for Owner and Rental reports
+    const [searchFilter, setSearchFilter] = useState({
+        flatNumber: "",
+        name: "",
+        ownerSearch: "", // Single search for Owner Report (searches both flat number and name)
+        rentalSearch: "", // Single search for Rental Report (searches both flat number and name)
     });
 
     // Report data
@@ -117,7 +126,13 @@ const Reports = ({ reportType }) => {
                 isArray: Array.isArray(res.data)
             });
 
-            const wingsData = parseArrayResponse(res.data, 'Wings');
+            let wingsData = parseArrayResponse(res.data, 'Wings');
+
+            // If user has wing restriction, filter wings to show only their wing
+            if (currentUserWingId !== null) {
+                wingsData = wingsData.filter(w => w.wing_id === currentUserWingId);
+            }
+
             if (isMounted.current) {
                 setWings(wingsData);
                 console.log('✅ [Reports] fetchWings - Success:', wingsData.length);
@@ -156,9 +171,17 @@ const Reports = ({ reportType }) => {
     useEffect(() => {
         if (reportType) {
             const reportId = getReportIdFromType(reportType);
+            console.log('🔄 [Reports] Setting activeReport from reportType:', reportType, '->', reportId);
             setActiveReport(reportId);
         }
     }, [reportType]);
+
+    // Set default wing_id if user has wing restriction
+    useEffect(() => {
+        if (currentUserWingId !== null) {
+            setDateFilter(prev => ({ ...prev, wing_id: currentUserWingId.toString() }));
+        }
+    }, [currentUserWingId]);
 
     // Set mounted flag on mount
     useEffect(() => {
@@ -176,6 +199,11 @@ const Reports = ({ reportType }) => {
     // Fetch only the active report to minimize API calls
     const fetchActiveReport = async () => {
         console.log('🔄 [Reports] fetchActiveReport - Starting fetch for:', activeReport);
+        console.log('📊 [Reports] fetchActiveReport - Current filters:', {
+            dateFilter,
+            searchFilter,
+            activeReport
+        });
         setLoading(true);
         setError("");
 
@@ -249,12 +277,19 @@ const Reports = ({ reportType }) => {
                 console.log('✅ [Reports] fetchOwnerReport - Using cached data:', owners.length);
             }
 
-            // Filter by wing if selected
+            // For Owner Report: No wing, date, or month filtering - only search
             let filteredOwners = owners;
-            if (dateFilter.wing_id) {
-                filteredOwners = owners.filter(o => o.wing_id && parseInt(o.wing_id) === parseInt(dateFilter.wing_id));
-            } else if (currentUserWingId !== null) {
-                filteredOwners = filterOwnersByWing(owners, currentUserWingId);
+
+            // Filter by single search term (searches both flat number and owner name)
+            if (searchFilter.ownerSearch && searchFilter.ownerSearch.trim()) {
+                const searchTerm = searchFilter.ownerSearch.trim().toLowerCase();
+                const beforeCount = filteredOwners.length;
+                filteredOwners = filteredOwners.filter(o => {
+                    const flatNo = (o.flat_no || "").toString().toLowerCase();
+                    const ownerName = (o.owner_name || "").toLowerCase();
+                    return flatNo.includes(searchTerm) || ownerName.includes(searchTerm);
+                });
+                console.log('🔍 [Reports] fetchOwnerReport - After search:', beforeCount, '->', filteredOwners.length, 'Search term:', searchTerm);
             }
 
             if (isMounted.current) {
@@ -273,7 +308,7 @@ const Reports = ({ reportType }) => {
                 setError(`Error fetching owner report: ${err.message || "Unknown error"}`);
             }
         }
-    }, [dateFilter, currentUserWingId]);
+    }, [searchFilter]);
 
     // Fetch maintenance report with caching
     const fetchMaintenanceReport = useCallback(async () => {
@@ -426,6 +461,25 @@ const Reports = ({ reportType }) => {
                 });
             }
 
+            // Filter by month if selected (prioritize month over date range if both are set)
+            if (dateFilter.month) {
+                const [year, month] = dateFilter.month.split('-');
+                const startOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const endOfMonth = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+
+                expenses = expenses.filter(e => {
+                    try {
+                        if (!e.date) return false;
+                        const expenseDate = new Date(e.date);
+                        if (isNaN(expenseDate.getTime())) return false;
+                        return expenseDate >= startOfMonth && expenseDate <= endOfMonth;
+                    } catch (err) {
+                        console.warn('⚠️ [Reports] fetchExpenseReport - Error parsing date:', e.date, err);
+                        return false;
+                    }
+                });
+            }
+
             if (isMounted.current) {
                 setExpenseReportData(expenses);
                 console.log('✅ [Reports] fetchExpenseReport - Success:', expenses.length);
@@ -465,22 +519,17 @@ const Reports = ({ reportType }) => {
                 console.log('✅ [Reports] fetchRentalReport - Using cached data:', rentals.length);
             }
 
-            // Filter by date range
-            if (dateFilter.startDate && dateFilter.endDate) {
-                const startDate = new Date(dateFilter.startDate);
-                const endDate = new Date(dateFilter.endDate);
-                endDate.setHours(23, 59, 59, 999);
-
+            // Filter by single search term (searches both flat number and name)
+            if (searchFilter.rentalSearch && searchFilter.rentalSearch.trim() !== "") {
+                const searchTerm = searchFilter.rentalSearch.trim().toLowerCase();
+                const beforeCount = rentals.length;
                 rentals = rentals.filter(r => {
-                    try {
-                        const rentalDate = r.start_date ? new Date(r.start_date) : (r.created_at ? new Date(r.created_at) : null);
-                        if (!rentalDate || isNaN(rentalDate.getTime())) return true; // Include if date is invalid
-                        return rentalDate >= startDate && rentalDate <= endDate;
-                    } catch (err) {
-                        console.warn('⚠️ [Reports] fetchRentalReport - Error parsing date:', r.start_date, err);
-                        return true; // Include if date parsing fails
-                    }
+                    const flatNo = (r.flat_no || "").toString().toLowerCase();
+                    const ownerName = (r.owner_name || "").toLowerCase();
+                    const tenantName = (r.tenant_name || "").toLowerCase();
+                    return flatNo.includes(searchTerm) || ownerName.includes(searchTerm) || tenantName.includes(searchTerm);
                 });
+                console.log('🔍 [Reports] fetchRentalReport - After search:', beforeCount, '->', rentals.length, 'Search term:', searchTerm);
             }
 
             if (isMounted.current) {
@@ -499,7 +548,7 @@ const Reports = ({ reportType }) => {
                 setError(`Error fetching rental report: ${err.message || "Unknown error"}`);
             }
         }
-    }, [dateFilter]);
+    }, [dateFilter, searchFilter]);
 
     // Fetch meeting report with caching
     const fetchMeetingReport = useCallback(async () => {
@@ -538,6 +587,26 @@ const Reports = ({ reportType }) => {
                         return true; // Include if date parsing fails
                     }
                 });
+            }
+
+            // Filter by month if selected
+            if (dateFilter.month) {
+                const [year, month] = dateFilter.month.split('-');
+                const startOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const endOfMonth = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+
+                console.log('📅 [Reports] fetchMeetingReport - Filtering by month:', dateFilter.month, 'Range:', startOfMonth, 'to', endOfMonth);
+
+                meetings = meetings.filter(m => {
+                    try {
+                        const meetingDate = m.meeting_date ? new Date(m.meeting_date) : (m.created_at ? new Date(m.created_at) : null);
+                        if (!meetingDate || isNaN(meetingDate.getTime())) return true; // Include if no date
+                        return meetingDate >= startOfMonth && meetingDate <= endOfMonth;
+                    } catch (err) {
+                        return true; // Include if date parsing fails
+                    }
+                });
+                console.log('✅ [Reports] fetchMeetingReport - After month filter:', meetings.length, 'meetings');
             }
 
             if (isMounted.current) {
@@ -879,10 +948,31 @@ const Reports = ({ reportType }) => {
         }
     }, [dateFilter, currentUserWingId]);
 
-    // Fetch active report when activeReport or dateFilter changes
+    // Fetch active report when activeReport, dateFilter, or searchFilter changes
     useEffect(() => {
         fetchActiveReport();
     }, [activeReport, dateFilter, currentUserWingId]);
+
+    // Debounced search filter - apply filters after user stops typing
+    useEffect(() => {
+        if (activeReport === "owner" && searchFilter.ownerSearch) {
+            const timeoutId = setTimeout(() => {
+                if (isMounted.current) {
+                    fetchActiveReport();
+                }
+            }, 500); // Wait 500ms after user stops typing
+
+            return () => clearTimeout(timeoutId);
+        } else if (activeReport === "rental" && searchFilter.rentalSearch) {
+            const timeoutId = setTimeout(() => {
+                if (isMounted.current) {
+                    fetchActiveReport();
+                }
+            }, 500); // Wait 500ms after user stops typing
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [searchFilter, activeReport]);
 
     const handleDateFilterChange = (e) => {
         try {
@@ -1059,50 +1149,172 @@ const Reports = ({ reportType }) => {
 
             {/* Filters */}
             <div className="reports-filters">
-                <div className="filter-group">
-                    <label>Start Date</label>
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={dateFilter.startDate}
-                        onChange={handleDateFilterChange}
-                    />
-                </div>
-                <div className="filter-group">
-                    <label>End Date</label>
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={dateFilter.endDate}
-                        onChange={handleDateFilterChange}
-                    />
-                </div>
-                <div className="filter-group">
-                    <label>Wing</label>
-                    <select
-                        name="wing_id"
-                        value={dateFilter.wing_id}
-                        onChange={handleDateFilterChange}
-                    >
-                        <option value="">All Wings</option>
-                        {wings.map((wing) => (
-                            <option key={wing.wing_id} value={wing.wing_id}>
-                                {wing.wing_name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="filter-group">
-                    <button className="btn-filter" onClick={fetchActiveReport}>
-                        🔍 Apply Filters
-                    </button>
-                    <button
-                        className="btn-reset"
-                        onClick={() => setDateFilter({ startDate: "", endDate: "", wing_id: "" })}
-                    >
-                        🔄 Reset
-                    </button>
-                </div>
+                {/* Owner Report: Only show search bar */}
+                {activeReport === "owner" ? (
+                    <>
+                        <div className="filter-group" style={{ flex: '1 1 300px', minWidth: '300px' }}>
+                            <label>Search by Flat Number or Owner Name</label>
+                            <input
+                                type="text"
+                                name="ownerSearch"
+                                placeholder="Enter flat number or owner name"
+                                value={searchFilter.ownerSearch || ""}
+                                onChange={(e) => {
+                                    console.log('🔍 [Reports] Search input changed:', e.target.value);
+                                    setSearchFilter(prev => ({ ...prev, ownerSearch: e.target.value }));
+                                }}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        fetchActiveReport();
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ddd' }}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <button className="btn-filter" onClick={fetchActiveReport}>
+                                🔍 Search
+                            </button>
+                            <button
+                                className="btn-reset"
+                                onClick={() => {
+                                    setSearchFilter(prev => ({ ...prev, ownerSearch: "" }));
+                                    fetchActiveReport();
+                                }}
+                            >
+                                🔄 Clear
+                            </button>
+                        </div>
+                    </>
+                ) : activeReport === "rental" ? (
+                    <>
+                        {/* Rental Report: Only Wing and Search filters */}
+                        <div className="filter-group">
+                            <label>Wing</label>
+                            <select
+                                name="wing_id"
+                                value={dateFilter.wing_id}
+                                onChange={handleDateFilterChange}
+                                disabled={currentUserWingId !== null} // Disable if user has wing restriction
+                            >
+                                {currentUserWingId === null ? (
+                                    <option value="">All Wings</option>
+                                ) : null}
+                                {wings.map((wing) => (
+                                    <option key={wing.wing_id} value={wing.wing_id}>
+                                        {wing.wing_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter-group" style={{ flex: '1 1 300px', minWidth: '300px' }}>
+                            <label>Search by Flat Number or Name</label>
+                            <input
+                                type="text"
+                                name="rentalSearch"
+                                placeholder="Enter flat number or owner/tenant name"
+                                value={searchFilter.rentalSearch || ""}
+                                onChange={(e) => setSearchFilter(prev => ({ ...prev, rentalSearch: e.target.value }))}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        fetchActiveReport();
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ddd' }}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <button className="btn-filter" onClick={fetchActiveReport}>
+                                🔍 Search
+                            </button>
+                            <button
+                                className="btn-reset"
+                                onClick={() => {
+                                    const resetFilter = {
+                                        startDate: "",
+                                        endDate: "",
+                                        month: "",
+                                        wing_id: currentUserWingId !== null ? currentUserWingId.toString() : ""
+                                    };
+                                    setDateFilter(resetFilter);
+                                    setSearchFilter(prev => ({ ...prev, rentalSearch: "" }));
+                                    fetchActiveReport();
+                                }}
+                            >
+                                🔄 Clear
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* Other reports: Show all filters */}
+                        <div className="filter-group">
+                            <label>Start Date</label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={dateFilter.startDate}
+                                onChange={handleDateFilterChange}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>End Date</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={dateFilter.endDate}
+                                onChange={handleDateFilterChange}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>Month</label>
+                            <input
+                                type="month"
+                                name="month"
+                                value={dateFilter.month}
+                                onChange={handleDateFilterChange}
+                            />
+                        </div>
+                        <div className="filter-group">
+                            <label>Wing</label>
+                            <select
+                                name="wing_id"
+                                value={dateFilter.wing_id}
+                                onChange={handleDateFilterChange}
+                                disabled={currentUserWingId !== null} // Disable if user has wing restriction
+                            >
+                                {currentUserWingId === null ? (
+                                    <option value="">All Wings</option>
+                                ) : null}
+                                {wings.map((wing) => (
+                                    <option key={wing.wing_id} value={wing.wing_id}>
+                                        {wing.wing_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="filter-group">
+                            <button className="btn-filter" onClick={fetchActiveReport}>
+                                🔍 Apply Filters
+                            </button>
+                            <button
+                                className="btn-reset"
+                                onClick={() => {
+                                    const resetFilter = {
+                                        startDate: "",
+                                        endDate: "",
+                                        month: "",
+                                        wing_id: currentUserWingId !== null ? currentUserWingId.toString() : ""
+                                    };
+                                    setDateFilter(resetFilter);
+                                    setSearchFilter({ flatNumber: "", name: "", ownerSearch: "", rentalSearch: "" });
+                                }}
+                            >
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Report Tabs - Only show if no specific reportType is passed */}
@@ -1363,13 +1575,12 @@ const Reports = ({ reportType }) => {
                                             <th>Title</th>
                                             <th>Agenda</th>
                                             <th>Location</th>
-                                            <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {reportData.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="no-data">No data available</td>
+                                                <td colSpan="5" className="no-data">No data available</td>
                                             </tr>
                                         ) : (
                                             reportData.map((meeting, index) => (
@@ -1379,11 +1590,6 @@ const Reports = ({ reportType }) => {
                                                     <td>{meeting.meeting_name || "-"}</td>
                                                     <td>{meeting.purpose || "-"}</td>
                                                     <td>{meeting.description || "-"}</td>
-                                                    <td>
-                                                        <span className={`status-badge ${meeting.status?.toLowerCase() || "scheduled"}`}>
-                                                            {meeting.status || "Scheduled"}
-                                                        </span>
-                                                    </td>
                                                 </tr>
                                             ))
                                         )}

@@ -49,7 +49,15 @@ const MaintenanceRate = () => {
             setRates(rawRates);
         }
         
-        setWings(wingRes.data);
+        // Filter wings to show only current user's wing
+        const rawWings = wingRes.data || [];
+        if (currentUserWingId !== null) {
+            const filteredWings = rawWings.filter(w => w.wing_id && Number(w.wing_id) === Number(currentUserWingId));
+            setWings(filteredWings);
+        } else {
+            setWings(rawWings);
+        }
+        
         setFlatTypes(flatRes.data);
         setComponents(compRes.data);
     };
@@ -145,7 +153,13 @@ const MaintenanceRate = () => {
             {!showForm && (
                 <div className="maintenance-controls">
                     {canEdit() && (
-                        <button className="new-entry-btn" onClick={() => setShowForm(true)}>
+                        <button className="new-entry-btn" onClick={() => {
+                            // Auto-select wing if user has only one wing option
+                            if (currentUserWingId !== null && wings.length === 1) {
+                                setFormData(prev => ({ ...prev, wing_id: wings[0].wing_id }));
+                            }
+                            setShowForm(true);
+                        }}>
                             New Entry
                         </button>
                     )}

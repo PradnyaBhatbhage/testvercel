@@ -10,6 +10,8 @@ const SocietyForm = () => {
     const [originalData, setOriginalData] = useState({});
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
+    const [qrImageFile, setQrImageFile] = useState(null);
+    const [qrImagePreview, setQrImagePreview] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -21,6 +23,7 @@ const SocietyForm = () => {
                     setFormData(society);
                     setOriginalData(society);
                     setLogoPreview(society.soc_logo || society.logo_url || null);
+                    setQrImagePreview(society.qr_image || society.qr_image_url || null);
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -71,19 +74,55 @@ const SocietyForm = () => {
         }));
     };
 
+    const handleQrImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size should be less than 5MB');
+                return;
+            }
+            setQrImageFile(file);
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setQrImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveQrImage = () => {
+        setQrImageFile(null);
+        setQrImagePreview(null);
+        // Also clear the QR image URL from formData if it exists
+        setFormData((prev) => ({
+            ...prev,
+            qr_image: null,
+            qr_image_url: null,
+        }));
+    };
+
     const handleUpdateClick = async () => {
         try {
-            await updateSociety(formData.soc_id, formData, logoFile);
+            await updateSociety(formData.soc_id, formData, logoFile, qrImageFile);
             alert("Society updated successfully!");
-            // Refresh society data to get updated logo URL
+            // Refresh society data to get updated logo and QR image URLs
             const societyRes = await getSocieties();
             if (societyRes.data.length > 0) {
                 const updatedSociety = societyRes.data[0];
                 setFormData(updatedSociety);
                 setOriginalData(updatedSociety);
                 setLogoPreview(updatedSociety.soc_logo || updatedSociety.logo_url || null);
+                setQrImagePreview(updatedSociety.qr_image || updatedSociety.qr_image_url || null);
             }
             setLogoFile(null);
+            setQrImageFile(null);
             setIsEditMode(false);
         } catch (err) {
             console.error(err);
@@ -95,6 +134,8 @@ const SocietyForm = () => {
         setFormData(originalData);
         setLogoFile(null);
         setLogoPreview(originalData.soc_logo || originalData.logo_url || null);
+        setQrImageFile(null);
+        setQrImagePreview(originalData.qr_image || originalData.qr_image_url || null);
         setIsEditMode(false);
     };
 
@@ -156,6 +197,60 @@ const SocietyForm = () => {
                     </div>
                 )}
             </div>
+            
+            {/* QR Image Section */}
+            <div className="logo-section">
+                <label>QR Image</label>
+                {(qrImagePreview || formData.qr_image || formData.qr_image_url) ? (
+                    <div className="logo-display">
+                        <img 
+                            src={qrImagePreview || formData.qr_image || formData.qr_image_url} 
+                            alt={`${formData.soc_name || 'Society'} QR Code`}
+                            className="society-logo"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                                const placeholder = e.target.nextElementSibling;
+                                if (placeholder) placeholder.style.display = 'flex';
+                            }}
+                        />
+                        <div className="logo-placeholder" style={{ display: 'none' }}>
+                            <span>No QR Image Available</span>
+                        </div>
+                        {isEditMode && (
+                            <button 
+                                type="button" 
+                                className="remove-logo-btn"
+                                onClick={handleRemoveQrImage}
+                                title="Remove QR image"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="logo-placeholder">
+                        <span>No QR Image Uploaded</span>
+                    </div>
+                )}
+                {isEditMode && (
+                    <div className="logo-upload-controls">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleQrImageChange}
+                            id="qr-image-upload"
+                            style={{ display: 'none' }}
+                        />
+                        <label htmlFor="qr-image-upload" className="upload-logo-btn">
+                            {qrImageFile || formData.qr_image || formData.qr_image_url ? 'Change QR Image' : 'Upload QR Image'}
+                        </label>
+                        {qrImageFile && (
+                            <span className="logo-file-name">{qrImageFile.name}</span>
+                        )}
+                    </div>
+                )}
+            </div>
+            
             <select
                 value={formData.wing_id || ""}
                 onChange={handleChange}

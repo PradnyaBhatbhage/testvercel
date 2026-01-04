@@ -23,8 +23,8 @@ const ActivityExpense = () => {
     const [editingId, setEditingId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
     const [expandedActivities, setExpandedActivities] = useState({}); // Track which activities are expanded
 
     // ===== Fetch All Expenses =====
@@ -60,30 +60,53 @@ const ActivityExpense = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const validFiles = [];
+        const validPreviews = [];
+
+        files.forEach((file) => {
+            // Validate file type
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
+                alert(`File "${file.name}" is not a valid type. Please select PDF or JPEG/PNG image files only.`);
                 return;
             }
+
+            // Validate file size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
+                alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
                 return;
             }
-            setSelectedFile(file);
+
+            validFiles.push(file);
+
+            // Create preview for images
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    setFilePreview(reader.result);
+                    validPreviews.push(reader.result);
+                    if (validPreviews.length === validFiles.length) {
+                        setFilePreviews(prev => [...prev, ...validPreviews]);
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
-                setFilePreview(null);
+                validPreviews.push(null);
             }
+        });
+
+        // Append new files to existing selected files
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+
+        // Set previews immediately for non-image files
+        if (validPreviews.length === validFiles.length && validPreviews.every(p => p === null || p)) {
+            setFilePreviews(prev => [...prev, ...validPreviews]);
         }
+
+        // Reset file input to allow selecting same files again
+        e.target.value = '';
     };
 
     // ===== Submit Form =====
@@ -91,10 +114,10 @@ const ActivityExpense = () => {
         e.preventDefault();
         try {
             if (editingId) {
-                await updateActivityExpense(editingId, formData, selectedFile);
+                await updateActivityExpense(editingId, formData, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Expense updated successfully!");
             } else {
-                await createActivityExpense(formData, selectedFile);
+                await createActivityExpense(formData, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Expense added successfully!");
             }
             setFormData({
@@ -107,12 +130,13 @@ const ActivityExpense = () => {
             });
             setEditingId(null);
             setShowForm(false);
-            setSelectedFile(null);
-            setFilePreview(null);
+            setSelectedFiles([]);
+            setFilePreviews([]);
             fetchExpenses();
         } catch (err) {
             console.error("Save error:", err.response?.data || err.message);
-            alert("Error saving expense! " + (err.response?.data?.error || err.message));
+            const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || "Unknown error";
+            alert("Error saving expense! " + errorMessage);
         }
     };
 
@@ -128,8 +152,34 @@ const ActivityExpense = () => {
             attachment_url: exp.attachment_url || null,
         });
         setEditingId(exp.activity_exp_id);
-        setSelectedFile(null);
-        setFilePreview(exp.attachment_url && exp.attachment_url.startsWith('http') ? exp.attachment_url : null);
+        setSelectedFiles([]);
+        
+        // Handle existing attachments - support both single URL and array of URLs
+        let existingUrls = [];
+        if (exp.attachment_url) {
+            try {
+                if (Array.isArray(exp.attachment_url)) {
+                    existingUrls = exp.attachment_url.filter(url => url && typeof url === 'string' && url.startsWith('http'));
+                } else if (typeof exp.attachment_url === 'string') {
+                    try {
+                        const parsed = JSON.parse(exp.attachment_url);
+                        if (Array.isArray(parsed)) {
+                            existingUrls = parsed.filter(url => url && typeof url === 'string' && url.startsWith('http'));
+                        } else if (parsed && typeof parsed === 'string' && parsed.startsWith('http')) {
+                            existingUrls = [parsed];
+                        }
+                    } catch {
+                        // Not JSON, treat as single URL
+                        if (exp.attachment_url.startsWith('http')) {
+                            existingUrls = [exp.attachment_url];
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error parsing attachment_url:', err);
+            }
+        }
+        setFilePreviews(existingUrls);
         setShowForm(true);
     };
 
@@ -158,8 +208,8 @@ const ActivityExpense = () => {
             description: "",
         });
         setEditingId(null);
-        setSelectedFile(null);
-        setFilePreview(null);
+        setSelectedFiles([]);
+        setFilePreviews([]);
         setShowForm(false);
     };
 
@@ -291,14 +341,21 @@ const ActivityExpense = () => {
 
                         <div className="form-group">
                             <label>Payment Mode:</label>
-                            <input
-                                type="text"
+                            <select
                                 name="payment_mode"
                                 value={formData.payment_mode}
                                 onChange={handleChange}
-                                placeholder="Cash / UPI / Bank Transfer"
                                 required
-                            />
+                            >
+                                <option value="">Select Payment Mode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                            </select>
                         </div>
                     </div>
 
@@ -314,37 +371,109 @@ const ActivityExpense = () => {
                     </div>
 
                     <div className="form-group full-width">
-                        <label>Attachment (PDF/JPEG):</label>
+                        <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                         <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
                             onChange={handleFileChange}
+                            multiple
                         />
-                        {selectedFile && (
-                            <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                                Selected: {selectedFile.name}
-                            </p>
-                        )}
-                        {filePreview && !selectedFile && formData.attachment_url && (
+                        
+                        {/* Display existing attachments (when editing) */}
+                        {filePreviews.length > 0 && selectedFiles.length === 0 && editingId && (
                             <div style={{ marginTop: '10px' }}>
-                                <p style={{ fontSize: '12px', color: '#666' }}>Current document:</p>
-                                {formData.attachment_url.endsWith('.pdf') || formData.attachment_url.includes('pdf') ? (
-                                    <a href={formData.attachment_url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        View PDF
-                                    </a>
-                                ) : (
-                                    <img src={formData.attachment_url} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                )}
+                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                    Existing attachments ({filePreviews.length}):
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {filePreviews.map((preview, idx) => (
+                                        <div key={`existing-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                            {preview && preview.startsWith('http') ? (
+                                                preview.includes('pdf') || preview.endsWith('.pdf') ? (
+                                                    <a href={preview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontSize: '12px' }}>
+                                                        📄 PDF {idx + 1}
+                                                    </a>
+                                                ) : (
+                                                    <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                )
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
-                        {filePreview && selectedFile && (
+
+                        {/* Display all files (existing + new) */}
+                        {(filePreviews.length > 0 || selectedFiles.length > 0) && (
                             <div style={{ marginTop: '10px' }}>
-                                <p style={{ fontSize: '12px', color: '#666' }}>Preview:</p>
-                                {selectedFile.type === 'application/pdf' ? (
-                                    <p style={{ color: '#007bff' }}>PDF file selected</p>
-                                ) : (
-                                    <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                )}
+                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                    All attachments ({filePreviews.length + selectedFiles.length}):
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {/* Existing attachments (URLs) */}
+                                    {filePreviews.map((preview, idx) => {
+                                        if (!preview || !preview.startsWith('http')) return null;
+                                        return (
+                                            <div key={`existing-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                                {preview.includes('pdf') || preview.endsWith('.pdf') ? (
+                                                    <a href={preview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontSize: '12px' }}>
+                                                        📄 PDF {idx + 1}
+                                                    </a>
+                                                ) : (
+                                                    <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    
+                                    {/* New selected files */}
+                                    {selectedFiles.map((file, idx) => {
+                                        // Find preview for this file (should be at index: filePreviews.length + idx)
+                                        const previewIndex = filePreviews.length + idx;
+                                        const preview = previewIndex < filePreviews.length ? filePreviews[previewIndex] : null;
+                                        
+                                        return (
+                                            <div key={`new-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                                {file.type === 'application/pdf' ? (
+                                                    <span style={{ fontSize: '12px', color: '#007bff' }}>📄 {file.name}</span>
+                                                ) : preview ? (
+                                                    <img src={preview} alt={file.name} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: '12px' }}>🖼️ {file.name}</span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated = selectedFiles.filter((_, i) => i !== idx);
+                                                        setSelectedFiles(updated);
+                                                        // Remove corresponding preview if it exists
+                                                        if (previewIndex < filePreviews.length) {
+                                                            const updatedPreviews = filePreviews.filter((_, i) => i !== previewIndex);
+                                                            setFilePreviews(updatedPreviews);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-5px',
+                                                        right: '-5px',
+                                                        background: '#dc3545',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px',
+                                                        lineHeight: '1'
+                                                    }}
+                                                    title="Remove file"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -450,18 +579,45 @@ const ActivityExpense = () => {
                                                                     <td>{e.payment_mode}</td>
                                                                     <td>{e.description}</td>
                                                                     <td>
-                                                                        {e.attachment_url ? (
-                                                                            <a
-                                                                                href={e.attachment_url}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                style={{ color: '#007bff', textDecoration: 'none' }}
-                                                                            >
-                                                                                {e.attachment_url.endsWith('.pdf') || e.attachment_url.includes('pdf') ? '📄 View PDF' : '🖼️ View Image'}
-                                                                            </a>
-                                                                        ) : (
-                                                                            <span style={{ color: '#999' }}>No attachment</span>
-                                                                        )}
+                                                                        {(() => {
+                                                                            let attachments = [];
+                                                                            if (e.attachment_url) {
+                                                                                try {
+                                                                                    if (Array.isArray(e.attachment_url)) {
+                                                                                        attachments = e.attachment_url;
+                                                                                    } else if (typeof e.attachment_url === 'string') {
+                                                                                        try {
+                                                                                            const parsed = JSON.parse(e.attachment_url);
+                                                                                            attachments = Array.isArray(parsed) ? parsed : [parsed];
+                                                                                        } catch {
+                                                                                            attachments = [e.attachment_url];
+                                                                                        }
+                                                                                    }
+                                                                                } catch {
+                                                                                    attachments = [];
+                                                                                }
+                                                                            }
+                                                                            
+                                                                            if (attachments.length === 0) {
+                                                                                return <span style={{ color: '#999' }}>No attachment</span>;
+                                                                            }
+                                                                            
+                                                                            return (
+                                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                                                    {attachments.map((url, idx) => (
+                                                                                        <a
+                                                                                            key={idx}
+                                                                                            href={url}
+                                                                                            target="_blank"
+                                                                                            rel="noopener noreferrer"
+                                                                                            style={{ color: '#007bff', textDecoration: 'none', fontSize: '12px' }}
+                                                                                        >
+                                                                                            {url.includes('pdf') || url.endsWith('.pdf') ? `📄 PDF ${idx + 1}` : `🖼️ Image ${idx + 1}`}
+                                                                                        </a>
+                                                                                    ))}
+                                                                                </div>
+                                                                            );
+                                                                        })()}
                                                                     </td>
                                                                     {(canEdit() || canDelete()) && (
                                                                         <td className="action-btns">

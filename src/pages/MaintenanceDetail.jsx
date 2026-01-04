@@ -8,6 +8,8 @@ import {
     getMaintenanceRates,
     sendReceiptByEmail,
     sendReceiptByWhatsApp,
+    sendBillByEmail,
+    sendBillByWhatsApp,
     sendMonthlyReminders,
 } from "../services/api";
 import {
@@ -73,6 +75,14 @@ const MaintenanceDetail = () => {
     const [remindersModal, setRemindersModal] = useState({
         show: false,
         reminderLinks: []
+    });
+
+    // Receipt method selection modal state
+    const [receiptMethodModal, setReceiptMethodModal] = useState({
+        show: false,
+        maintainId: null,
+        ownerId: null,
+        status: ''
     });
 
     // Fetch data function - wrapped in useCallback to avoid recreating on every render
@@ -372,55 +382,13 @@ const MaintenanceDetail = () => {
             if (status === "Paid" || status === "Advance Available") {
                 const maintainId = isEditing ? editId : (savedMaintenance?.data?.insertId || savedMaintenance?.data?.maintain_id);
                 if (maintainId) {
-                    const messageText = status === "Paid"
-                        ? "Payment completed! Would you like to send the receipt via Email or WhatsApp?\n\nClick OK to choose, or Cancel to skip."
-                        : "Advance payment received! Would you like to send the receipt via Email or WhatsApp?\n\nClick OK to choose, or Cancel to skip.";
-
-                    const sendReceipt = window.confirm(messageText);
-
-                    if (sendReceipt) {
-                        const receiptMethod = window.prompt(
-                            "How would you like to send the receipt?\n\n" +
-                            "Enter 'email' for Email\n" +
-                            "Enter 'whatsapp' for WhatsApp\n" +
-                            "Or click Cancel to skip"
-                        );
-
-                        if (receiptMethod && receiptMethod.toLowerCase() === 'email') {
-                            try {
-                                await sendReceiptByEmail(maintainId);
-                                alert("Receipt sent successfully via Email!");
-                            } catch (error) {
-                                console.error("Error sending receipt via email:", error);
-                                const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to send receipt via email. Please try again later.";
-                                const errorDetails = error.response?.data?.details ? `\n\nDetails: ${error.response.data.details}` : '';
-                                alert(`Failed to send receipt via Email.\n\n${errorMessage}${errorDetails}`);
-                            }
-                        } else if (receiptMethod && receiptMethod.toLowerCase() === 'whatsapp') {
-                            try {
-                                const response = await sendReceiptByWhatsApp(maintainId);
-                                const data = response.data || response;
-
-                                if (data.whatsappLink) {
-                                    // Show modal with message and options
-                                    const selectedOwner = owners.find(o => o.owner_id === parseInt(form.owner_id));
-                                    setWhatsappModal({
-                                        show: true,
-                                        phoneNumber: data.phoneNumber,
-                                        message: data.receiptMessage,
-                                        whatsappLink: data.whatsappLink,
-                                        ownerName: selectedOwner?.owner_name || 'Owner'
-                                    });
-                                } else {
-                                    alert("Receipt link generated successfully!");
-                                }
-                            } catch (error) {
-                                console.error("Error sending receipt via WhatsApp:", error);
-                                const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to generate WhatsApp link. Please try again later.";
-                                alert(`Failed to generate WhatsApp link.\n\n${errorMessage}`);
-                            }
-                        }
-                    }
+                    // Show modal with Email and WhatsApp buttons
+                    setReceiptMethodModal({
+                        show: true,
+                        maintainId: maintainId,
+                        ownerId: form.owner_id,
+                        status: status
+                    });
                 }
             }
 
@@ -794,12 +762,19 @@ const MaintenanceDetail = () => {
                         />
 
                         <label>Payment Mode</label>
-                        <input
-                            type="text"
-                            placeholder="Cash / UPI / Bank Transfer"
+                        <select
                             value={form.payment_mode}
                             onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
-                        />
+                        >
+                            <option value="">Select Payment Mode</option>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Online">Online</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Debit Card">Debit Card</option>
+                        </select>
 
                         <label>Penalty</label>
                         <input
@@ -1043,28 +1018,31 @@ const MaintenanceDetail = () => {
                                                                             {isOwnerRole() && (
                                                                                 <span style={{ color: '#999', fontSize: '12px' }}>View Only</span>
                                                                             )}
+                                                                            {/* Invoice/Receipt buttons for Paid/Advance Available */}
                                                                             {(displayStatus === "Paid" || displayStatus === "Advance Available") && !row.is_deleted && (
                                                                                 <div style={{ display: 'inline-flex', gap: '5px', marginLeft: '5px' }}>
                                                                                     <button
                                                                                         className="receipt-btn email"
+                                                                                        title="Send Invoice/Receipt via Email"
                                                                                         onClick={async () => {
-                                                                                            if (window.confirm("Send receipt via Email?")) {
+                                                                                            if (window.confirm("Send invoice/receipt via Email?")) {
                                                                                                 try {
                                                                                                     await sendReceiptByEmail(row.maintain_id);
-                                                                                                    alert("Receipt sent successfully via Email!");
+                                                                                                    alert("Invoice/Receipt sent successfully via Email!");
                                                                                                 } catch (error) {
                                                                                                     console.error("Error sending receipt:", error);
                                                                                                     const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to send receipt. Please try again.";
                                                                                                     const errorDetails = error.response?.data?.details ? `\n\nDetails: ${error.response.data.details}` : '';
-                                                                                                    alert(`Failed to send receipt via Email.\n\n${errorMessage}${errorDetails}`);
+                                                                                                    alert(`Failed to send invoice/receipt via Email.\n\n${errorMessage}${errorDetails}`);
                                                                                                 }
                                                                                             }
                                                                                         }}
                                                                                     >
-                                                                                        📧 Email
+                                                                                        📧 Invoice
                                                                                     </button>
                                                                                     <button
                                                                                         className="receipt-btn whatsapp"
+                                                                                        title="Send Invoice/Receipt via WhatsApp"
                                                                                         onClick={async () => {
                                                                                             try {
                                                                                                 const response = await sendReceiptByWhatsApp(row.maintain_id);
@@ -1080,7 +1058,7 @@ const MaintenanceDetail = () => {
                                                                                                         ownerName: owner?.owner_name || 'Owner'
                                                                                                     });
                                                                                                 } else {
-                                                                                                    alert("Receipt link generated successfully!");
+                                                                                                    alert("Invoice/Receipt link generated successfully!");
                                                                                                 }
                                                                                             } catch (error) {
                                                                                                 console.error("Error sending receipt:", error);
@@ -1089,7 +1067,60 @@ const MaintenanceDetail = () => {
                                                                                             }
                                                                                         }}
                                                                                     >
-                                                                                        💬 WhatsApp
+                                                                                        💬 Invoice
+                                                                                    </button>
+                                                                                </div>
+                                                                            )}
+                                                                            {/* Bill buttons for Pending status */}
+                                                                            {displayStatus === "Pending" && !row.is_deleted && (
+                                                                                <div style={{ display: 'inline-flex', gap: '5px', marginLeft: '5px' }}>
+                                                                                    <button
+                                                                                        className="bill-btn email"
+                                                                                        title="Send Bill via Email"
+                                                                                        onClick={async () => {
+                                                                                            if (window.confirm("Send bill via Email?")) {
+                                                                                                try {
+                                                                                                    await sendBillByEmail(row.maintain_id);
+                                                                                                    alert("Bill sent successfully via Email!");
+                                                                                                } catch (error) {
+                                                                                                    console.error("Error sending bill:", error);
+                                                                                                    const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to send bill. Please try again.";
+                                                                                                    const errorDetails = error.response?.data?.details ? `\n\nDetails: ${error.response.data.details}` : '';
+                                                                                                    alert(`Failed to send bill via Email.\n\n${errorMessage}${errorDetails}`);
+                                                                                                }
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        📧 Bill
+                                                                                    </button>
+                                                                                    <button
+                                                                                        className="bill-btn whatsapp"
+                                                                                        title="Send Bill via WhatsApp"
+                                                                                        onClick={async () => {
+                                                                                            try {
+                                                                                                const response = await sendBillByWhatsApp(row.maintain_id);
+                                                                                                const data = response.data || response;
+
+                                                                                                if (data.whatsappLink) {
+                                                                                                    const owner = owners.find(o => o.owner_id === row.owner_id);
+                                                                                                    setWhatsappModal({
+                                                                                                        show: true,
+                                                                                                        phoneNumber: data.phoneNumber,
+                                                                                                        message: data.billMessage,
+                                                                                                        whatsappLink: data.whatsappLink,
+                                                                                                        ownerName: owner?.owner_name || 'Owner'
+                                                                                                    });
+                                                                                                } else {
+                                                                                                    alert("Bill link generated successfully!");
+                                                                                                }
+                                                                                            } catch (error) {
+                                                                                                console.error("Error sending bill:", error);
+                                                                                                const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to generate WhatsApp link. Please try again.";
+                                                                                                alert(`Failed to generate WhatsApp link.\n\n${errorMessage}`);
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        💬 Bill
                                                                                     </button>
                                                                                 </div>
                                                                             )}
@@ -1201,6 +1232,100 @@ const MaintenanceDetail = () => {
 
                         <div className="modal-tip">
                             💡 Tip: If WhatsApp doesn't open, copy the message and send it manually
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Receipt Method Selection Modal */}
+            {receiptMethodModal.show && (
+                <div
+                    className="receipt-method-modal-overlay"
+                    onClick={() => setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' })}
+                >
+                    <div
+                        className="receipt-method-modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="modal-header receipt-method">
+                            <h3>📧 Send Receipt</h3>
+                            <button
+                                className="modal-close-btn"
+                                onClick={() => setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' })}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-section">
+                            <p>
+                                {receiptMethodModal.status === "Paid"
+                                    ? "Payment completed! How would you like to send the receipt?"
+                                    : "Advance payment received! How would you like to send the receipt?"}
+                            </p>
+                        </div>
+
+                        <div className="receipt-method-buttons">
+                            <button
+                                className="receipt-method-btn email-btn"
+                                onClick={async () => {
+                                    const maintainId = receiptMethodModal.maintainId;
+                                    setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' });
+                                    
+                                    try {
+                                        await sendReceiptByEmail(maintainId);
+                                        alert("Receipt sent successfully via Email!");
+                                    } catch (error) {
+                                        console.error("Error sending receipt via email:", error);
+                                        const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to send receipt via email. Please try again later.";
+                                        const errorDetails = error.response?.data?.details ? `\n\nDetails: ${error.response.data.details}` : '';
+                                        alert(`Failed to send receipt via Email.\n\n${errorMessage}${errorDetails}`);
+                                    }
+                                }}
+                            >
+                                📧 Email
+                            </button>
+                            <button
+                                className="receipt-method-btn whatsapp-btn"
+                                onClick={async () => {
+                                    const maintainId = receiptMethodModal.maintainId;
+                                    setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' });
+                                    
+                                    try {
+                                        const response = await sendReceiptByWhatsApp(maintainId);
+                                        const data = response.data || response;
+
+                                        if (data.whatsappLink) {
+                                            // Show modal with message and options
+                                            const selectedOwner = owners.find(o => o.owner_id === parseInt(receiptMethodModal.ownerId));
+                                            setWhatsappModal({
+                                                show: true,
+                                                phoneNumber: data.phoneNumber,
+                                                message: data.receiptMessage,
+                                                whatsappLink: data.whatsappLink,
+                                                ownerName: selectedOwner?.owner_name || 'Owner'
+                                            });
+                                        } else {
+                                            alert("Receipt link generated successfully!");
+                                        }
+                                    } catch (error) {
+                                        console.error("Error sending receipt via WhatsApp:", error);
+                                        const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to generate WhatsApp link. Please try again later.";
+                                        alert(`Failed to generate WhatsApp link.\n\n${errorMessage}`);
+                                    }
+                                }}
+                            >
+                                💬 WhatsApp
+                            </button>
+                        </div>
+
+                        <div className="modal-section">
+                            <button
+                                className="receipt-method-btn cancel-btn"
+                                onClick={() => setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' })}
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 </div>

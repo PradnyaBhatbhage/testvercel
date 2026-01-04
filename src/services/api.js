@@ -156,6 +156,15 @@ export const getWings = () => API.post("/wings");
 // Register user
 export const registerUser = (userData) => API.post("/users", userData);
 
+// Get all users
+export const getAllUsers = () => API.get("/users");
+
+// Update user
+export const updateUser = (id, userData) => API.put(`/users/${id}`, userData);
+
+// Delete user
+export const deleteUser = (id, reason) => API.delete(`/users/${id}`, { data: { deleted_reason: reason } });
+
 // Login user
 export const loginUser = (credentials) => API.post("/auth/login", credentials);
 
@@ -166,8 +175,8 @@ export const resetPassword = (data) => API.post("/auth/reset-password", data);
 
 // ================= Society =================
 export const createSociety = (data) => API.post("/societies", data);
-export const updateSociety = (id, data, file = null) => {
-    if (file) {
+export const updateSociety = (id, data, logoFile = null, qrImageFile = null) => {
+    if (logoFile || qrImageFile) {
         const formData = new FormData();
         // Append all form fields as strings
         Object.keys(data).forEach(key => {
@@ -180,7 +189,12 @@ export const updateSociety = (id, data, file = null) => {
                 }
             }
         });
-        formData.append('logo', file);
+        if (logoFile) {
+            formData.append('logo', logoFile);
+        }
+        if (qrImageFile) {
+            formData.append('qrImage', qrImageFile);
+        }
         return API.put(`/societies/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -350,15 +364,24 @@ export const getAbsenteeWarnings = () => API.get("/meetings/warnings/absentees")
 export const sendAbsenteeWarningByEmail = (ownerId) => API.post("/meetings/warnings/absentees/email", { owner_id: ownerId });
 export const sendAbsenteeWarningByWhatsApp = (ownerId) => API.post("/meetings/warnings/absentees/whatsapp", { owner_id: ownerId });
 export const sendAbsenteeWarningBySMS = (ownerId) => API.post("/meetings/warnings/absentees/sms", { owner_id: ownerId });
-export const createMeeting = (data, file = null) => {
+export const createMeeting = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/meetings", formData, {
         headers: {
@@ -366,15 +389,24 @@ export const createMeeting = (data, file = null) => {
         },
     });
 };
-export const updateMeeting = (id, data, file = null) => {
+export const updateMeeting = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/meetings/${id}`, formData, {
         headers: {
@@ -397,15 +429,24 @@ export const restoreActivity = (id) => API.put(`/activities/restore/${id}`);
 // ================= Activity Expenses =================
 export const getAllActivityExpenses = () => API.get("/activity-expenses");
 export const getActivityExpenseById = (id) => API.get(`/activity-expenses/${id}`);
-export const createActivityExpense = (data, file = null) => {
+export const createActivityExpense = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/activity-expenses", formData, {
         headers: {
@@ -413,15 +454,24 @@ export const createActivityExpense = (data, file = null) => {
         },
     });
 };
-export const updateActivityExpense = (id, data, file = null) => {
+export const updateActivityExpense = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/activity-expenses/${id}`, formData, {
         headers: {
@@ -454,15 +504,24 @@ export const getExpenses = () => API.get("/expenses");
 export const getExpenseById = (id) => API.get(`/expenses/${id}`);
 
 // Create a new expense
-export const createExpense = (data, file = null) => {
+export const createExpense = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/expenses", formData, {
         headers: {
@@ -472,15 +531,24 @@ export const createExpense = (data, file = null) => {
 };
 
 // Update an existing expense
-export const updateExpense = (id, data, file = null) => {
+export const updateExpense = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/expenses/${id}`, formData, {
         headers: {
@@ -534,6 +602,12 @@ export const sendReceiptByEmail = (maintainId) => API.post(`/maintenance-details
 
 // Generate and send receipt via WhatsApp
 export const sendReceiptByWhatsApp = (maintainId) => API.post(`/maintenance-details/${maintainId}/send-receipt/whatsapp`);
+
+// Send bill via Email
+export const sendBillByEmail = (maintainId) => API.post(`/maintenance-details/${maintainId}/send-bill/email`);
+
+// Send bill via WhatsApp
+export const sendBillByWhatsApp = (maintainId) => API.post(`/maintenance-details/${maintainId}/send-bill/whatsapp`);
 
 // Send monthly reminders to all owners
 export const sendMonthlyReminders = () => API.post("/maintenance-details/send-monthly-reminders");
@@ -618,15 +692,24 @@ export const restoreParking = (id) => API.put(`/parking/restore/${id}`);
 
 // ================= Complaints =================
 export const getComplaints = () => API.get("/complaints/get");
-export const addComplaint = (data, file = null) => {
+export const addComplaint = (data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.post("/complaints/add", formData, {
         headers: {
@@ -634,15 +717,24 @@ export const addComplaint = (data, file = null) => {
         },
     });
 };
-export const updateComplaint = (id, data, file = null) => {
+export const updateComplaint = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
-    if (file) {
-        formData.append('attachment', file);
+    // Support both single file and array of files
+    if (files) {
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                if (file) {
+                    formData.append('attachment', file);
+                }
+            });
+        } else {
+            formData.append('attachment', files);
+        }
     }
     return API.put(`/complaints/update/${id}`, formData, {
         headers: {

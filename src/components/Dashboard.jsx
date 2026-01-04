@@ -223,7 +223,7 @@ const Dashboard = () => {
                 return <Announcements />;
             case "Invitation":
                 return <Invitation />;
-            case "Committee Members":
+            case "Members":
                 return <CommitteeMembers />;
             default:
                 return <p>Module "{activeMenu}" is under construction.</p>;

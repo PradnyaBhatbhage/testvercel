@@ -9,10 +9,9 @@ const OwnerReport = () => {
     const [wings, setWings] = useState([]);
     const [reportData, setReportData] = useState([]);
     
-    const [dateFilter, setDateFilter] = useState({
-        startDate: "",
-        endDate: "",
-        wing_id: "",
+    // Search filter for Owner Report (searches both flat number and owner name)
+    const [searchFilter, setSearchFilter] = useState({
+        ownerSearch: "",
     });
 
     const reportRef = useRef(null);
@@ -22,10 +21,6 @@ const OwnerReport = () => {
         fetchWings();
         fetchReport();
     }, []);
-
-    useEffect(() => {
-        fetchReport();
-    }, [dateFilter]);
 
     const fetchWings = async () => {
         try {
@@ -42,10 +37,19 @@ const OwnerReport = () => {
             const res = await getOwners();
             let owners = res.data || [];
             
-            if (dateFilter.wing_id) {
-                owners = owners.filter(o => o.wing_id === parseInt(dateFilter.wing_id));
-            } else if (currentUserWingId !== null) {
+            // Apply wing filter if user has wing restriction
+            if (currentUserWingId !== null) {
                 owners = filterOwnersByWing(owners, currentUserWingId);
+            }
+            
+            // Apply search filter (searches both flat number and owner name)
+            if (searchFilter.ownerSearch && searchFilter.ownerSearch.trim() !== "") {
+                const searchTerm = searchFilter.ownerSearch.toLowerCase().trim();
+                owners = owners.filter(owner => {
+                    const flatNo = (owner.flat_no || "").toString().toLowerCase();
+                    const ownerName = (owner.owner_name || "").toLowerCase();
+                    return flatNo.includes(searchTerm) || ownerName.includes(searchTerm);
+                });
             }
             
             setReportData(owners);
@@ -56,9 +60,8 @@ const OwnerReport = () => {
         }
     };
 
-    const handleDateFilterChange = (e) => {
-        const { name, value } = e.target;
-        setDateFilter(prev => ({ ...prev, [name]: value }));
+    const handleSearchChange = (e) => {
+        setSearchFilter(prev => ({ ...prev, ownerSearch: e.target.value }));
     };
 
     const handlePrint = () => {
@@ -101,48 +104,34 @@ const OwnerReport = () => {
 
             {/* Filters */}
             <div className="reports-filters">
-                <div className="filter-group">
-                    <label>Start Date</label>
+                <div className="filter-group" style={{ flex: '1 1 300px', minWidth: '300px' }}>
+                    <label>Search by Flat Number or Owner Name</label>
                     <input
-                        type="date"
-                        name="startDate"
-                        value={dateFilter.startDate}
-                        onChange={handleDateFilterChange}
+                        type="text"
+                        name="ownerSearch"
+                        placeholder="Enter flat number or owner name"
+                        value={searchFilter.ownerSearch || ""}
+                        onChange={handleSearchChange}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                                fetchReport();
+                            }
+                        }}
+                        style={{ width: '100%', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ddd' }}
                     />
-                </div>
-                <div className="filter-group">
-                    <label>End Date</label>
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={dateFilter.endDate}
-                        onChange={handleDateFilterChange}
-                    />
-                </div>
-                <div className="filter-group">
-                    <label>Wing</label>
-                    <select
-                        name="wing_id"
-                        value={dateFilter.wing_id}
-                        onChange={handleDateFilterChange}
-                    >
-                        <option value="">All Wings</option>
-                        {wings.map((wing) => (
-                            <option key={wing.wing_id} value={wing.wing_id}>
-                                {wing.wing_name}
-                            </option>
-                        ))}
-                    </select>
                 </div>
                 <div className="filter-group">
                     <button className="btn-filter" onClick={fetchReport}>
-                        🔍 Apply Filters
+                        🔍 Search
                     </button>
                     <button 
                         className="btn-reset" 
-                        onClick={() => setDateFilter({ startDate: "", endDate: "", wing_id: "" })}
+                        onClick={() => {
+                            setSearchFilter({ ownerSearch: "" });
+                            fetchReport();
+                        }}
                     >
-                        🔄 Reset
+                        🔄 Clear
                     </button>
                 </div>
             </div>
@@ -159,11 +148,8 @@ const OwnerReport = () => {
                                 <h1>Owner Report</h1>
                                 <p className="report-meta">
                                     Generated on: {new Date().toLocaleString('en-IN')}
-                                    {dateFilter.startDate && dateFilter.endDate && (
-                                        <span> | Period: {formatDate(dateFilter.startDate)} to {formatDate(dateFilter.endDate)}</span>
-                                    )}
-                                    {dateFilter.wing_id && (
-                                        <span> | Wing: {wings.find(w => w.wing_id === parseInt(dateFilter.wing_id))?.wing_name || "All"}</span>
+                                    {searchFilter.ownerSearch && (
+                                        <span> | Search: "{searchFilter.ownerSearch}"</span>
                                     )}
                                 </p>
                             </div>

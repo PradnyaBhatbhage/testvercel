@@ -13,6 +13,7 @@ const MaintenanceReport = () => {
         startDate: "",
         endDate: "",
         wing_id: "",
+        month: "", // Month filter (YYYY-MM format)
     });
 
     const reportRef = useRef(null);
@@ -20,7 +21,10 @@ const MaintenanceReport = () => {
 
     useEffect(() => {
         fetchWings();
-        fetchReport();
+        // If user has wing restriction, set it as default
+        if (currentUserWingId !== null) {
+            setDateFilter(prev => ({ ...prev, wing_id: currentUserWingId.toString() }));
+        }
     }, []);
 
     useEffect(() => {
@@ -30,7 +34,14 @@ const MaintenanceReport = () => {
     const fetchWings = async () => {
         try {
             const res = await getWings();
-            setWings(res.data || []);
+            let allWings = res.data || [];
+            
+            // If user has wing restriction, filter wings to show only their wing
+            if (currentUserWingId !== null) {
+                allWings = allWings.filter(w => w.wing_id === currentUserWingId);
+            }
+            
+            setWings(allWings);
         } catch (err) {
             console.error("Error fetching wings:", err);
         }
@@ -80,14 +91,91 @@ const MaintenanceReport = () => {
                 console.log("After wing filter (current user):", maintenance.length);
             }
             
-            // Filter by date range
-            if (dateFilter.startDate && dateFilter.endDate) {
+            // Filter by month (takes priority over date range)
+            if (dateFilter.month && dateFilter.month.trim() !== "") {
+                const [year, month] = dateFilter.month.split('-');
+                const startOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const endOfMonth = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+                
+                console.log('📅 [MaintenanceReport] Filtering by month:', dateFilter.month, 'Range:', startOfMonth, 'to', endOfMonth);
+                
                 maintenance = maintenance.filter(m => {
-                    const billDate = new Date(m.bill_start_date || m.created_at);
-                    const startDate = new Date(dateFilter.startDate);
-                    const endDate = new Date(dateFilter.endDate);
-                    endDate.setHours(23, 59, 59, 999); // Include entire end date
-                    return billDate >= startDate && billDate <= endDate;
+                    try {
+                        // Check if bill period overlaps with the selected month
+                        // A bill should be included if: bill_start_date <= endOfMonth AND bill_end_date >= startOfMonth
+                        const billStartDate = m.bill_start_date ? new Date(m.bill_start_date) : null;
+                        const billEndDate = m.bill_end_date ? new Date(m.bill_end_date) : null;
+                        
+                        // If no bill dates, fallback to created_at
+                        if (!billStartDate && !billEndDate) {
+                            const createdDate = m.created_at ? new Date(m.created_at) : null;
+                            if (!createdDate || isNaN(createdDate.getTime())) return false;
+                            return createdDate >= startOfMonth && createdDate <= endOfMonth;
+                        }
+                        
+                        // Use bill_start_date if bill_end_date is not available
+                        if (!billEndDate) {
+                            if (!billStartDate || isNaN(billStartDate.getTime())) return false;
+                            return billStartDate >= startOfMonth && billStartDate <= endOfMonth;
+                        }
+                        
+                        // Use bill_end_date if bill_start_date is not available
+                        if (!billStartDate) {
+                            if (!billEndDate || isNaN(billEndDate.getTime())) return false;
+                            return billEndDate >= startOfMonth && billEndDate <= endOfMonth;
+                        }
+                        
+                        // Check if bill period overlaps with the selected month
+                        // Bill overlaps if: bill starts before/on month end AND bill ends after/on month start
+                        return billStartDate <= endOfMonth && billEndDate >= startOfMonth;
+                    } catch (err) {
+                        console.error('Error filtering by month:', err, m);
+                        return false;
+                    }
+                });
+                console.log("After month filter:", maintenance.length);
+            } 
+            // Filter by date range (only if month is not selected)
+            else if (dateFilter.startDate && dateFilter.endDate) {
+                const startDate = new Date(dateFilter.startDate);
+                const endDate = new Date(dateFilter.endDate);
+                endDate.setHours(23, 59, 59, 999); // Include entire end date
+                
+                console.log('📅 [MaintenanceReport] Filtering by date range:', dateFilter.startDate, 'to', dateFilter.endDate);
+                
+                maintenance = maintenance.filter(m => {
+                    try {
+                        // Check if bill period overlaps with the selected date range
+                        // A bill should be included if: bill_start_date <= endDate AND bill_end_date >= startDate
+                        const billStartDate = m.bill_start_date ? new Date(m.bill_start_date) : null;
+                        const billEndDate = m.bill_end_date ? new Date(m.bill_end_date) : null;
+                        
+                        // If no bill dates, fallback to created_at
+                        if (!billStartDate && !billEndDate) {
+                            const createdDate = m.created_at ? new Date(m.created_at) : null;
+                            if (!createdDate || isNaN(createdDate.getTime())) return false;
+                            return createdDate >= startDate && createdDate <= endDate;
+                        }
+                        
+                        // Use bill_start_date if bill_end_date is not available
+                        if (!billEndDate) {
+                            if (!billStartDate || isNaN(billStartDate.getTime())) return false;
+                            return billStartDate >= startDate && billStartDate <= endDate;
+                        }
+                        
+                        // Use bill_end_date if bill_start_date is not available
+                        if (!billStartDate) {
+                            if (!billEndDate || isNaN(billEndDate.getTime())) return false;
+                            return billEndDate >= startDate && billEndDate <= endDate;
+                        }
+                        
+                        // Check if bill period overlaps with the selected date range
+                        // Bill overlaps if: bill starts before/on range end AND bill ends after/on range start
+                        return billStartDate <= endDate && billEndDate >= startDate;
+                    } catch (err) {
+                        console.error('Error filtering by date range:', err, m);
+                        return false;
+                    }
                 });
                 console.log("After date filter:", maintenance.length);
             }
@@ -165,6 +253,15 @@ const MaintenanceReport = () => {
             {/* Filters */}
             <div className="reports-filters">
                 <div className="filter-group">
+                    <label>Month</label>
+                    <input
+                        type="month"
+                        name="month"
+                        value={dateFilter.month}
+                        onChange={handleDateFilterChange}
+                    />
+                </div>
+                <div className="filter-group">
                     <label>Start Date</label>
                     <input
                         type="date"
@@ -188,8 +285,11 @@ const MaintenanceReport = () => {
                         name="wing_id"
                         value={dateFilter.wing_id}
                         onChange={handleDateFilterChange}
+                        disabled={currentUserWingId !== null} // Disable if user has wing restriction
                     >
-                        <option value="">All Wings</option>
+                        {currentUserWingId === null ? (
+                            <option value="">All Wings</option>
+                        ) : null}
                         {wings.map((wing) => (
                             <option key={wing.wing_id} value={wing.wing_id}>
                                 {wing.wing_name}
@@ -203,7 +303,16 @@ const MaintenanceReport = () => {
                     </button>
                     <button 
                         className="btn-reset" 
-                        onClick={() => setDateFilter({ startDate: "", endDate: "", wing_id: "" })}
+                        onClick={() => {
+                            const resetFilter = { 
+                                startDate: "", 
+                                endDate: "", 
+                                month: "",
+                                wing_id: currentUserWingId !== null ? currentUserWingId.toString() : ""
+                            };
+                            setDateFilter(resetFilter);
+                            fetchReport();
+                        }}
                     >
                         🔄 Reset
                     </button>
@@ -222,7 +331,10 @@ const MaintenanceReport = () => {
                                 <h1>Maintenance Report</h1>
                                 <p className="report-meta">
                                     Generated on: {new Date().toLocaleString('en-IN')}
-                                    {dateFilter.startDate && dateFilter.endDate && (
+                                    {dateFilter.month && (
+                                        <span> | Month: {new Date(dateFilter.month + '-01').toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })}</span>
+                                    )}
+                                    {!dateFilter.month && dateFilter.startDate && dateFilter.endDate && (
                                         <span> | Period: {formatDate(dateFilter.startDate)} to {formatDate(dateFilter.endDate)}</span>
                                     )}
                                     {dateFilter.wing_id && (

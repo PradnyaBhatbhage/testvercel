@@ -50,7 +50,7 @@ const Sidebar = ({ isOpen, user, onMenuClick, activeDelegations = [] }) => {
             { label: "Parking Details", icon: "🚗", moduleId: "parking_details" },
             { label: "Announcements", icon: "📢", alwaysVisible: true },
             { label: "Invitation", icon: "🎉", moduleId: "invitation" },
-            { label: "Committee Members", icon: "👨‍👩‍👧‍👦", moduleId: "committee_members" },
+            { label: "Members", icon: "👨‍👩‍👧‍👦", moduleId: "committee_members" },
             {
                 label: "Reports", icon: "📊",
                 subItems: [

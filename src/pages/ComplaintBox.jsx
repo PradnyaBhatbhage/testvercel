@@ -33,8 +33,8 @@ const ComplaintBox = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState("");
     const itemsPerPage = 10;
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
     const [deleteModal, setDeleteModal] = useState({
         show: false,
         id: null,
@@ -180,30 +180,53 @@ const ComplaintBox = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const validFiles = [];
+        const validPreviews = [];
+
+        files.forEach((file) => {
+            // Validate file type
             if (!validTypes.includes(file.type)) {
-                alert('Please select a PDF or JPEG/PNG image file.');
-                e.target.value = '';
+                alert(`File "${file.name}" is not a valid type. Please select PDF or JPEG/PNG image files only.`);
                 return;
             }
+
+            // Validate file size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size should be less than 10MB.');
-                e.target.value = '';
+                alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
                 return;
             }
-            setSelectedFile(file);
+
+            validFiles.push(file);
+
+            // Create preview for images
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    setFilePreview(reader.result);
+                    validPreviews.push(reader.result);
+                    if (validPreviews.length === validFiles.length) {
+                        setFilePreviews(prev => [...prev, ...validPreviews]);
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
-                setFilePreview(null);
+                validPreviews.push(null);
             }
+        });
+
+        // Append new files to existing selected files
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+
+        // Set previews immediately for non-image files
+        if (validPreviews.length === validFiles.length && validPreviews.every(p => p === null || p)) {
+            setFilePreviews(prev => [...prev, ...validPreviews]);
         }
+
+        // Reset file input to allow selecting same files again
+        e.target.value = '';
     };
 
     const resetForm = () => {
@@ -234,8 +257,8 @@ const ComplaintBox = () => {
 
         setFormData(baseFormData);
         setEditingId(null);
-        setSelectedFile(null);
-        setFilePreview(null);
+        setSelectedFiles([]);
+        setFilePreviews([]);
         setShowForm(false);
     };
 
@@ -273,10 +296,10 @@ const ComplaintBox = () => {
             console.log("Submitting complaint data:", submitData);
 
             if (editingId) {
-                await updateComplaint(editingId, submitData, selectedFile);
+                await updateComplaint(editingId, submitData, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Complaint updated successfully!");
             } else {
-                await addComplaint(submitData, selectedFile);
+                await addComplaint(submitData, selectedFiles.length > 0 ? selectedFiles : null);
                 alert("Complaint submitted successfully!");
             }
             resetForm();
@@ -325,8 +348,34 @@ const ComplaintBox = () => {
             resolution_notes: complaint.resolution_notes || "",
         });
         setEditingId(complaint.complaint_id);
-        setSelectedFile(null);
-        setFilePreview(complaint.attachment_url && complaint.attachment_url.startsWith('http') ? complaint.attachment_url : null);
+        setSelectedFiles([]);
+        
+        // Handle existing attachments - support both single URL and array of URLs
+        let existingUrls = [];
+        if (complaint.attachment_url) {
+            try {
+                if (Array.isArray(complaint.attachment_url)) {
+                    existingUrls = complaint.attachment_url.filter(url => url && typeof url === 'string' && url.startsWith('http'));
+                } else if (typeof complaint.attachment_url === 'string') {
+                    try {
+                        const parsed = JSON.parse(complaint.attachment_url);
+                        if (Array.isArray(parsed)) {
+                            existingUrls = parsed.filter(url => url && typeof url === 'string' && url.startsWith('http'));
+                        } else if (parsed && typeof parsed === 'string' && parsed.startsWith('http')) {
+                            existingUrls = [parsed];
+                        }
+                    } catch {
+                        // Not JSON, treat as single URL
+                        if (complaint.attachment_url.startsWith('http')) {
+                            existingUrls = [complaint.attachment_url];
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error parsing attachment_url:', err);
+            }
+        }
+        setFilePreviews(existingUrls);
         setShowForm(true);
     };
 
@@ -634,22 +683,110 @@ const ComplaintBox = () => {
                     )}
 
                     <div className="form-field">
-                        <label>Attachment</label>
+                        <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                         <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
                             onChange={handleFileChange}
+                            multiple
                             disabled={formData.status === "closed"}
                         />
-                        {filePreview && (
+                        
+                        {/* Display existing attachments (when editing) */}
+                        {filePreviews.length > 0 && selectedFiles.length === 0 && editingId && (
                             <div style={{ marginTop: '10px' }}>
-                                {filePreview.startsWith('data:') ? (
-                                    <img src={filePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '5px' }} />
-                                ) : (
-                                    <a href={filePreview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        {filePreview.includes('pdf') ? 'View PDF' : 'View Image'}
-                                    </a>
-                                )}
+                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                    Existing attachments ({filePreviews.length}):
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {filePreviews.map((preview, idx) => (
+                                        <div key={`existing-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                            {preview && preview.startsWith('http') ? (
+                                                preview.includes('pdf') || preview.endsWith('.pdf') ? (
+                                                    <a href={preview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontSize: '12px' }}>
+                                                        📄 PDF {idx + 1}
+                                                    </a>
+                                                ) : (
+                                                    <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                )
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Display all files (existing + new) */}
+                        {(filePreviews.length > 0 || selectedFiles.length > 0) && (
+                            <div style={{ marginTop: '10px' }}>
+                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                    All attachments ({filePreviews.length + selectedFiles.length}):
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {/* Existing attachments (URLs) */}
+                                    {filePreviews.map((preview, idx) => {
+                                        if (!preview || !preview.startsWith('http')) return null;
+                                        return (
+                                            <div key={`existing-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                                {preview.includes('pdf') || preview.endsWith('.pdf') ? (
+                                                    <a href={preview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontSize: '12px' }}>
+                                                        📄 PDF {idx + 1}
+                                                    </a>
+                                                ) : (
+                                                    <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    
+                                    {/* New selected files */}
+                                    {selectedFiles.map((file, idx) => {
+                                        // Find preview for this file (should be at index: filePreviews.length + idx)
+                                        const previewIndex = filePreviews.length + idx;
+                                        const preview = previewIndex < filePreviews.length ? filePreviews[previewIndex] : null;
+                                        
+                                        return (
+                                            <div key={`new-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
+                                                {file.type === 'application/pdf' ? (
+                                                    <span style={{ fontSize: '12px', color: '#007bff' }}>📄 {file.name}</span>
+                                                ) : preview ? (
+                                                    <img src={preview} alt={file.name} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: '12px' }}>🖼️ {file.name}</span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated = selectedFiles.filter((_, i) => i !== idx);
+                                                        setSelectedFiles(updated);
+                                                        // Remove corresponding preview if it exists
+                                                        if (previewIndex < filePreviews.length) {
+                                                            const updatedPreviews = filePreviews.filter((_, i) => i !== previewIndex);
+                                                            setFilePreviews(updatedPreviews);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-5px',
+                                                        right: '-5px',
+                                                        background: '#dc3545',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px',
+                                                        lineHeight: '1'
+                                                    }}
+                                                    title="Remove file"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -750,20 +887,59 @@ const ComplaintBox = () => {
                                             )}
                                             <td>{complaint.created_at ? new Date(complaint.created_at).toLocaleDateString('en-IN') : "-"}</td>
                                             <td>
-                                                {complaint.attachment_url ? (
-                                                    <a
-                                                        href={complaint.attachment_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        style={{ color: '#007bff', textDecoration: 'none' }}
-                                                    >
-                                                        {complaint.attachment_url.endsWith('.pdf') || complaint.attachment_url.includes('pdf')
-                                                            ? '📄 View PDF'
-                                                            : '🖼️ View Image'}
-                                                    </a>
-                                                ) : (
-                                                    "-"
-                                                )}
+                                                {(() => {
+                                                    let attachments = [];
+                                                    if (complaint.attachment_url) {
+                                                        try {
+                                                            if (Array.isArray(complaint.attachment_url)) {
+                                                                // Already an array from backend
+                                                                attachments = complaint.attachment_url.filter(url => url && typeof url === 'string' && url.trim().length > 0);
+                                                            } else if (typeof complaint.attachment_url === 'string') {
+                                                                // Try to parse as JSON
+                                                                try {
+                                                                    const parsed = JSON.parse(complaint.attachment_url);
+                                                                    if (Array.isArray(parsed)) {
+                                                                        attachments = parsed.filter(url => url && typeof url === 'string' && url.trim().length > 0);
+                                                                    } else if (parsed && typeof parsed === 'string' && parsed.trim().length > 0) {
+                                                                        attachments = [parsed];
+                                                                    }
+                                                                } catch {
+                                                                    // Not JSON, treat as single URL string
+                                                                    if (complaint.attachment_url.trim().length > 0) {
+                                                                        attachments = [complaint.attachment_url];
+                                                                    }
+                                                                }
+                                                            }
+                                                        } catch (err) {
+                                                            console.error('Error parsing attachment_url:', err, complaint.attachment_url);
+                                                            attachments = [];
+                                                        }
+                                                    }
+                                                    
+                                                    if (attachments.length === 0) {
+                                                        return <span style={{ color: '#999' }}>-</span>;
+                                                    }
+                                                    
+                                                    return (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                            {attachments.map((url, idx) => {
+                                                                if (!url || typeof url !== 'string' || url.trim().length === 0) return null;
+                                                                const isPdf = url.includes('pdf') || url.endsWith('.pdf') || url.toLowerCase().includes('application/pdf');
+                                                                return (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: '#007bff', textDecoration: 'none', fontSize: '12px' }}
+                                                                    >
+                                                                        {isPdf ? `📄 PDF ${idx + 1}` : `🖼️ Image ${idx + 1}`}
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </td>
                                             {(canEdit() || canDelete()) && (
                                                 <td>
@@ -848,75 +1024,173 @@ const ComplaintBox = () => {
 
             {/* View Modal for Closed Complaints */}
             {viewModal.show && viewModal.complaint && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <h3>View Complaint Details</h3>
-                        <div style={{ marginTop: '20px' }}>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Complaint ID:</strong> {viewModal.complaint.complaint_id}
+                <div className="modal-overlay" onClick={() => setViewModal({ show: false, complaint: null })}>
+                    <div 
+                        className="modal-content" 
+                        style={{ 
+                            maxWidth: '700px', 
+                            width: '90%',
+                            maxHeight: '90vh', 
+                            overflowY: 'auto',
+                            margin: 'auto',
+                            position: 'relative',
+                            padding: '30px'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e9ecef', paddingBottom: '15px' }}>
+                            <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '24px', fontWeight: '700' }}>View Complaint Details</h3>
+                            <button
+                                onClick={() => setViewModal({ show: false, complaint: null })}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '28px',
+                                    cursor: 'pointer',
+                                    color: '#666',
+                                    padding: '0',
+                                    width: '30px',
+                                    height: '30px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                title="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div style={{ marginTop: '20px', paddingLeft: '0', paddingRight: '0' }}>
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Complaint ID:</strong>
+                                <span style={{ color: '#212529' }}>{viewModal.complaint.complaint_id}</span>
                             </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Owner:</strong> {owners.find(o => o.owner_id === viewModal.complaint.owner_id)?.owner_name || "-"}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Owner:</strong>
+                                <span style={{ color: '#212529' }}>{owners.find(o => o.owner_id === viewModal.complaint.owner_id)?.owner_name || "-"}</span>
                             </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Title:</strong> {viewModal.complaint.complaint_title || "-"}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Title:</strong>
+                                <span style={{ color: '#212529' }}>{viewModal.complaint.complaint_title || "-"}</span>
                             </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Type:</strong> {viewModal.complaint.complaint_type || "-"}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Type:</strong>
+                                <span style={{ color: '#212529' }}>{viewModal.complaint.complaint_type || "-"}</span>
                             </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Priority:</strong> {getPriorityBadge(viewModal.complaint.priority || "medium")}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Priority:</strong>
+                                <span>{getPriorityBadge(viewModal.complaint.priority || "medium")}</span>
                             </div>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Status:</strong> {getStatusBadge(viewModal.complaint.status || "pending")}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Status:</strong>
+                                <span>{getStatusBadge(viewModal.complaint.status || "pending")}</span>
                             </div>
                             {(canEdit() || !isOwnerRole()) && viewModal.complaint.assigned_to && (
-                                <div style={{ marginBottom: '15px' }}>
-                                    <strong>Assigned To:</strong> {viewModal.complaint.assigned_to}
+                                <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                    <strong style={{ minWidth: '140px', color: '#495057' }}>Assigned To:</strong>
+                                    <span style={{ color: '#212529' }}>{viewModal.complaint.assigned_to}</span>
                                 </div>
                             )}
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Description:</strong>
-                                <div style={{ marginTop: '5px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                            <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
+                                <strong style={{ marginBottom: '8px', color: '#495057' }}>Description:</strong>
+                                <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', color: '#212529', lineHeight: '1.6' }}>
                                     {viewModal.complaint.complaint_description || "-"}
                                 </div>
                             </div>
                             {(canEdit() || !isOwnerRole()) && viewModal.complaint.resolution_notes && (
-                                <div style={{ marginBottom: '15px' }}>
-                                    <strong>Resolution Notes:</strong>
-                                    <div style={{ marginTop: '5px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
+                                    <strong style={{ marginBottom: '8px', color: '#495057' }}>Resolution Notes:</strong>
+                                    <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', color: '#212529', lineHeight: '1.6' }}>
                                         {viewModal.complaint.resolution_notes}
                                     </div>
                                 </div>
                             )}
-                            {viewModal.complaint.attachment_url && (
-                                <div style={{ marginBottom: '15px' }}>
-                                    <strong>Attachment:</strong>
-                                    <div style={{ marginTop: '5px' }}>
-                                        <a
-                                            href={viewModal.complaint.attachment_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: '#007bff', textDecoration: 'none' }}
-                                        >
-                                            {viewModal.complaint.attachment_url.endsWith('.pdf') || viewModal.complaint.attachment_url.includes('pdf')
-                                                ? '📄 View PDF'
-                                                : '🖼️ View Image'}
-                                        </a>
+                            {(() => {
+                                let attachments = [];
+                                if (viewModal.complaint && viewModal.complaint.attachment_url) {
+                                    try {
+                                        if (Array.isArray(viewModal.complaint.attachment_url)) {
+                                            // Already an array from backend
+                                            attachments = viewModal.complaint.attachment_url.filter(url => url && typeof url === 'string' && url.trim().length > 0);
+                                        } else if (typeof viewModal.complaint.attachment_url === 'string') {
+                                            // Try to parse as JSON
+                                            try {
+                                                const parsed = JSON.parse(viewModal.complaint.attachment_url);
+                                                if (Array.isArray(parsed)) {
+                                                    attachments = parsed.filter(url => url && typeof url === 'string' && url.trim().length > 0);
+                                                } else if (parsed && typeof parsed === 'string' && parsed.trim().length > 0) {
+                                                    attachments = [parsed];
+                                                }
+                                            } catch {
+                                                // Not JSON, treat as single URL string
+                                                if (viewModal.complaint.attachment_url.trim().length > 0) {
+                                                    attachments = [viewModal.complaint.attachment_url];
+                                                }
+                                            }
+                                        }
+                                    } catch (err) {
+                                        console.error('Error parsing attachment_url in view modal:', err, viewModal.complaint.attachment_url);
+                                        attachments = [];
+                                    }
+                                }
+                                
+                                if (attachments.length === 0) return null;
+                                
+                                return (
+                                    <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
+                                        <strong style={{ marginBottom: '8px', color: '#495057' }}>Attachments:</strong>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {attachments.map((url, idx) => {
+                                                if (!url || typeof url !== 'string' || url.trim().length === 0) return null;
+                                                const isPdf = url.includes('pdf') || url.endsWith('.pdf') || url.toLowerCase().includes('application/pdf');
+                                                return (
+                                                    <a
+                                                        key={idx}
+                                                        href={url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{ 
+                                                            color: '#007bff', 
+                                                            textDecoration: 'none',
+                                                            padding: '8px 12px',
+                                                            backgroundColor: '#f8f9fa',
+                                                            borderRadius: '4px',
+                                                            display: 'inline-block',
+                                                            width: 'fit-content',
+                                                            transition: 'background-color 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                                                    >
+                                                        {isPdf ? `📄 PDF ${idx + 1}` : `🖼️ Image ${idx + 1}`}
+                                                    </a>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>Created Date:</strong> {viewModal.complaint.created_at ? new Date(viewModal.complaint.created_at).toLocaleString('en-IN') : "-"}
+                                );
+                            })()}
+                            <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                <strong style={{ minWidth: '140px', color: '#495057' }}>Created Date:</strong>
+                                <span style={{ color: '#212529' }}>{viewModal.complaint.created_at ? new Date(viewModal.complaint.created_at).toLocaleString('en-IN') : "-"}</span>
                             </div>
                             {viewModal.complaint.updated_at && (
-                                <div style={{ marginBottom: '15px' }}>
-                                    <strong>Last Updated:</strong> {new Date(viewModal.complaint.updated_at).toLocaleString('en-IN')}
+                                <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start' }}>
+                                    <strong style={{ minWidth: '140px', color: '#495057' }}>Last Updated:</strong>
+                                    <span style={{ color: '#212529' }}>{new Date(viewModal.complaint.updated_at).toLocaleString('en-IN')}</span>
                                 </div>
                             )}
                         </div>
-                        <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setViewModal({ show: false, complaint: null })}>
+                        <div className="modal-actions" style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid #e9ecef' }}>
+                            <button 
+                                className="btn-cancel" 
+                                onClick={() => setViewModal({ show: false, complaint: null })}
+                                style={{ width: '100%', padding: '12px', fontSize: '16px' }}
+                            >
                                 Close
                             </button>
                         </div>

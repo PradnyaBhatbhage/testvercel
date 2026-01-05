@@ -270,20 +270,47 @@ const ParkingDetails = () => {
                                         <td>{parking.total_vehicles || 0}</td>
                                         <td>{parking.parking_slot_no || "-"}</td>
                                         <td>
-                                            {parking.attachment_url ? (
-                                                <a
-                                                    href={parking.attachment_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: '#007bff', textDecoration: 'none' }}
-                                                >
-                                                    {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf')
-                                                        ? '📄 View PDF'
-                                                        : '🖼️ View Image'}
-                                                </a>
-                                            ) : (
-                                                "-"
-                                            )}
+                                            {(() => {
+                                                // Handle both array and single string
+                                                let attachments = [];
+                                                if (parking.attachment_url) {
+                                                    if (Array.isArray(parking.attachment_url)) {
+                                                        attachments = parking.attachment_url;
+                                                    } else if (typeof parking.attachment_url === 'string') {
+                                                        // Try to parse as JSON
+                                                        try {
+                                                            const parsed = JSON.parse(parking.attachment_url);
+                                                            attachments = Array.isArray(parsed) ? parsed : [parking.attachment_url];
+                                                        } catch {
+                                                            attachments = [parking.attachment_url];
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                if (attachments.length === 0) {
+                                                    return "-";
+                                                }
+                                                
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                        {attachments.map((url, idx) => {
+                                                            if (!url || typeof url !== 'string') return null;
+                                                            const isPDF = url.endsWith('.pdf') || url.includes('pdf');
+                                                            return (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    style={{ color: '#007bff', textDecoration: 'none', fontSize: '12px' }}
+                                                                >
+                                                                    {isPDF ? '📄 PDF' : '🖼️ Image'} {attachments.length > 1 ? `(${idx + 1})` : ''}
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                     </tr>
                                 ))
@@ -353,20 +380,47 @@ const ParkingDetails = () => {
                                         <td>{parking.total_vehicles || 0}</td>
                                         <td>{parking.parking_slot_no || "-"}</td>
                                         <td>
-                                            {parking.attachment_url ? (
-                                                <a
-                                                    href={parking.attachment_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: '#007bff', textDecoration: 'none' }}
-                                                >
-                                                    {parking.attachment_url.endsWith('.pdf') || parking.attachment_url.includes('pdf')
-                                                        ? '📄 View PDF'
-                                                        : '🖼️ View Image'}
-                                                </a>
-                                            ) : (
-                                                "-"
-                                            )}
+                                            {(() => {
+                                                // Handle both array and single string
+                                                let attachments = [];
+                                                if (parking.attachment_url) {
+                                                    if (Array.isArray(parking.attachment_url)) {
+                                                        attachments = parking.attachment_url;
+                                                    } else if (typeof parking.attachment_url === 'string') {
+                                                        // Try to parse as JSON
+                                                        try {
+                                                            const parsed = JSON.parse(parking.attachment_url);
+                                                            attachments = Array.isArray(parsed) ? parsed : [parking.attachment_url];
+                                                        } catch {
+                                                            attachments = [parking.attachment_url];
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                if (attachments.length === 0) {
+                                                    return "-";
+                                                }
+                                                
+                                                return (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                        {attachments.map((url, idx) => {
+                                                            if (!url || typeof url !== 'string') return null;
+                                                            const isPDF = url.endsWith('.pdf') || url.includes('pdf');
+                                                            return (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    style={{ color: '#007bff', textDecoration: 'none', fontSize: '12px' }}
+                                                                >
+                                                                    {isPDF ? '📄 PDF' : '🖼️ Image'} {attachments.length > 1 ? `(${idx + 1})` : ''}
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                     </tr>
                                 ))

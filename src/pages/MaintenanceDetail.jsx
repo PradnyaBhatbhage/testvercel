@@ -11,6 +11,7 @@ import {
     sendBillByEmail,
     sendBillByWhatsApp,
     sendMonthlyReminders,
+    generateBillsForMonth,
 } from "../services/api";
 import {
     getCurrentUserWingId,
@@ -83,6 +84,16 @@ const MaintenanceDetail = () => {
         maintainId: null,
         ownerId: null,
         status: ''
+    });
+
+    // Automatic bill generation modal state
+    const [billGenerationModal, setBillGenerationModal] = useState({
+        show: false,
+        loading: false,
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+        sendEmail: true,
+        sendWhatsApp: true
     });
 
     // Fetch data function - wrapped in useCallback to avoid recreating on every render
@@ -693,6 +704,21 @@ const MaintenanceDetail = () => {
                             }}
                         >
                             📱 Send Reminders
+                        </button>
+                        <button
+                            className="btn-generate-bills"
+                            onClick={() => setBillGenerationModal(prev => ({ ...prev, show: true }))}
+                            style={{ 
+                                backgroundColor: '#28a745', 
+                                color: 'white', 
+                                padding: '10px 20px', 
+                                border: 'none', 
+                                borderRadius: '5px', 
+                                cursor: 'pointer',
+                                marginLeft: '10px'
+                            }}
+                        >
+                            ⚡ Generate Bills Automatically
                         </button>
                         <div className="search-bar">
                             <input
@@ -1429,6 +1455,145 @@ const MaintenanceDetail = () => {
 
                         <div className="modal-tip">
                             💡 Tip: If WhatsApp doesn't open, copy the messages and send them manually
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Automatic Bill Generation Modal */}
+            {billGenerationModal.show && (
+                <div
+                    className="reminders-modal-overlay"
+                    onClick={() => !billGenerationModal.loading && setBillGenerationModal(prev => ({ ...prev, show: false }))}
+                >
+                    <div
+                        className="reminders-modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: '500px' }}
+                    >
+                        <div className="modal-header reminders">
+                            <h3>⚡ Generate Bills Automatically</h3>
+                            <button
+                                className="modal-close-btn"
+                                onClick={() => !billGenerationModal.loading && setBillGenerationModal(prev => ({ ...prev, show: false }))}
+                                disabled={billGenerationModal.loading}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="reminders-info" style={{ marginBottom: '20px' }}>
+                            <p>Generate maintenance bills for all owners for a specific month.</p>
+                            <p><strong>Note:</strong> Bills are automatically generated on the 4th of every month via cron job.</p>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                                Year:
+                            </label>
+                            <input
+                                type="number"
+                                value={billGenerationModal.year}
+                                onChange={(e) => setBillGenerationModal(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+                                disabled={billGenerationModal.loading}
+                                style={{ width: '100%', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ddd' }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                                Month:
+                            </label>
+                            <select
+                                value={billGenerationModal.month}
+                                onChange={(e) => setBillGenerationModal(prev => ({ ...prev, month: parseInt(e.target.value) }))}
+                                disabled={billGenerationModal.loading}
+                                style={{ width: '100%', padding: '8px', fontSize: '14px', borderRadius: '4px', border: '1px solid #ddd' }}
+                            >
+                                <option value={1}>January</option>
+                                <option value={2}>February</option>
+                                <option value={3}>March</option>
+                                <option value={4}>April</option>
+                                <option value={5}>May</option>
+                                <option value={6}>June</option>
+                                <option value={7}>July</option>
+                                <option value={8}>August</option>
+                                <option value={9}>September</option>
+                                <option value={10}>October</option>
+                                <option value={11}>November</option>
+                                <option value={12}>December</option>
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={billGenerationModal.sendEmail}
+                                    onChange={(e) => setBillGenerationModal(prev => ({ ...prev, sendEmail: e.target.checked }))}
+                                    disabled={billGenerationModal.loading}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                <span>Send bills via Email</span>
+                            </label>
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={billGenerationModal.sendWhatsApp}
+                                    onChange={(e) => setBillGenerationModal(prev => ({ ...prev, sendWhatsApp: e.target.checked }))}
+                                    disabled={billGenerationModal.loading}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                <span>Send bills via WhatsApp</span>
+                            </label>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <button
+                                className="reminder-item-button"
+                                onClick={() => setBillGenerationModal(prev => ({ ...prev, show: false }))}
+                                disabled={billGenerationModal.loading}
+                                style={{ backgroundColor: '#6c757d' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="reminder-item-button whatsapp"
+                                onClick={async () => {
+                                    setBillGenerationModal(prev => ({ ...prev, loading: true }));
+                                    try {
+                                        const response = await generateBillsForMonth(
+                                            billGenerationModal.year,
+                                            billGenerationModal.month,
+                                            billGenerationModal.sendEmail,
+                                            billGenerationModal.sendWhatsApp
+                                        );
+                                        const data = response.data || response;
+                                        
+                                        alert(
+                                            `Bill Generation Completed!\n\n` +
+                                            `Generated: ${data.results?.generated || 0}\n` +
+                                            `Skipped: ${data.results?.skipped || 0}\n` +
+                                            `Failed: ${data.results?.failed || 0}\n` +
+                                            (billGenerationModal.sendEmail ? `Emails Sent: ${data.results?.emailsSent || 0}\n` : '') +
+                                            (billGenerationModal.sendWhatsApp ? `WhatsApp Sent: ${data.results?.whatsappSent || 0}` : '')
+                                        );
+                                        
+                                        setBillGenerationModal(prev => ({ ...prev, show: false, loading: false }));
+                                        fetchData(); // Refresh the data
+                                    } catch (error) {
+                                        console.error("Error generating bills:", error);
+                                        alert(`Error: ${error.response?.data?.error || error.message || "Failed to generate bills"}`);
+                                        setBillGenerationModal(prev => ({ ...prev, loading: false }));
+                                    }
+                                }}
+                                disabled={billGenerationModal.loading}
+                            >
+                                {billGenerationModal.loading ? 'Generating...' : 'Generate Bills'}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -331,41 +331,71 @@ const RentalDetail = () => {
             tenant_agrimg: rental.tenant_agrimg || null,
         });
         setSelectedFiles([]);
+        // Helper function to clean and validate URLs (same as in table rendering)
+        const cleanAndValidateUrls = (urlString) => {
+            if (!urlString || typeof urlString !== 'string') return [];
+
+            // Split by comma, semicolon, or newline (common delimiters)
+            const potentialUrls = urlString.split(/[,;\n\r]+/).map(u => u.trim()).filter(u => u.length > 0);
+
+            const validUrls = [];
+            for (const url of potentialUrls) {
+                // Skip if it's not a valid HTTP/HTTPS URL
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    continue;
+                }
+
+                // Validate URL format
+                try {
+                    const urlObj = new URL(url);
+                    // Only accept storage.googleapis.com or other valid domains
+                    if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+                        // Additional validation: must be at least 10 chars and not a base64-like string
+                        if (url.length >= 10 && (!url.match(/^[A-Za-z0-9+/=]+$/g) || url.length >= 50)) {
+                            validUrls.push(url);
+                        }
+                    }
+                } catch (e) {
+                    // Invalid URL format, skip it
+                    continue;
+                }
+            }
+
+            return validUrls;
+        };
+
         // Handle both single URL string and array of URLs
         if (rental.tenant_agrimg) {
             let urls = [];
             if (Array.isArray(rental.tenant_agrimg)) {
-                urls = rental.tenant_agrimg.filter(url => {
-                    if (!url || typeof url !== 'string') return false;
-                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
-                    if (url.length < 10) return false;
-                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
-                    return true;
-                });
+                // Process each URL in the array
+                for (const url of rental.tenant_agrimg) {
+                    const cleaned = cleanAndValidateUrls(url);
+                    urls.push(...cleaned);
+                }
             } else if (typeof rental.tenant_agrimg === 'string') {
                 try {
+                    // Try to parse as JSON first
                     const parsed = JSON.parse(rental.tenant_agrimg);
                     if (Array.isArray(parsed)) {
-                        urls = parsed.filter(url => {
-                            if (!url || typeof url !== 'string') return false;
-                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
-                            if (url.length < 10) return false;
-                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
-                            return true;
-                        });
-                    } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
-                        if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
-                            urls = [parsed];
+                        // Process each URL in the parsed array
+                        for (const url of parsed) {
+                            const cleaned = cleanAndValidateUrls(url);
+                            urls.push(...cleaned);
                         }
+                    } else if (parsed && typeof parsed === 'string') {
+                        // Single URL in JSON
+                        const cleaned = cleanAndValidateUrls(parsed);
+                        urls.push(...cleaned);
                     }
                 } catch (e) {
-                    if (rental.tenant_agrimg.startsWith('http') || rental.tenant_agrimg.startsWith('https')) {
-                        if (rental.tenant_agrimg.length >= 10 && (!rental.tenant_agrimg.match(/^[A-Za-z0-9+/=]+$/g) || rental.tenant_agrimg.length >= 50)) {
-                            urls = [rental.tenant_agrimg];
-                        }
-                    }
+                    // Not JSON, treat as plain string (might contain multiple URLs)
+                    const cleaned = cleanAndValidateUrls(rental.tenant_agrimg);
+                    urls.push(...cleaned);
                 }
             }
+            // Remove duplicates
+            urls = [...new Set(urls)];
             setFilePreviews(urls);
         } else {
             setFilePreviews([]);
@@ -645,42 +675,73 @@ const RentalDetail = () => {
                                         <td>{rental.deposite}</td>
                                         <td>
                                             {(() => {
+                                                // Helper function to clean and validate URLs
+                                                const cleanAndValidateUrls = (urlString) => {
+                                                    if (!urlString || typeof urlString !== 'string') return [];
+
+                                                    // Split by comma, semicolon, or newline (common delimiters)
+                                                    const potentialUrls = urlString.split(/[,;\n\r]+/).map(u => u.trim()).filter(u => u.length > 0);
+
+                                                    const validUrls = [];
+                                                    for (const url of potentialUrls) {
+                                                        // Skip if it's not a valid HTTP/HTTPS URL
+                                                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                                            continue;
+                                                        }
+
+                                                        // Validate URL format
+                                                        try {
+                                                            const urlObj = new URL(url);
+                                                            // Only accept storage.googleapis.com or other valid domains
+                                                            if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+                                                                // Additional validation: must be at least 10 chars and not a base64-like string
+                                                                if (url.length >= 10 && (!url.match(/^[A-Za-z0-9+/=]+$/g) || url.length >= 50)) {
+                                                                    validUrls.push(url);
+                                                                }
+                                                            }
+                                                        } catch (e) {
+                                                            // Invalid URL format, skip it
+                                                            continue;
+                                                        }
+                                                    }
+
+                                                    return validUrls;
+                                                };
+
                                                 let attachmentUrls = [];
 
                                                 if (rental.tenant_agrimg) {
                                                     if (Array.isArray(rental.tenant_agrimg)) {
-                                                        attachmentUrls = rental.tenant_agrimg.filter(url => {
-                                                            if (!url || typeof url !== 'string') return false;
-                                                            if (!url.startsWith('http') && !url.startsWith('https')) return false;
-                                                            if (url.length < 10) return false;
-                                                            if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
-                                                            return true;
-                                                        });
+                                                        // Process each URL in the array
+                                                        for (const url of rental.tenant_agrimg) {
+                                                            const cleaned = cleanAndValidateUrls(url);
+                                                            attachmentUrls.push(...cleaned);
+                                                        }
                                                     } else if (typeof rental.tenant_agrimg === 'string') {
                                                         try {
+                                                            // Try to parse as JSON first
                                                             const parsed = JSON.parse(rental.tenant_agrimg);
                                                             if (Array.isArray(parsed)) {
-                                                                attachmentUrls = parsed.filter(url => {
-                                                                    if (!url || typeof url !== 'string') return false;
-                                                                    if (!url.startsWith('http') && !url.startsWith('https')) return false;
-                                                                    if (url.length < 10) return false;
-                                                                    if (url.match(/^[A-Za-z0-9+/=]+$/g) && url.length < 50) return false;
-                                                                    return true;
-                                                                });
-                                                            } else if (parsed && typeof parsed === 'string' && (parsed.startsWith('http') || parsed.startsWith('https')) && parsed.length >= 10) {
-                                                                if (!parsed.match(/^[A-Za-z0-9+/=]+$/g) || parsed.length >= 50) {
-                                                                    attachmentUrls = [parsed];
+                                                                // Process each URL in the parsed array
+                                                                for (const url of parsed) {
+                                                                    const cleaned = cleanAndValidateUrls(url);
+                                                                    attachmentUrls.push(...cleaned);
                                                                 }
+                                                            } else if (parsed && typeof parsed === 'string') {
+                                                                // Single URL in JSON
+                                                                const cleaned = cleanAndValidateUrls(parsed);
+                                                                attachmentUrls.push(...cleaned);
                                                             }
                                                         } catch (e) {
-                                                            if (rental.tenant_agrimg.startsWith('http') || rental.tenant_agrimg.startsWith('https')) {
-                                                                if (rental.tenant_agrimg.length >= 10 && (!rental.tenant_agrimg.match(/^[A-Za-z0-9+/=]+$/g) || rental.tenant_agrimg.length >= 50)) {
-                                                                    attachmentUrls = [rental.tenant_agrimg];
-                                                                }
-                                                            }
+                                                            // Not JSON, treat as plain string (might contain multiple URLs)
+                                                            const cleaned = cleanAndValidateUrls(rental.tenant_agrimg);
+                                                            attachmentUrls.push(...cleaned);
                                                         }
                                                     }
                                                 }
+
+                                                // Remove duplicates
+                                                attachmentUrls = [...new Set(attachmentUrls)];
 
                                                 if (attachmentUrls.length === 0) {
                                                     return <span style={{ color: '#999' }}>No document</span>;
@@ -1250,6 +1311,22 @@ const RentalDetail = () => {
                                     </thead>
                                     <tbody>
                                         {modalDocuments.map((url, idx) => {
+                                            // Validate URL before processing
+                                            if (!url || typeof url !== 'string' || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+                                                return (
+                                                    <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                                        <td style={{ padding: '12px' }}>{idx + 1}</td>
+                                                        <td style={{ padding: '12px', wordBreak: 'break-word', maxWidth: '300px', color: '#999' }}>
+                                                            Invalid URL
+                                                        </td>
+                                                        <td style={{ padding: '12px' }}>Error</td>
+                                                        <td style={{ padding: '12px', color: '#dc3545' }}>
+                                                            Invalid URL format
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+
                                             // Extract file name from URL
                                             let fileName = `Document ${idx + 1}`;
                                             try {

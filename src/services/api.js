@@ -266,15 +266,37 @@ export const updateOwner = (id, data, files = null) => {
     // Support both single file and array of files
     if (files) {
         if (Array.isArray(files)) {
-            files.forEach(file => {
-                if (file) {
+            console.log('📤 [API] updateOwner - Adding files to FormData:', {
+                fileCount: files.length,
+                fileNames: files.map(f => f?.name || 'invalid'),
+                fileTypes: files.map(f => f?.type || 'unknown')
+            });
+            files.forEach((file, index) => {
+                if (file && file instanceof File) {
                     formData.append('attachment', file);
+                    console.log(`✅ [API] updateOwner - File ${index + 1} added to FormData:`, file.name);
+                } else {
+                    console.warn(`⚠️ [API] updateOwner - File ${index + 1} is not a valid File object:`, file);
                 }
             });
         } else {
-            formData.append('attachment', files);
+            if (files instanceof File) {
+                formData.append('attachment', files);
+                console.log('✅ [API] updateOwner - Single file added to FormData:', files.name);
+            } else {
+                console.warn('⚠️ [API] updateOwner - Single file is not a valid File object:', files);
+            }
         }
+    } else {
+        console.log('ℹ️ [API] updateOwner - No files to send');
     }
+    
+    // Log FormData contents (for debugging)
+    console.log('📋 [API] updateOwner - FormData entries:', {
+        hasFiles: files ? (Array.isArray(files) ? files.length : 1) : 0,
+        formDataKeys: Array.from(formData.keys())
+    });
+    
     return API.put(`/owners/update/${id}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -612,6 +634,10 @@ export const sendBillByWhatsApp = (maintainId) => API.post(`/maintenance-details
 // Send monthly reminders to all owners
 export const sendMonthlyReminders = () => API.post("/maintenance-details/send-monthly-reminders");
 
+// Generate bills automatically for a specific month
+export const generateBillsForMonth = (year, month, sendEmail = true, sendWhatsApp = true) => 
+    API.post("/maintenance-details/generate-bills-for-month", { year, month, sendEmail, sendWhatsApp });
+
 // ================= Role Delegation =================
 // Get all users (for delegation selection)
 export const getUsers = () => API.get("/users");
@@ -647,15 +673,31 @@ export const addParking = (data, files = null) => {
     // Support both single file and array of files
     if (files) {
         if (Array.isArray(files)) {
-            files.forEach(file => {
-                if (file) {
+            console.log('📤 [API] addParking - Adding files to FormData:', {
+                fileCount: files.length,
+                fileNames: files.map(f => f?.name || 'invalid'),
+                fileTypes: files.map(f => f?.type || 'unknown')
+            });
+            files.forEach((file, index) => {
+                if (file && file instanceof File) {
                     formData.append('attachment', file);
+                    console.log(`✅ [API] addParking - File ${index + 1} added to FormData:`, file.name);
+                } else {
+                    console.warn(`⚠️ [API] addParking - File ${index + 1} is not a valid File object:`, file);
                 }
             });
         } else {
-            formData.append('attachment', files);
+            if (files instanceof File) {
+                formData.append('attachment', files);
+                console.log('✅ [API] addParking - Single file added to FormData:', files.name);
+            } else {
+                console.warn('⚠️ [API] addParking - Single file is not a valid File object:', files);
+            }
         }
+    } else {
+        console.log('ℹ️ [API] addParking - No files to send');
     }
+    
     return API.post("/parking/add", formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -672,15 +714,37 @@ export const updateParking = (id, data, files = null) => {
     // Support both single file and array of files
     if (files) {
         if (Array.isArray(files)) {
-            files.forEach(file => {
-                if (file) {
+            console.log('📤 [API] updateParking - Adding files to FormData:', {
+                fileCount: files.length,
+                fileNames: files.map(f => f?.name || 'invalid'),
+                fileTypes: files.map(f => f?.type || 'unknown')
+            });
+            files.forEach((file, index) => {
+                if (file && file instanceof File) {
                     formData.append('attachment', file);
+                    console.log(`✅ [API] updateParking - File ${index + 1} added to FormData:`, file.name);
+                } else {
+                    console.warn(`⚠️ [API] updateParking - File ${index + 1} is not a valid File object:`, file);
                 }
             });
         } else {
-            formData.append('attachment', files);
+            if (files instanceof File) {
+                formData.append('attachment', files);
+                console.log('✅ [API] updateParking - Single file added to FormData:', files.name);
+            } else {
+                console.warn('⚠️ [API] updateParking - Single file is not a valid File object:', files);
+            }
         }
+    } else {
+        console.log('ℹ️ [API] updateParking - No files to send');
     }
+    
+    // Log FormData contents (for debugging)
+    console.log('📋 [API] updateParking - FormData entries:', {
+        hasFiles: files ? (Array.isArray(files) ? files.length : 1) : 0,
+        formDataKeys: Array.from(formData.keys())
+    });
+    
     return API.put(`/parking/update/${id}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',

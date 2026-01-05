@@ -49,6 +49,7 @@ const RentalDetail = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [modalDocuments, setModalDocuments] = useState([]);
     const [modalTenantName, setModalTenantName] = useState("");
+    const [modalRentalId, setModalRentalId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -755,6 +756,7 @@ const RentalDetail = () => {
                                                             e.preventDefault();
                                                             setModalDocuments(attachmentUrls);
                                                             setModalTenantName(rental.tenant_name || 'Tenant');
+                                                            setModalRentalId(rental.rental_id);
                                                             setShowDocumentModal(true);
                                                         }}
                                                         style={{ color: '#007bff', textDecoration: 'none', cursor: 'pointer', fontWeight: '500' }}
@@ -948,14 +950,45 @@ const RentalDetail = () => {
                                                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
                                                         <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
                                                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                            <a
-                                                                href={preview}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
-                                                            >
-                                                                View
-                                                            </a>
+                                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                <a
+                                                                    href={preview}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                >
+                                                                    View
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (!window.confirm('Are you sure you want to delete this document?')) {
+                                                                            return;
+                                                                        }
+                                                                        // Remove from filePreviews
+                                                                        const updatedPreviews = filePreviews.filter((p, i) => i !== idx);
+                                                                        setFilePreviews(updatedPreviews);
+
+                                                                        // Update formData.tenant_agrimg to reflect the change
+                                                                        const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                                        setFormData(prev => ({
+                                                                            ...prev,
+                                                                            tenant_agrimg: updatedUrlsJson
+                                                                        }));
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '4px 8px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: '500',
+                                                                        fontSize: '11px'
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
@@ -1373,22 +1406,104 @@ const RentalDetail = () => {
                                                     </td>
                                                     <td style={{ padding: '12px' }}>{fileType}</td>
                                                     <td style={{ padding: '12px' }}>
-                                                        <a
-                                                            href={url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            style={{
-                                                                color: '#007bff',
-                                                                textDecoration: 'none',
-                                                                fontWeight: '500',
-                                                                padding: '6px 12px',
-                                                                border: '1px solid #007bff',
-                                                                borderRadius: '4px',
-                                                                display: 'inline-block'
-                                                            }}
-                                                        >
-                                                            View
-                                                        </a>
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            <a
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{
+                                                                    color: '#007bff',
+                                                                    textDecoration: 'none',
+                                                                    fontWeight: '500',
+                                                                    padding: '6px 12px',
+                                                                    border: '1px solid #007bff',
+                                                                    borderRadius: '4px',
+                                                                    display: 'inline-block'
+                                                                }}
+                                                            >
+                                                                View
+                                                            </a>
+                                                            {canEdit() && modalRentalId && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!window.confirm('Are you sure you want to delete this document?')) {
+                                                                            return;
+                                                                        }
+                                                                        try {
+                                                                            // Find the rental in the rentals array
+                                                                            const rental = rentals.find(r => r.rental_id === modalRentalId);
+                                                                            if (!rental) {
+                                                                                alert('Rental not found. Please refresh the page and try again.');
+                                                                                return;
+                                                                            }
+
+                                                                            // Remove from modal view
+                                                                            const updatedUrls = modalDocuments.filter((u, i) => i !== idx);
+                                                                            setModalDocuments(updatedUrls);
+
+                                                                            // Prepare update data with all required fields
+                                                                            const updatedUrlsJson = updatedUrls.length > 0 ? JSON.stringify(updatedUrls) : null;
+
+                                                                            // Format dates properly (remove time if present)
+                                                                            const formatDate = (dateStr) => {
+                                                                                if (!dateStr) return "";
+                                                                                if (dateStr.includes('T')) {
+                                                                                    return dateStr.split('T')[0];
+                                                                                }
+                                                                                return dateStr;
+                                                                            };
+
+                                                                            const updateData = {
+                                                                                tenant_name: rental.tenant_name || "",
+                                                                                tenant_contactno: rental.tenant_contactno || "",
+                                                                                tenant_altercontactno: rental.tenant_altercontactno || "",
+                                                                                tenant_email: rental.tenant_email || "",
+                                                                                tenant_agrimg: updatedUrlsJson,
+                                                                                start_date: formatDate(rental.start_date),
+                                                                                end_date: formatDate(rental.end_date),
+                                                                                monthly_rent: rental.monthly_rent || "",
+                                                                                deposite: rental.deposite || ""
+                                                                            };
+
+                                                                            console.log('🔄 [RentalDetail] Deleting attachment - Update data:', {
+                                                                                rental_id: modalRentalId,
+                                                                                tenant_agrimg_length: updatedUrlsJson ? updatedUrlsJson.length : 0,
+                                                                                updated_urls_count: updatedUrls.length
+                                                                            });
+
+                                                                            // Update the rental record
+                                                                            const response = await updateRental(modalRentalId, updateData, null);
+                                                                            console.log('✅ [RentalDetail] Delete attachment - Response:', response);
+
+                                                                            // Refresh the rentals list
+                                                                            await fetchRentals();
+                                                                            alert('Document deleted successfully!');
+                                                                        } catch (error) {
+                                                                            console.error('❌ [RentalDetail] Error deleting document:', {
+                                                                                error: error,
+                                                                                message: error.message,
+                                                                                response: error.response?.data,
+                                                                                status: error.response?.status
+                                                                            });
+                                                                            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
+                                                                            alert(`Error deleting document: ${errorMessage}`);
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '6px 12px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: '500',
+                                                                        fontSize: '12px'
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );

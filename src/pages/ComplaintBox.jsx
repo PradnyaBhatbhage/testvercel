@@ -735,6 +735,41 @@ const ComplaintBox = () => {
                                                 ) : (
                                                     <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
                                                 )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!window.confirm('Are you sure you want to delete this attachment?')) {
+                                                            return;
+                                                        }
+                                                        // Remove from filePreviews
+                                                        const updatedPreviews = filePreviews.filter((_, i) => i !== idx);
+                                                        setFilePreviews(updatedPreviews);
+                                                        
+                                                        // Update formData.attachment_url to reflect the change
+                                                        const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            attachment_url: updatedUrlsJson
+                                                        }));
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-5px',
+                                                        right: '-5px',
+                                                        background: '#dc3545',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px',
+                                                        lineHeight: '1'
+                                                    }}
+                                                    title="Delete attachment"
+                                                >
+                                                    ×
+                                                </button>
                                             </div>
                                         );
                                     })}
@@ -1148,26 +1183,74 @@ const ComplaintBox = () => {
                                                 if (!url || typeof url !== 'string' || url.trim().length === 0) return null;
                                                 const isPdf = url.includes('pdf') || url.endsWith('.pdf') || url.toLowerCase().includes('application/pdf');
                                                 return (
-                                                    <a
-                                                        key={idx}
-                                                        href={url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        style={{ 
-                                                            color: '#007bff', 
-                                                            textDecoration: 'none',
-                                                            padding: '8px 12px',
-                                                            backgroundColor: '#f8f9fa',
-                                                            borderRadius: '4px',
-                                                            display: 'inline-block',
-                                                            width: 'fit-content',
-                                                            transition: 'background-color 0.2s'
-                                                        }}
-                                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                                                    >
-                                                        {isPdf ? `📄 PDF ${idx + 1}` : `🖼️ Image ${idx + 1}`}
-                                                    </a>
+                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <a
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{ 
+                                                                color: '#007bff', 
+                                                                textDecoration: 'none',
+                                                                padding: '8px 12px',
+                                                                backgroundColor: '#f8f9fa',
+                                                                borderRadius: '4px',
+                                                                display: 'inline-block',
+                                                                width: 'fit-content',
+                                                                transition: 'background-color 0.2s',
+                                                                flex: 1
+                                                            }}
+                                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+                                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                                                        >
+                                                            {isPdf ? `📄 PDF ${idx + 1}` : `🖼️ Image ${idx + 1}`}
+                                                        </a>
+                                                        {canEdit() && viewModal.complaint && (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!window.confirm('Are you sure you want to delete this attachment?')) {
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        // Remove from attachments array
+                                                                        const updatedAttachments = attachments.filter((_, i) => i !== idx);
+                                                                        const updatedUrlsJson = updatedAttachments.length > 0 ? JSON.stringify(updatedAttachments) : null;
+                                                                        
+                                                                        // Update the complaint record
+                                                                        await updateComplaint(viewModal.complaint.complaint_id, { attachment_url: updatedUrlsJson }, null);
+                                                                        
+                                                                        // Refresh complaints list
+                                                                        await fetchComplaints();
+                                                                        
+                                                                        // Update view modal
+                                                                        setViewModal(prev => ({
+                                                                            ...prev,
+                                                                            complaint: {
+                                                                                ...prev.complaint,
+                                                                                attachment_url: updatedUrlsJson
+                                                                            }
+                                                                        }));
+                                                                        
+                                                                        alert('Attachment deleted successfully!');
+                                                                    } catch (error) {
+                                                                        console.error('Error deleting attachment:', error);
+                                                                        alert('Error deleting attachment. Please try again.');
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    background: '#dc3545',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    padding: '8px 12px',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer',
+                                                                    fontWeight: '500',
+                                                                    fontSize: '12px'
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 );
                                             })}
                                         </div>

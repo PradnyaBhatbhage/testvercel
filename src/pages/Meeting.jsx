@@ -484,30 +484,6 @@ const Meeting = () => {
                             multiple
                         />
                         
-                        {/* Display existing attachments (when editing) */}
-                        {filePreviews.length > 0 && selectedFiles.length === 0 && editingId && (
-                            <div style={{ marginTop: '10px' }}>
-                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
-                                    Existing attachments ({filePreviews.length}):
-                                </p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                    {filePreviews.map((preview, idx) => (
-                                        <div key={`existing-${idx}`} style={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '4px' }}>
-                                            {preview && preview.startsWith('http') ? (
-                                                preview.includes('pdf') || preview.endsWith('.pdf') ? (
-                                                    <a href={preview} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', fontSize: '12px' }}>
-                                                        📄 PDF {idx + 1}
-                                                    </a>
-                                                ) : (
-                                                    <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
-                                                )
-                                            ) : null}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Display all files (existing + new) */}
                         {(filePreviews.length > 0 || selectedFiles.length > 0) && (
                             <div style={{ marginTop: '10px' }}>
@@ -527,6 +503,41 @@ const Meeting = () => {
                                                 ) : (
                                                     <img src={preview} alt={`Attachment ${idx + 1}`} style={{ maxWidth: '100px', maxHeight: '100px', display: 'block' }} />
                                                 )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!window.confirm('Are you sure you want to delete this attachment?')) {
+                                                            return;
+                                                        }
+                                                        // Remove from filePreviews
+                                                        const updatedPreviews = filePreviews.filter((_, i) => i !== idx);
+                                                        setFilePreviews(updatedPreviews);
+                                                        
+                                                        // Update formData.attachment_url to reflect the change
+                                                        const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            attachment_url: updatedUrlsJson
+                                                        }));
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '-5px',
+                                                        right: '-5px',
+                                                        background: '#dc3545',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '20px',
+                                                        height: '20px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px',
+                                                        lineHeight: '1'
+                                                    }}
+                                                    title="Delete attachment"
+                                                >
+                                                    ×
+                                                </button>
                                             </div>
                                         );
                                     })}

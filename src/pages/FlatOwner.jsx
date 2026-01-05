@@ -65,6 +65,7 @@ const FlatOwner = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [modalDocuments, setModalDocuments] = useState([]);
     const [modalOwnerName, setModalOwnerName] = useState("");
+    const [modalOwnerId, setModalOwnerId] = useState(null);
 
     // Get current user's wing_id
     const currentUserWingId = getCurrentUserWingId();
@@ -1467,6 +1468,7 @@ const FlatOwner = () => {
                                                             e.preventDefault();
                                                             setModalDocuments(attachmentUrls);
                                                             setModalOwnerName(owner.owner_name || 'Owner');
+                                                            setModalOwnerId(owner.owner_id);
                                                             setShowDocumentModal(true);
                                                         }}
                                                         style={{ color: '#007bff', textDecoration: 'none', cursor: 'pointer', fontWeight: '500' }}
@@ -1776,14 +1778,45 @@ const FlatOwner = () => {
                                                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
                                                         <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
                                                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                            <a
-                                                                href={preview}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
-                                                            >
-                                                                View
-                                                            </a>
+                                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                <a
+                                                                    href={preview}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                >
+                                                                    View
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (!window.confirm('Are you sure you want to delete this document?')) {
+                                                                            return;
+                                                                        }
+                                                                        // Remove from filePreviews
+                                                                        const updatedPreviews = filePreviews.filter((p, i) => i !== idx);
+                                                                        setFilePreviews(updatedPreviews);
+                                                                        
+                                                                        // Update formData.attachment_url to reflect the change
+                                                                        const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                                        setFormData(prev => ({
+                                                                            ...prev,
+                                                                            attachment_url: updatedUrlsJson
+                                                                        }));
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '4px 8px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: '500',
+                                                                        fontSize: '11px'
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
@@ -2251,22 +2284,119 @@ const FlatOwner = () => {
                                                     </td>
                                                     <td style={{ padding: '12px' }}>{fileType}</td>
                                                     <td style={{ padding: '12px' }}>
-                                                        <a
-                                                            href={url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            style={{
-                                                                color: '#007bff',
-                                                                textDecoration: 'none',
-                                                                fontWeight: '500',
-                                                                padding: '6px 12px',
-                                                                border: '1px solid #007bff',
-                                                                borderRadius: '4px',
-                                                                display: 'inline-block'
-                                                            }}
-                                                        >
-                                                            View
-                                                        </a>
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            <a
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{
+                                                                    color: '#007bff',
+                                                                    textDecoration: 'none',
+                                                                    fontWeight: '500',
+                                                                    padding: '6px 12px',
+                                                                    border: '1px solid #007bff',
+                                                                    borderRadius: '4px',
+                                                                    display: 'inline-block'
+                                                                }}
+                                                            >
+                                                                View
+                                                            </a>
+                                                            {canEdit() && modalOwnerId && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!window.confirm('Are you sure you want to delete this document?')) {
+                                                                            return;
+                                                                        }
+                                                                        try {
+                                                                            // Find the owner in the owners array
+                                                                            const owner = owners.find(o => o.owner_id === modalOwnerId);
+                                                                            if (!owner) {
+                                                                                alert('Owner not found. Please refresh the page and try again.');
+                                                                                return;
+                                                                            }
+                                                                            
+                                                                            // Remove from modal view
+                                                                            const updatedUrls = modalDocuments.filter((u, i) => i !== idx);
+                                                                            setModalDocuments(updatedUrls);
+                                                                            
+                                                                            // Prepare update data with all required fields
+                                                                            const updatedUrlsJson = updatedUrls.length > 0 ? JSON.stringify(updatedUrls) : null;
+                                                                            
+                                                                            // Convert boolean to string for FormData
+                                                                            const isResidence = owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true;
+                                                                            
+                                                                            // Helper to convert empty strings to null for integer fields
+                                                                            const toIntOrNull = (value) => {
+                                                                                if (value === null || value === undefined || value === '') return null;
+                                                                                const num = parseInt(value);
+                                                                                return isNaN(num) ? null : num.toString();
+                                                                            };
+                                                                            
+                                                                            // Format owner_contactno - ensure it's a valid integer string or empty string (backend will convert empty to null)
+                                                                            const formatContactNo = (value) => {
+                                                                                if (!value || value === null || value === undefined) return "";
+                                                                                const str = String(value).trim();
+                                                                                if (str === '') return "";
+                                                                                const num = parseInt(str, 10);
+                                                                                return isNaN(num) ? "" : String(num);
+                                                                            };
+                                                                            
+                                                                            const updateData = {
+                                                                                flat_id: owner.flat_id ? String(owner.flat_id) : "",
+                                                                                flat_no: owner.flat_no || "",
+                                                                                wing_id: owner.wing_id ? String(owner.wing_id) : "",
+                                                                                floor_id: owner.floor_id ? String(owner.floor_id) : "",
+                                                                                flat_type_id: owner.flat_type_id ? String(owner.flat_type_id) : "",
+                                                                                owner_name: owner.owner_name || "",
+                                                                                owner_contactno: formatContactNo(owner.owner_contactno),
+                                                                                owner_altercontactno: owner.owner_altercontactno || "",
+                                                                                owner_email: owner.owner_email || "",
+                                                                                is_residence: isResidence ? "1" : "0",
+                                                                                owner_adhar_no: owner.owner_adhar_no || "",
+                                                                                owner_pan: owner.owner_pan || "",
+                                                                                ownership_type: owner.ownership_type || "",
+                                                                                attachment_url: updatedUrlsJson
+                                                                            };
+                                                                            
+                                                                            console.log('🔄 [FlatOwner] Deleting attachment - Update data:', {
+                                                                                owner_id: modalOwnerId,
+                                                                                attachment_url_length: updatedUrlsJson ? updatedUrlsJson.length : 0,
+                                                                                updated_urls_count: updatedUrls.length
+                                                                            });
+                                                                            
+                                                                            // Update the owner record
+                                                                            const response = await updateOwner(modalOwnerId, updateData, null);
+                                                                            console.log('✅ [FlatOwner] Delete attachment - Response:', response);
+                                                                            
+                                                                            // Refresh the owners list
+                                                                            await fetchData();
+                                                                            alert('Document deleted successfully!');
+                                                                        } catch (error) {
+                                                                            console.error('❌ [FlatOwner] Error deleting document:', {
+                                                                                error: error,
+                                                                                message: error.message,
+                                                                                response: error.response?.data,
+                                                                                status: error.response?.status
+                                                                            });
+                                                                            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Unknown error occurred';
+                                                                            alert(`Error deleting document: ${errorMessage}`);
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        background: '#dc3545',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        padding: '6px 12px',
+                                                                        borderRadius: '4px',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: '500',
+                                                                        fontSize: '12px'
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );

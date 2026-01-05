@@ -151,6 +151,15 @@ const Invitation = () => {
                 created_by: user.user_id,
             };
 
+            // Debug: Log attachment_url before sending
+            console.log('📤 [Invitation] handleSubmit - Sending data:', {
+                isEditing,
+                attachment_url: dataToSend.attachment_url,
+                attachment_url_type: typeof dataToSend.attachment_url,
+                filePreviews_count: filePreviews.length,
+                selectedFiles_count: selectedFiles.length
+            });
+
             if (isEditing) {
                 await updateInvitation(editingId, dataToSend, selectedFiles);
                 alert("Invitation updated successfully!");
@@ -168,15 +177,8 @@ const Invitation = () => {
     };
 
     const handleEdit = (invitation) => {
-        setFormData({
-            title: invitation.title || "",
-            description: invitation.description || "",
-        });
-        setEditingId(invitation.invitation_id);
-        setIsEditing(true);
-        setShowForm(true);
-        
         // Load existing files - filter out invalid URLs
+        let validUrls = [];
         if (invitation.attachment_url) {
             let urls = [];
             if (Array.isArray(invitation.attachment_url)) {
@@ -191,13 +193,20 @@ const Invitation = () => {
             }
             
             // Filter out invalid URLs
-            const validUrls = urls.filter(url => isValidUrl(url));
-            setFilePreviews(validUrls);
-            setSelectedFiles([]); // Clear new files, existing ones are in previews
-        } else {
-            setFilePreviews([]);
-            setSelectedFiles([]);
+            validUrls = urls.filter(url => isValidUrl(url));
         }
+        
+        // Set formData with attachment_url included
+        setFormData({
+            title: invitation.title || "",
+            description: invitation.description || "",
+            attachment_url: validUrls.length > 0 ? JSON.stringify(validUrls) : null
+        });
+        setEditingId(invitation.invitation_id);
+        setIsEditing(true);
+        setShowForm(true);
+        setFilePreviews(validUrls);
+        setSelectedFiles([]); // Clear new files, existing ones are in previews
     };
 
     const handleDelete = async (id) => {
@@ -224,6 +233,7 @@ const Invitation = () => {
         setFormData({
             title: "",
             description: "",
+            attachment_url: null
         });
         setSelectedFiles([]);
         setFilePreviews([]);
@@ -384,7 +394,7 @@ const Invitation = () => {
                                         {filePreviews
                                             .filter(url => isValidUrl(url))
                                             .map((url, index) => (
-                                                <div key={index} className="file-item">
+                                                <div key={index} className="file-item" style={{ position: 'relative', display: 'inline-block' }}>
                                                     <a
                                                         href={url}
                                                         target="_blank"
@@ -395,6 +405,47 @@ const Invitation = () => {
                                                             ? '📄 ' + getFileName(url)
                                                             : '🖼️ ' + getFileName(url)}
                                                     </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (!window.confirm('Are you sure you want to delete this attachment?')) {
+                                                                return;
+                                                            }
+                                                            // Remove from filePreviews
+                                                            const updatedPreviews = filePreviews.filter((_, i) => i !== index);
+                                                            setFilePreviews(updatedPreviews);
+                                                            
+                                                            // Update formData.attachment_url to reflect the change
+                                                            const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                            console.log('🗑️ [Invitation] Delete attachment - Updated URLs:', {
+                                                                updatedPreviews_count: updatedPreviews.length,
+                                                                updatedUrlsJson,
+                                                                updatedUrlsJson_type: typeof updatedUrlsJson
+                                                            });
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                attachment_url: updatedUrlsJson
+                                                            }));
+                                                        }}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '-5px',
+                                                            right: '-5px',
+                                                            background: '#dc3545',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '50%',
+                                                            width: '20px',
+                                                            height: '20px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '12px',
+                                                            lineHeight: '1',
+                                                            marginLeft: '5px'
+                                                        }}
+                                                        title="Delete attachment"
+                                                    >
+                                                        ×
+                                                    </button>
                                                 </div>
                                             ))}
                                     </div>

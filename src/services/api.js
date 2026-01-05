@@ -260,6 +260,8 @@ export const updateOwner = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
+            // For owner_contactno, if it's null or empty string, send empty string (backend will convert to null)
+            // FormData doesn't handle null well, so we send empty string and let backend handle conversion
             formData.append(key, data[key]);
         }
     });
@@ -414,7 +416,16 @@ export const createMeeting = (data, files = null) => {
 export const updateMeeting = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined) {
+        // Always send attachment_url even if null (for deletions)
+        // FormData converts null to string "null", so send empty string or JSON string
+        if (key === 'attachment_url') {
+            const value = data[key];
+            if (value === null || value === undefined) {
+                formData.append(key, '');
+            } else {
+                formData.append(key, value);
+            }
+        } else if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
@@ -479,7 +490,16 @@ export const createActivityExpense = (data, files = null) => {
 export const updateActivityExpense = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined) {
+        // Always send attachment_url even if null (for deletions)
+        // FormData converts null to string "null", so send empty string or JSON string
+        if (key === 'attachment_url') {
+            const value = data[key];
+            if (value === null || value === undefined) {
+                formData.append(key, '');
+            } else {
+                formData.append(key, value);
+            }
+        } else if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
@@ -556,7 +576,16 @@ export const createExpense = (data, files = null) => {
 export const updateExpense = (id, data, files = null) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined) {
+        // Always send attachment_url even if null (for deletions)
+        // FormData converts null to string "null", so send empty string or JSON string
+        if (key === 'attachment_url') {
+            const value = data[key];
+            if (value === null || value === undefined) {
+                formData.append(key, '');
+            } else {
+                formData.append(key, value);
+            }
+        } else if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });
@@ -847,7 +876,16 @@ export const addInvitation = (data, files = []) => {
 export const updateInvitation = (id, data, files = []) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined) {
+        // Always send attachment_url even if null (for deletions)
+        // FormData converts null to string "null", so send empty string or JSON string
+        if (key === 'attachment_url') {
+            const value = data[key];
+            if (value === null || value === undefined) {
+                formData.append(key, '');
+            } else {
+                formData.append(key, value);
+            }
+        } else if (data[key] !== null && data[key] !== undefined) {
             formData.append(key, data[key]);
         }
     });

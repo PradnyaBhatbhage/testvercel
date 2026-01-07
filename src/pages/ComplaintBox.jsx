@@ -537,8 +537,7 @@ const ComplaintBox = () => {
                         }
                     </h3>
 
-                    <div className="form-grid">
-                        <div className="form-field">
+                    <div className="form-field">
                             <label>Wing *</label>
                             <select
                                 name="wing_id"
@@ -653,7 +652,6 @@ const ComplaintBox = () => {
                                 />
                             </div>
                         )}
-                    </div>
 
                     <div className="form-field full-width">
                         <label>Description *</label>
@@ -682,7 +680,7 @@ const ComplaintBox = () => {
                         </div>
                     )}
 
-                    <div className="form-field">
+                    <div className="form-field full-width">
                         <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                         <input
                             type="file"
@@ -826,7 +824,7 @@ const ComplaintBox = () => {
                         )}
                     </div>
 
-                    <div className="button-group">
+                    <div className="button-group" style={{ gridColumn: '1 / -1' }}>
                         {formData.status === "closed" ? (
                             <button type="button" className="btn-cancel" onClick={resetForm} style={{ width: '100%' }}>
                                 Close

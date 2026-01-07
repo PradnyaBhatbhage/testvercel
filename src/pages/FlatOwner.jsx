@@ -256,7 +256,7 @@ const FlatOwner = () => {
             fileSizes: files.map(f => f.size),
             fileTypes: files.map(f => f.type)
         });
-        
+
         if (files.length === 0) {
             console.warn('⚠️ [FlatOwner] handleFileChange - No files selected');
             return;
@@ -563,16 +563,16 @@ const FlatOwner = () => {
                         fileNames: selectedFiles.map(f => f?.name || 'invalid'),
                         fileSizes: selectedFiles.map(f => f?.size || 0)
                     });
-                    
+
                     const updateResponse = await updateOwner(editId, ownerPayload, selectedFiles.length > 0 ? selectedFiles : null);
                     console.log('📥 [FlatOwner] handleSubmit - updateOwner response:', {
                         status: updateResponse.status,
                         data: updateResponse.data
                     });
-                    
+
                     ownerId = editId;
                     console.log('✅ [FlatOwner] handleSubmit - Owner updated successfully');
-                    
+
                     if (updateResponse.data?.warning) {
                         alert(`Owner updated successfully, but with warning: ${updateResponse.data.warning}`);
                     } else {
@@ -670,7 +670,7 @@ const FlatOwner = () => {
                                             fileNames: parkingFileArray.map(f => f?.name || 'invalid'),
                                             fileSizes: parkingFileArray.map(f => f?.size || 0)
                                         });
-                                        
+
                                         const updateResponse = await updateParking(parking.parking_id, {
                                             vehical_type: parking.vehical_type,
                                             vehical_no: parking.vehical_no,
@@ -679,13 +679,13 @@ const FlatOwner = () => {
                                             ownership_type: parking.ownership_type || "Owner",
                                             attachment_url: parking.attachment_url || null,
                                         }, parkingFilesToSend);
-                                        
+
                                         console.log('📥 [FlatOwner] handleSubmit - updateParking response:', {
                                             parking_id: parking.parking_id,
                                             status: updateResponse.status,
                                             data: updateResponse.data
                                         });
-                                        
+
                                         console.log('✅ [FlatOwner] handleSubmit - Parking updated:', parking.parking_id);
                                     } catch (err) {
                                         console.error('❌ [FlatOwner] handleSubmit - Error updating parking:', {
@@ -736,7 +736,7 @@ const FlatOwner = () => {
                                         fileNames: parkingFileArray.map(f => f?.name || 'invalid'),
                                         fileSizes: parkingFileArray.map(f => f?.size || 0)
                                     });
-                                    
+
                                     const addResponse = await addParking({
                                         owner_id: ownerId,
                                         vehical_type: parking.vehical_type,
@@ -745,12 +745,12 @@ const FlatOwner = () => {
                                         remark: parking.remark || "",
                                         ownership_type: parking.ownership_type || "Owner",
                                     }, parkingFilesToSend);
-                                    
+
                                     console.log('📥 [FlatOwner] handleSubmit - addParking response:', {
                                         status: addResponse.status,
                                         data: addResponse.data
                                     });
-                                    
+
                                     console.log('✅ [FlatOwner] handleSubmit - Parking added');
                                 } catch (err) {
                                     console.error('❌ [FlatOwner] handleSubmit - Error adding parking:', {
@@ -778,7 +778,7 @@ const FlatOwner = () => {
                 console.log('🔄 [FlatOwner] handleSubmit - Refreshing data after submission...');
                 await fetchData();
                 console.log('✅ [FlatOwner] handleSubmit - Data refresh completed');
-                
+
                 // If we were editing, verify the attachments were saved
                 if (editMode && editId) {
                     console.log('🔍 [FlatOwner] handleSubmit - Verifying saved attachments for owner:', editId);
@@ -879,17 +879,17 @@ const FlatOwner = () => {
         // Helper function to clean and validate URLs (same as in table rendering)
         const cleanAndValidateUrls = (urlString) => {
             if (!urlString || typeof urlString !== 'string') return [];
-            
+
             // Split by comma, semicolon, or newline (common delimiters)
             const potentialUrls = urlString.split(/[,;\n\r]+/).map(u => u.trim()).filter(u => u.length > 0);
-            
+
             const validUrls = [];
             for (const url of potentialUrls) {
                 // Skip if it's not a valid HTTP/HTTPS URL
                 if (!url.startsWith('http://') && !url.startsWith('https://')) {
                     continue;
                 }
-                
+
                 // Validate URL format
                 try {
                     const urlObj = new URL(url);
@@ -905,7 +905,7 @@ const FlatOwner = () => {
                     continue;
                 }
             }
-            
+
             return validUrls;
         };
 
@@ -1170,7 +1170,7 @@ const FlatOwner = () => {
             fileSizes: files.map(f => f.size),
             fileTypes: files.map(f => f.type)
         });
-        
+
         if (files.length === 0) {
             console.warn(`⚠️ [FlatOwner] handleParkingFileChange - No files selected for parking entry ${index}`);
             return;
@@ -1201,7 +1201,7 @@ const FlatOwner = () => {
             }
 
             validFiles.push(file);
-            
+
             if (file.type.startsWith('image/')) {
                 imageFiles.push(file);
             } else {
@@ -1241,7 +1241,7 @@ const FlatOwner = () => {
         const existingFiles = updatedFiles[index] || [];
         updatedFiles[index] = [...existingFiles, ...validFiles];
         setParkingFiles(updatedFiles);
-        
+
         console.log('✅ [FlatOwner] handleParkingFileChange - Files added to state:', {
             index,
             totalFiles: updatedFiles[index].length,
@@ -1252,12 +1252,12 @@ const FlatOwner = () => {
         const updatedPreviews = [...parkingFilePreviews];
         const existingPreviews = updatedPreviews[index] || [];
         const newPreviews = [...existingPreviews];
-        
+
         // Add placeholders for all new files (null for PDFs, will be replaced with data URLs for images)
         validFiles.forEach(() => {
             newPreviews.push(null);
         });
-        
+
         // Update previews array immediately (with placeholders)
         updatedPreviews[index] = newPreviews;
         setParkingFilePreviews(updatedPreviews);
@@ -1272,7 +1272,7 @@ const FlatOwner = () => {
                     const fileIndexInValidFiles = validFiles.indexOf(file);
                     const pdfsBeforeThis = validFiles.slice(0, fileIndexInValidFiles).filter(f => !f.type.startsWith('image/')).length;
                     const previewIndex = existingPreviews.length + pdfsBeforeThis + imgIdx;
-                    
+
                     // Update the preview at the correct position
                     setParkingFilePreviews(prev => {
                         const currentPreviews = [...prev];
@@ -1391,17 +1391,17 @@ const FlatOwner = () => {
                                                 // Helper function to clean and validate URLs
                                                 const cleanAndValidateUrls = (urlString) => {
                                                     if (!urlString || typeof urlString !== 'string') return [];
-                                                    
+
                                                     // Split by comma, semicolon, or newline (common delimiters)
                                                     const potentialUrls = urlString.split(/[,;\n\r]+/).map(u => u.trim()).filter(u => u.length > 0);
-                                                    
+
                                                     const validUrls = [];
                                                     for (const url of potentialUrls) {
                                                         // Skip if it's not a valid HTTP/HTTPS URL
                                                         if (!url.startsWith('http://') && !url.startsWith('https://')) {
                                                             continue;
                                                         }
-                                                        
+
                                                         // Validate URL format
                                                         try {
                                                             const urlObj = new URL(url);
@@ -1417,7 +1417,7 @@ const FlatOwner = () => {
                                                             continue;
                                                         }
                                                     }
-                                                    
+
                                                     return validUrls;
                                                 };
 
@@ -1664,9 +1664,9 @@ const FlatOwner = () => {
                                     style={{ flex: 1 }}
                                 />
                                 {selectedFiles.length > 0 && (
-                                    <span style={{ 
-                                        fontSize: '12px', 
-                                        color: '#28a745', 
+                                    <span style={{
+                                        fontSize: '12px',
+                                        color: '#28a745',
                                         fontWeight: '600',
                                         padding: '4px 8px',
                                         backgroundColor: '#d4edda',
@@ -1685,123 +1685,165 @@ const FlatOwner = () => {
                                 // Count new files selected
                                 const newFilesCount = selectedFiles.length;
                                 const totalCount = validExistingPreviews + newFilesCount;
-                                
+
                                 // Show table if there are any files (existing or new)
                                 if (totalCount === 0) return null;
-                                
+
                                 return (
-                                <div style={{ marginTop: '10px' }}>
-                                    <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
-                                        All documents ({totalCount}):
-                                    </p>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
-                                        <thead>
-                                            <tr style={{ background: '#f5f5f5' }}>
-                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
-                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
-                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
-                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
-                                                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {/* Show existing documents first (from database) */}
-                                            {filePreviews.map((preview, idx) => {
-                                                if (!preview) return null;
+                                    <div style={{ marginTop: '10px' }}>
+                                        <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                            All documents ({totalCount}):
+                                        </p>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                            <thead>
+                                                <tr style={{ background: '#f5f5f5' }}>
+                                                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                    <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {/* Show existing documents first (from database) */}
+                                                {filePreviews.map((preview, idx) => {
+                                                    if (!preview) return null;
 
-                                                // Validate URL - skip invalid URLs
-                                                if (typeof preview !== 'string' || preview.length < 20) return null;
-                                                if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                    // Validate URL - skip invalid URLs
+                                                    if (typeof preview !== 'string' || preview.length < 20) return null;
+                                                    if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
 
-                                                // Extract file name from URL (handle query parameters and encoded URLs)
-                                                let fileName = `Document ${idx + 1}`;
-                                                try {
-                                                    const url = new URL(preview);
-                                                    const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
-                                                    // Get the last meaningful part (skip empty parts)
-                                                    if (pathParts.length > 0) {
-                                                        fileName = pathParts[pathParts.length - 1];
-                                                        // Decode URL-encoded file names
-                                                        try {
-                                                            fileName = decodeURIComponent(fileName);
-                                                        } catch (decodeErr) {
-                                                            // If decoding fails, use as is
-                                                        }
-                                                        // Remove query parameters and hash fragments
-                                                        fileName = fileName.split('?')[0].split('#')[0];
-                                                        // Validate file name - if it looks invalid, use default
-                                                        if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
-                                                            // If it's just base64-like characters and short, it's probably invalid
-                                                            if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
-                                                                fileName = `Document ${idx + 1}`;
-                                                            } else if (!fileName || fileName.length < 3) {
-                                                                fileName = `Document ${idx + 1}`;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) {
-                                                    // If URL parsing fails, try simple split
+                                                    // Extract file name from URL (handle query parameters and encoded URLs)
+                                                    let fileName = `Document ${idx + 1}`;
                                                     try {
-                                                        const parts = preview.split('/').filter(part => part && part.length > 0);
-                                                        if (parts.length > 0) {
-                                                            fileName = parts[parts.length - 1];
-                                                            // Remove query parameters and hash fragments
-                                                            fileName = fileName.split('?')[0].split('#')[0];
+                                                        const url = new URL(preview);
+                                                        const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                        // Get the last meaningful part (skip empty parts)
+                                                        if (pathParts.length > 0) {
+                                                            fileName = pathParts[pathParts.length - 1];
+                                                            // Decode URL-encoded file names
                                                             try {
                                                                 fileName = decodeURIComponent(fileName);
                                                             } catch (decodeErr) {
                                                                 // If decoding fails, use as is
                                                             }
-                                                            // Validate file name
-                                                            if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
-                                                                fileName = `Document ${idx + 1}`;
+                                                            // Remove query parameters and hash fragments
+                                                            fileName = fileName.split('?')[0].split('#')[0];
+                                                            // Validate file name - if it looks invalid, use default
+                                                            if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                // If it's just base64-like characters and short, it's probably invalid
+                                                                if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                    fileName = `Document ${idx + 1}`;
+                                                                } else if (!fileName || fileName.length < 3) {
+                                                                    fileName = `Document ${idx + 1}`;
+                                                                }
                                                             }
                                                         }
-                                                    } catch (splitErr) {
-                                                        fileName = `Document ${idx + 1}`;
+                                                    } catch (e) {
+                                                        // If URL parsing fails, try simple split
+                                                        try {
+                                                            const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                            if (parts.length > 0) {
+                                                                fileName = parts[parts.length - 1];
+                                                                // Remove query parameters and hash fragments
+                                                                fileName = fileName.split('?')[0].split('#')[0];
+                                                                try {
+                                                                    fileName = decodeURIComponent(fileName);
+                                                                } catch (decodeErr) {
+                                                                    // If decoding fails, use as is
+                                                                }
+                                                                // Validate file name
+                                                                if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                    fileName = `Document ${idx + 1}`;
+                                                                }
+                                                            }
+                                                        } catch (splitErr) {
+                                                            fileName = `Document ${idx + 1}`;
+                                                        }
                                                     }
-                                                }
 
-                                                // Better type detection
-                                                const lowerFileName = fileName.toLowerCase();
-                                                const lowerUrl = preview.toLowerCase();
-                                                const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
-                                                const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
-                                                const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+                                                    // Better type detection
+                                                    const lowerFileName = fileName.toLowerCase();
+                                                    const lowerUrl = preview.toLowerCase();
+                                                    const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
+                                                    const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                    const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
 
-                                                return (
-                                                    <tr key={`existing-${idx}`}>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
-                                                            {fileName}
-                                                        </td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                                <a
-                                                                    href={preview}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
-                                                                >
-                                                                    View
-                                                                </a>
+                                                    return (
+                                                        <tr key={`existing-${idx}`}>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                                {fileName}
+                                                            </td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                    <a
+                                                                        href={preview}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                    >
+                                                                        View
+                                                                    </a>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            if (!window.confirm('Are you sure you want to delete this document?')) {
+                                                                                return;
+                                                                            }
+                                                                            // Remove from filePreviews
+                                                                            const updatedPreviews = filePreviews.filter((p, i) => i !== idx);
+                                                                            setFilePreviews(updatedPreviews);
+
+                                                                            // Update formData.attachment_url to reflect the change
+                                                                            const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
+                                                                            setFormData(prev => ({
+                                                                                ...prev,
+                                                                                attachment_url: updatedUrlsJson
+                                                                            }));
+                                                                        }}
+                                                                        style={{
+                                                                            background: '#dc3545',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            padding: '4px 8px',
+                                                                            borderRadius: '4px',
+                                                                            cursor: 'pointer',
+                                                                            fontWeight: '500',
+                                                                            fontSize: '11px'
+                                                                        }}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                                {/* Show newly selected files */}
+                                                {selectedFiles.map((file, idx) => {
+                                                    // Count valid existing previews for correct numbering
+                                                    const validExistingPreviews = filePreviews.filter(p => p && typeof p === 'string' && p.length >= 20 && (p.startsWith('http') || p.startsWith('https'))).length;
+
+                                                    return (
+                                                        <tr key={`new-${idx}`}>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{validExistingPreviews + idx + 1}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                                                                 <button
+                                                                    type="button"
                                                                     onClick={() => {
-                                                                        if (!window.confirm('Are you sure you want to delete this document?')) {
-                                                                            return;
+                                                                        const updated = selectedFiles.filter((_, i) => i !== idx);
+                                                                        setSelectedFiles(updated);
+                                                                        // Also remove corresponding preview if exists
+                                                                        const previewIdx = filePreviews.length - selectedFiles.length + idx;
+                                                                        if (previewIdx >= 0 && previewIdx < filePreviews.length) {
+                                                                            const updatedPreviews = filePreviews.filter((_, i) => i !== previewIdx);
+                                                                            setFilePreviews(updatedPreviews);
                                                                         }
-                                                                        // Remove from filePreviews
-                                                                        const updatedPreviews = filePreviews.filter((p, i) => i !== idx);
-                                                                        setFilePreviews(updatedPreviews);
-                                                                        
-                                                                        // Update formData.attachment_url to reflect the change
-                                                                        const updatedUrlsJson = updatedPreviews.length > 0 ? JSON.stringify(updatedPreviews) : null;
-                                                                        setFormData(prev => ({
-                                                                            ...prev,
-                                                                            attachment_url: updatedUrlsJson
-                                                                        }));
                                                                     }}
                                                                     style={{
                                                                         background: '#dc3545',
@@ -1810,60 +1852,18 @@ const FlatOwner = () => {
                                                                         padding: '4px 8px',
                                                                         borderRadius: '4px',
                                                                         cursor: 'pointer',
-                                                                        fontWeight: '500',
                                                                         fontSize: '11px'
                                                                     }}
                                                                 >
-                                                                    Delete
+                                                                    Remove
                                                                 </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                            {/* Show newly selected files */}
-                                            {selectedFiles.map((file, idx) => {
-                                                // Count valid existing previews for correct numbering
-                                                const validExistingPreviews = filePreviews.filter(p => p && typeof p === 'string' && p.length >= 20 && (p.startsWith('http') || p.startsWith('https'))).length;
-                                                
-                                                return (
-                                                <tr key={`new-${idx}`}>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{validExistingPreviews + idx + 1}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const updated = selectedFiles.filter((_, i) => i !== idx);
-                                                                setSelectedFiles(updated);
-                                                                // Also remove corresponding preview if exists
-                                                                const previewIdx = filePreviews.length - selectedFiles.length + idx;
-                                                                if (previewIdx >= 0 && previewIdx < filePreviews.length) {
-                                                                    const updatedPreviews = filePreviews.filter((_, i) => i !== previewIdx);
-                                                                    setFilePreviews(updatedPreviews);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                background: '#dc3545',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '11px'
-                                                            }}
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 );
                             })()}
                         </div>
@@ -1941,9 +1941,9 @@ const FlatOwner = () => {
                                             style={{ flex: 1 }}
                                         />
                                         {parkingFiles[index] && parkingFiles[index].length > 0 && (
-                                            <span style={{ 
-                                                fontSize: '12px', 
-                                                color: '#28a745', 
+                                            <span style={{
+                                                fontSize: '12px',
+                                                color: '#28a745',
                                                 fontWeight: '600',
                                                 padding: '4px 8px',
                                                 backgroundColor: '#d4edda',
@@ -1962,157 +1962,157 @@ const FlatOwner = () => {
                                         // Count new files selected
                                         const newFilesCount = (parkingFiles[index] || []).length;
                                         const totalCount = validExistingPreviews + newFilesCount;
-                                        
+
                                         // Show table if there are any files (existing or new)
                                         if (totalCount === 0) return null;
-                                        
+
                                         return (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
-                                                All documents ({totalCount}):
-                                            </p>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
-                                                <thead>
-                                                    <tr style={{ background: '#f5f5f5' }}>
-                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
-                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
-                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
-                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
-                                                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {/* Show existing documents first (from database) */}
-                                                    {parkingFilePreviews[index] && parkingFilePreviews[index].length > 0 && parkingFilePreviews[index].map((preview, idx) => {
-                                                        // Skip null previews (they're placeholders for files being processed or PDFs)
-                                                        // These will be shown in the "new files" section if they're in parkingFiles
-                                                        if (!preview) return null;
+                                            <div style={{ marginTop: '10px' }}>
+                                                <p style={{ fontSize: '12px', color: '#666', fontWeight: '600', marginBottom: '8px' }}>
+                                                    All documents ({totalCount}):
+                                                </p>
+                                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid #ddd' }}>
+                                                    <thead>
+                                                        <tr style={{ background: '#f5f5f5' }}>
+                                                            <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Sr. No.</th>
+                                                            <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>File Name</th>
+                                                            <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Type</th>
+                                                            <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+                                                            <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ddd' }}>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {/* Show existing documents first (from database) */}
+                                                        {parkingFilePreviews[index] && parkingFilePreviews[index].length > 0 && parkingFilePreviews[index].map((preview, idx) => {
+                                                            // Skip null previews (they're placeholders for files being processed or PDFs)
+                                                            // These will be shown in the "new files" section if they're in parkingFiles
+                                                            if (!preview) return null;
 
-                                                        // Validate URL - skip invalid URLs
-                                                        if (typeof preview !== 'string' || preview.length < 20) return null;
-                                                        if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
+                                                            // Validate URL - skip invalid URLs
+                                                            if (typeof preview !== 'string' || preview.length < 20) return null;
+                                                            if (!preview.startsWith('http') && !preview.startsWith('https')) return null;
 
-                                                        // Extract file name from URL (handle query parameters and encoded URLs)
-                                                        let fileName = `Document ${idx + 1}`;
-                                                        try {
-                                                            const url = new URL(preview);
-                                                            const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
-                                                            // Get the last meaningful part (skip empty parts)
-                                                            if (pathParts.length > 0) {
-                                                                fileName = pathParts[pathParts.length - 1];
-                                                                // Decode URL-encoded file names
-                                                                try {
-                                                                    fileName = decodeURIComponent(fileName);
-                                                                } catch (decodeErr) {
-                                                                    // If decoding fails, use as is
-                                                                }
-                                                                // Remove query parameters and hash fragments
-                                                                fileName = fileName.split('?')[0].split('#')[0];
-                                                                // Validate file name - if it looks invalid, use default
-                                                                if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
-                                                                    // If it's just base64-like characters and short, it's probably invalid
-                                                                    if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
-                                                                        fileName = `Document ${idx + 1}`;
-                                                                    } else if (!fileName || fileName.length < 3) {
-                                                                        fileName = `Document ${idx + 1}`;
-                                                                    }
-                                                                }
-                                                            }
-                                                        } catch (e) {
-                                                            // If URL parsing fails, try simple split
+                                                            // Extract file name from URL (handle query parameters and encoded URLs)
+                                                            let fileName = `Document ${idx + 1}`;
                                                             try {
-                                                                const parts = preview.split('/').filter(part => part && part.length > 0);
-                                                                if (parts.length > 0) {
-                                                                    fileName = parts[parts.length - 1];
-                                                                    // Remove query parameters and hash fragments
-                                                                    fileName = fileName.split('?')[0].split('#')[0];
+                                                                const url = new URL(preview);
+                                                                const pathParts = url.pathname.split('/').filter(part => part && part.length > 0);
+                                                                // Get the last meaningful part (skip empty parts)
+                                                                if (pathParts.length > 0) {
+                                                                    fileName = pathParts[pathParts.length - 1];
+                                                                    // Decode URL-encoded file names
                                                                     try {
                                                                         fileName = decodeURIComponent(fileName);
                                                                     } catch (decodeErr) {
                                                                         // If decoding fails, use as is
                                                                     }
-                                                                    // Validate file name
-                                                                    if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
-                                                                        fileName = `Document ${idx + 1}`;
+                                                                    // Remove query parameters and hash fragments
+                                                                    fileName = fileName.split('?')[0].split('#')[0];
+                                                                    // Validate file name - if it looks invalid, use default
+                                                                    if (!fileName || fileName.length < 3 || fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                        // If it's just base64-like characters and short, it's probably invalid
+                                                                        if (fileName && fileName.length < 10 && fileName.match(/^[A-Za-z0-9+/=]+$/g)) {
+                                                                            fileName = `Document ${idx + 1}`;
+                                                                        } else if (!fileName || fileName.length < 3) {
+                                                                            fileName = `Document ${idx + 1}`;
+                                                                        }
                                                                     }
                                                                 }
-                                                            } catch (splitErr) {
-                                                                fileName = `Document ${idx + 1}`;
+                                                            } catch (e) {
+                                                                // If URL parsing fails, try simple split
+                                                                try {
+                                                                    const parts = preview.split('/').filter(part => part && part.length > 0);
+                                                                    if (parts.length > 0) {
+                                                                        fileName = parts[parts.length - 1];
+                                                                        // Remove query parameters and hash fragments
+                                                                        fileName = fileName.split('?')[0].split('#')[0];
+                                                                        try {
+                                                                            fileName = decodeURIComponent(fileName);
+                                                                        } catch (decodeErr) {
+                                                                            // If decoding fails, use as is
+                                                                        }
+                                                                        // Validate file name
+                                                                        if (!fileName || fileName.length < 3 || (fileName.match(/^[A-Za-z0-9+/=]+$/g) && fileName.length < 10)) {
+                                                                            fileName = `Document ${idx + 1}`;
+                                                                        }
+                                                                    }
+                                                                } catch (splitErr) {
+                                                                    fileName = `Document ${idx + 1}`;
+                                                                }
                                                             }
-                                                        }
 
-                                                        // Better type detection
-                                                        const lowerFileName = fileName.toLowerCase();
-                                                        const lowerUrl = preview.toLowerCase();
-                                                        const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
-                                                        const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
-                                                        const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
+                                                            // Better type detection
+                                                            const lowerFileName = fileName.toLowerCase();
+                                                            const lowerUrl = preview.toLowerCase();
+                                                            const isPDF = lowerFileName.endsWith('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('application/pdf');
+                                                            const isImage = lowerFileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || lowerUrl.includes('image/');
+                                                            const fileType = isPDF ? 'PDF' : (isImage ? 'Image' : 'Document');
 
-                                                        return (
-                                                            <tr key={`existing-${idx}`}>
-                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
-                                                                <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
-                                                                    {fileName}
-                                                                </td>
-                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
-                                                                <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
-                                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                                    <a
-                                                                        href={preview}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
-                                                                    >
-                                                                        View
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                    {/* Show newly selected files (from file input) */}
-                                                    {parkingFiles[index] && parkingFiles[index].length > 0 && parkingFiles[index].map((file, idx) => {
-                                                        // Count valid existing previews for correct numbering
-                                                        const validExistingPreviews = (parkingFilePreviews[index] || []).filter(p => p && typeof p === 'string' && p.length >= 10 && (p.startsWith('http') || p.startsWith('https'))).length;
-                                                        
-                                                        return (
-                                                        <tr key={`new-${idx}`}>
-                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{validExistingPreviews + idx + 1}</td>
-                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
-                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
-                                                            <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
-                                                            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const updatedFiles = [...parkingFiles];
-                                                                        const currentFiles = updatedFiles[index] || [];
-                                                                        updatedFiles[index] = currentFiles.filter((_, i) => i !== idx);
-                                                                        setParkingFiles(updatedFiles);
+                                                            return (
+                                                                <tr key={`existing-${idx}`}>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd', wordBreak: 'break-word', maxWidth: '200px' }} title={fileName}>
+                                                                        {fileName}
+                                                                    </td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{fileType}</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd', color: '#28a745', fontWeight: '500' }}>Saved</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                        <a
+                                                                            href={preview}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
+                                                                        >
+                                                                            View
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                        {/* Show newly selected files (from file input) */}
+                                                        {parkingFiles[index] && parkingFiles[index].length > 0 && parkingFiles[index].map((file, idx) => {
+                                                            // Count valid existing previews for correct numbering
+                                                            const validExistingPreviews = (parkingFilePreviews[index] || []).filter(p => p && typeof p === 'string' && p.length >= 10 && (p.startsWith('http') || p.startsWith('https'))).length;
 
-                                                                        const updatedPreviews = [...parkingFilePreviews];
-                                                                        const currentPreviews = updatedPreviews[index] || [];
-                                                                        updatedPreviews[index] = currentPreviews.filter((_, i) => i !== (currentPreviews.length - currentFiles.length + idx));
-                                                                        setParkingFilePreviews(updatedPreviews);
-                                                                    }}
-                                                                    style={{
-                                                                        background: '#dc3545',
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        padding: '4px 8px',
-                                                                        borderRadius: '4px',
-                                                                        cursor: 'pointer',
-                                                                        fontSize: '11px'
-                                                                    }}
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                            return (
+                                                                <tr key={`new-${idx}`}>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{validExistingPreviews + idx + 1}</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.name}</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{file.type === 'application/pdf' ? 'PDF' : 'Image'}</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd', color: '#ffc107' }}>New</td>
+                                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const updatedFiles = [...parkingFiles];
+                                                                                const currentFiles = updatedFiles[index] || [];
+                                                                                updatedFiles[index] = currentFiles.filter((_, i) => i !== idx);
+                                                                                setParkingFiles(updatedFiles);
+
+                                                                                const updatedPreviews = [...parkingFilePreviews];
+                                                                                const currentPreviews = updatedPreviews[index] || [];
+                                                                                updatedPreviews[index] = currentPreviews.filter((_, i) => i !== (currentPreviews.length - currentFiles.length + idx));
+                                                                                setParkingFilePreviews(updatedPreviews);
+                                                                            }}
+                                                                            style={{
+                                                                                background: '#dc3545',
+                                                                                color: 'white',
+                                                                                border: 'none',
+                                                                                padding: '4px 8px',
+                                                                                borderRadius: '4px',
+                                                                                cursor: 'pointer',
+                                                                                fontSize: '11px'
+                                                                            }}
+                                                                        >
+                                                                            Remove
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         );
                                     })()}
                                 </div>
@@ -2314,24 +2314,24 @@ const FlatOwner = () => {
                                                                                 alert('Owner not found. Please refresh the page and try again.');
                                                                                 return;
                                                                             }
-                                                                            
+
                                                                             // Remove from modal view
                                                                             const updatedUrls = modalDocuments.filter((u, i) => i !== idx);
                                                                             setModalDocuments(updatedUrls);
-                                                                            
+
                                                                             // Prepare update data with all required fields
                                                                             const updatedUrlsJson = updatedUrls.length > 0 ? JSON.stringify(updatedUrls) : null;
-                                                                            
+
                                                                             // Convert boolean to string for FormData
                                                                             const isResidence = owner.is_residence === 1 || owner.is_residence === '1' || owner.is_residence === true;
-                                                                            
+
                                                                             // Helper to convert empty strings to null for integer fields
                                                                             const toIntOrNull = (value) => {
                                                                                 if (value === null || value === undefined || value === '') return null;
                                                                                 const num = parseInt(value);
                                                                                 return isNaN(num) ? null : num.toString();
                                                                             };
-                                                                            
+
                                                                             // Format owner_contactno - ensure it's a valid integer string or empty string (backend will convert empty to null)
                                                                             const formatContactNo = (value) => {
                                                                                 if (!value || value === null || value === undefined) return "";
@@ -2340,7 +2340,7 @@ const FlatOwner = () => {
                                                                                 const num = parseInt(str, 10);
                                                                                 return isNaN(num) ? "" : String(num);
                                                                             };
-                                                                            
+
                                                                             const updateData = {
                                                                                 flat_id: owner.flat_id ? String(owner.flat_id) : "",
                                                                                 flat_no: owner.flat_no || "",
@@ -2357,17 +2357,17 @@ const FlatOwner = () => {
                                                                                 ownership_type: owner.ownership_type || "",
                                                                                 attachment_url: updatedUrlsJson
                                                                             };
-                                                                            
+
                                                                             console.log('🔄 [FlatOwner] Deleting attachment - Update data:', {
                                                                                 owner_id: modalOwnerId,
                                                                                 attachment_url_length: updatedUrlsJson ? updatedUrlsJson.length : 0,
                                                                                 updated_urls_count: updatedUrls.length
                                                                             });
-                                                                            
+
                                                                             // Update the owner record
                                                                             const response = await updateOwner(modalOwnerId, updateData, null);
                                                                             console.log('✅ [FlatOwner] Delete attachment - Response:', response);
-                                                                            
+
                                                                             // Refresh the owners list
                                                                             await fetchData();
                                                                             alert('Document deleted successfully!');

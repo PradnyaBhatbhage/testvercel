@@ -96,12 +96,24 @@ const ActivityPayment = () => {
 
             // Filter flats by current user's wing
             const allFlats = flatRes.data || [];
+            let filteredFlats = [];
+            
             if (currentUserWingId !== null) {
-                const filteredFlats = filterByWing(allFlats, currentUserWingId, 'wing_id');
-                setFlats(filteredFlats);
+                filteredFlats = filterByWing(allFlats, currentUserWingId, 'wing_id');
             } else {
-                setFlats(allFlats);
+                filteredFlats = allFlats;
             }
+            
+            // Deduplicate flats by flat_id to prevent duplicate entries in dropdown
+            const uniqueFlatsMap = new Map();
+            filteredFlats.forEach(f => {
+                if (f.flat_id && !uniqueFlatsMap.has(f.flat_id)) {
+                    uniqueFlatsMap.set(f.flat_id, f);
+                }
+            });
+            const uniqueFlats = Array.from(uniqueFlatsMap.values());
+            
+            setFlats(uniqueFlats);
         } catch (err) {
             console.error(err);
             alert("Error fetching dropdown data!");
@@ -328,28 +340,50 @@ const ActivityPayment = () => {
                                 required
                             >
                                 <option value="">Select Flat</option>
-                                {flats.map((f) => {
-                                    // Find owner for this flat
-                                    const owner = owners.find(o => o.flat_id === f.flat_id);
+                                {(() => {
+                                    // Additional deduplication by display text to prevent visual duplicates
+                                    const seenDisplayTexts = new Set();
+                                    const seenFlatIds = new Set();
+                                    const options = [];
                                     
-                                    // Get wing name and flat type name
-                                    const wing = wings.find(w => w.wing_id === f.wing_id);
-                                    const flatType = flatTypes.find(ft => ft.flat_type_id === f.flat_type_id);
+                                    flats.forEach(f => {
+                                        // Skip if flat_id is missing or already seen
+                                        if (!f.flat_id || seenFlatIds.has(f.flat_id)) {
+                                            return;
+                                        }
+                                        
+                                        // Find owner for this flat (get first owner if multiple exist)
+                                        const owner = owners.find(o => o.flat_id === f.flat_id);
+                                        
+                                        // Get wing name and flat type name
+                                        const wing = wings.find(w => w.wing_id === f.wing_id);
+                                        const flatType = flatTypes.find(ft => ft.flat_type_id === f.flat_type_id);
+                                        
+                                        const wingName = owner?.wing_name || wing?.wing_name || 'N/A';
+                                        const flatTypeName = owner?.flat_type_name || flatType?.flat_type_name || 'N/A';
+                                        
+                                        // Format: "Owner Name - Flat No (Wing Name - Flat Type Name)"
+                                        const displayText = owner 
+                                            ? `${owner.owner_name} - ${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`
+                                            : `${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`;
+                                        
+                                        // Skip if display text already seen (additional safety check)
+                                        if (seenDisplayTexts.has(displayText)) {
+                                            return;
+                                        }
+                                        
+                                        seenFlatIds.add(f.flat_id);
+                                        seenDisplayTexts.add(displayText);
+                                        
+                                        options.push(
+                                            <option key={f.flat_id} value={f.flat_id}>
+                                                {displayText}
+                                            </option>
+                                        );
+                                    });
                                     
-                                    const wingName = owner?.wing_name || wing?.wing_name || 'N/A';
-                                    const flatTypeName = owner?.flat_type_name || flatType?.flat_type_name || 'N/A';
-                                    
-                                    // Format: "Owner Name - Flat No (Wing Name - Flat Type Name)"
-                                    const displayText = owner 
-                                        ? `${owner.owner_name} - ${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`
-                                        : `${f.flat_no || 'N/A'} (Wing ${wingName} - ${flatTypeName})`;
-                                    
-                                    return (
-                                        <option key={f.flat_id} value={f.flat_id}>
-                                            {displayText}
-                                        </option>
-                                    );
-                                })}
+                                    return options;
+                                })()}
                             </select>
                         </div>
 

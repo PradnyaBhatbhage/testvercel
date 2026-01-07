@@ -434,80 +434,113 @@ const ExpenseEntry = () => {
             {/* ===== Form ===== */}
             {showForm && (
                 <form className="expense-form" onSubmit={handleSubmit}>
-                    <div className="form-grid">
-                        <select 
-                            name="wing_id" 
-                            value={form.wing_id} 
-                            onChange={handleChange} 
-                            required
-                            disabled={currentUserWingId !== null && wings.length === 1}
-                        >
-                            <option value="">Select Wing</option>
-                            {wings.map((w) => (
-                                <option key={w.wing_id} value={w.wing_id}>
-                                    {w.wing_name}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="form-field">
+                            <label>Wing</label>
+                            <select 
+                                name="wing_id" 
+                                value={form.wing_id} 
+                                onChange={handleChange} 
+                                required
+                                disabled={currentUserWingId !== null && wings.length === 1}
+                            >
+                                <option value="">Select Wing</option>
+                                {wings.map((w) => (
+                                    <option key={w.wing_id} value={w.wing_id}>
+                                        {w.wing_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <select
-                            name="catg_name"
-                            value={uniqueCategories.find(c => c.catg_ids.includes(parseInt(form.catg_id)))?.catg_name || ""}
-                            onChange={handleCategoryChange}
-                            required
-                        >
-                            <option value="">Select Category</option>
-                            {uniqueCategories.map((c) => (
-                                <option key={c.catg_name} value={c.catg_name}>
-                                    {c.catg_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Category</label>
+                            <select
+                                name="catg_name"
+                                value={uniqueCategories.find(c => c.catg_ids.includes(parseInt(form.catg_id)))?.catg_name || ""}
+                                onChange={handleCategoryChange}
+                                required
+                            >
+                                <option value="">Select Category</option>
+                                {uniqueCategories.map((c) => (
+                                    <option key={c.catg_name} value={c.catg_name}>
+                                        {c.catg_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <select
-                            name="subcatg_name"
-                            value={form.subcatg_name}
-                            onChange={handleSubcategoryChange}
-                        >
-                            <option value="">Select Subcategory</option>
-                            {filteredSubcategories.map((s, index) => (
-                                <option key={`${s.catg_id}-${s.subcatg_name}-${index}`} value={s.subcatg_name}>
-                                    {s.subcatg_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Subcategory</label>
+                            <select
+                                name="subcatg_name"
+                                value={form.subcatg_name}
+                                onChange={handleSubcategoryChange}
+                            >
+                                <option value="">Select Subcategory</option>
+                                {filteredSubcategories.map((s, index) => (
+                                    <option key={`${s.catg_id}-${s.subcatg_name}-${index}`} value={s.subcatg_name}>
+                                        {s.subcatg_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
+                        <div className="form-field">
+                            <label>Date</label>
+                            <input type="date" name="date" value={form.date} onChange={handleChange} required />
+                        </div>
 
-                        <input type="date" name="date" value={form.date} onChange={handleChange} required />
-                        <input type="number" name="amount" placeholder="Amount" value={form.amount} onChange={handleChange} required />
-                        <input type="text" name="description" placeholder="Description" value={form.description} onChange={handleChange} />
-                        <select name="frequency" value={form.frequency} onChange={handleChange}>
-                            <option value="">Select Frequency</option>
-                            <option value="One-time">One-time</option>
-                            <option value="Monthly">Monthly</option>
-                            <option value="Quarterly">Quarterly</option>
-                            <option value="Yearly">Yearly</option>
-                            <option value="Weekly">Weekly</option>
-                        </select>
-                        <input type="text" name="paid_to" placeholder="Paid To" value={form.paid_to} onChange={handleChange} />
-                        <select name="payment_mode" value={form.payment_mode} onChange={handleChange}>
-                            <option value="">Select Payment Mode</option>
-                            <option value="Cash">Cash</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Online">Online</option>
-                            <option value="Cheque">Cheque</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="Debit Card">Debit Card</option>
-                        </select>
-                        <select name="payment_status" value={form.payment_status} onChange={handleChange}>
-                            <option value="">Select Status</option>
-                            <option value="Paid">Paid</option>
-                            <option value="Pending">Pending</option>
-                        </select>
-                    </div>
+                        <div className="form-field">
+                            <label>Amount</label>
+                            <input type="number" name="amount" placeholder="Amount" value={form.amount} onChange={handleChange} required />
+                        </div>
 
-                    <div className="form-group full-width">
+                        <div className="form-field">
+                            <label>Description</label>
+                            <input type="text" name="description" placeholder="Description" value={form.description} onChange={handleChange} />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Frequency</label>
+                            <select name="frequency" value={form.frequency} onChange={handleChange}>
+                                <option value="">Select Frequency</option>
+                                <option value="One-time">One-time</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Yearly">Yearly</option>
+                                <option value="Weekly">Weekly</option>
+                            </select>
+                        </div>
+
+                        <div className="form-field">
+                            <label>Paid To</label>
+                            <input type="text" name="paid_to" placeholder="Paid To" value={form.paid_to} onChange={handleChange} />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Payment Mode</label>
+                            <select name="payment_mode" value={form.payment_mode} onChange={handleChange}>
+                                <option value="">Select Payment Mode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                            </select>
+                        </div>
+
+                        <div className="form-field">
+                            <label>Status</label>
+                            <select name="payment_status" value={form.payment_status} onChange={handleChange}>
+                                <option value="">Select Status</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+
+                    <div className="form-field full">
                         <label>Attachments (PDF/JPEG) - Multiple files allowed:</label>
                         <input
                             type="file"

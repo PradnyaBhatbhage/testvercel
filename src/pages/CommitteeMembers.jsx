@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getUsers, getOwners, registerUser, deleteUser, updateUser } from "../services/api";
 import { getCurrentUserWingId } from "../utils/wingFilter";
+import { isOwnerRole } from "../utils/ownerFilter";
 import "../css/CommitteeMembers.css";
 
 const CommitteeMembers = () => {
@@ -380,16 +381,21 @@ const CommitteeMembers = () => {
         );
     }
 
+    // Check if user is owner role
+    const userIsOwner = isOwnerRole();
+
     return (
         <div className="committee-members-container">
             <div className="committee-members-header">
                 <h2>Members</h2>
-                <button
-                    className="add-committee-member-btn"
-                    onClick={() => setShowAddModal(true)}
-                >
-                    + Add Committee Member
-                </button>
+                {!userIsOwner && (
+                    <button
+                        className="add-committee-member-btn"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        + Add Committee Member
+                    </button>
+                )}
             </div>
 
             {error && (
@@ -447,7 +453,7 @@ const CommitteeMembers = () => {
                                     <th>Designation</th>
                                     <th>Contact No.</th>
                                     <th>Email ID</th>
-                                    <th>Actions</th>
+                                    {!userIsOwner && <th>Actions</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -458,23 +464,25 @@ const CommitteeMembers = () => {
                                         <td>{member.designation || "-"}</td>
                                         <td>{member.owner_contactno || "-"}</td>
                                         <td>{member.owner_email || "-"}</td>
-                                        <td>
-                                            <button
-                                                className="edit-btn"
-                                                onClick={() => handleEditDesignation(member)}
-                                                title="Edit Designation"
-                                                style={{ marginRight: '5px' }}
-                                            >
-                                                ✏️ Edit
-                                            </button>
-                                            <button
-                                                className="delete-btn"
-                                                onClick={() => handleDeleteCommitteeMember(member.user_id, member.owner_name || member.user_name)}
-                                                title="Delete Committee Member"
-                                            >
-                                                🗑️ Delete
-                                            </button>
-                                        </td>
+                                        {!userIsOwner && (
+                                            <td>
+                                                <button
+                                                    className="edit-btn"
+                                                    onClick={() => handleEditDesignation(member)}
+                                                    title="Edit Designation"
+                                                    style={{ marginRight: '5px' }}
+                                                >
+                                                    ✏️ Edit
+                                                </button>
+                                                <button
+                                                    className="delete-btn"
+                                                    onClick={() => handleDeleteCommitteeMember(member.user_id, member.owner_name || member.user_name)}
+                                                    title="Delete Committee Member"
+                                                >
+                                                    🗑️ Delete
+                                                </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>

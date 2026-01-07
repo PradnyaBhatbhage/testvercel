@@ -64,17 +64,32 @@
 
 /* Form */
 .expense-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
     background: var(--surface);
-    padding: 25px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
 }
 
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-field.full {
+    grid-column: 1 / -1;
+}
+
+.form-field label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
 }
 
 .expense-form input,
@@ -83,6 +98,8 @@
     border-radius: 5px;
     border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .button-group {
@@ -266,9 +283,9 @@
         width: 100%;
     }
 
-    .form-grid {
+    .expense-form {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 16px;
     }
 
     .expense-table td {

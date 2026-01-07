@@ -111,7 +111,7 @@ const MaintenanceDetail = () => {
         let filteredOwners = rawOwners;
         let filteredRates = rawRates;
         let filteredDetails = rawDetails;
-        
+
         if (currentUserWingId !== null) {
             // Filter owners by wing
             filteredOwners = filterOwnersByWing(rawOwners, currentUserWingId);
@@ -120,13 +120,13 @@ const MaintenanceDetail = () => {
             // Filter details by owner's wing (use rawOwners to check all owners' wings)
             filteredDetails = filterMaintenanceDetailsByWing(rawDetails, rawOwners, currentUserWingId);
         }
-        
+
         // Filter by owner_id if user is owner role
         if (isOwnerRole()) {
             filteredOwners = filterOwnersByCurrentOwner(filteredOwners);
             filteredDetails = filterMaintenanceByCurrentOwner(filteredDetails);
         }
-        
+
         setOwners(filteredOwners);
         setRates(filteredRates);
         setDetails(filteredDetails);
@@ -708,12 +708,12 @@ const MaintenanceDetail = () => {
                         <button
                             className="btn-generate-bills"
                             onClick={() => setBillGenerationModal(prev => ({ ...prev, show: true }))}
-                            style={{ 
-                                backgroundColor: '#28a745', 
-                                color: 'white', 
-                                padding: '10px 20px', 
-                                border: 'none', 
-                                borderRadius: '5px', 
+                            style={{
+                                backgroundColor: '#28a745',
+                                color: 'white',
+                                padding: '10px 20px',
+                                border: 'none',
+                                borderRadius: '5px',
                                 cursor: 'pointer',
                                 marginLeft: '10px'
                             }}
@@ -738,82 +738,98 @@ const MaintenanceDetail = () => {
                         <h3>{isEditing ? "Edit Maintenance" : "Add New Maintenance"}</h3>
                     </div>
                     <div className="form-section">
-                        <label>Owner</label>
-                        <select value={form.owner_id} onChange={(e) => handleOwnerSelect(e.target.value)}>
-                            <option value="">Select Owner</option>
-                            {owners.map((o) => (
-                                <option key={o.owner_id} value={o.owner_id}>
-                                    {o.owner_name} - {o.flat_no || 'N/A'} ({o.wing_name || 'N/A'} - {o.flat_type_name})
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Owner</label>
+                            <select value={form.owner_id} onChange={(e) => handleOwnerSelect(e.target.value)}>
+                                <option value="">Select Owner</option>
+                                {owners.map((o) => (
+                                    <option key={o.owner_id} value={o.owner_id}>
+                                        {o.owner_name} - {o.flat_no || 'N/A'} ({o.wing_name || 'N/A'} - {o.flat_type_name})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <label>Rate (Auto-selected by BHK)</label>
-                        <select value={form.rate_id} disabled>
-                            <option value="">Rate</option>
-                            {rates.map((r) => (
-                                <option key={r.rate_id} value={r.rate_id}>
-                                    ₹{r.amount} ({r.flat_type_id} BHK)
-                                </option>
-                            ))}
-                        </select>
+                        <div className="form-field">
+                            <label>Rate (Auto-selected by BHK)</label>
+                            <select value={form.rate_id} disabled>
+                                <option value="">Rate</option>
+                                {rates.map((r) => (
+                                    <option key={r.rate_id} value={r.rate_id}>
+                                        ₹{r.amount} ({r.flat_type_id} BHK)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <label>Bill Start Date</label>
-                        <input
-                            type="date"
-                            value={form.bill_start_date}
-                            onChange={(e) => setForm({ ...form, bill_start_date: e.target.value })}
-                        />
+                        <div className="form-field">
+                            <label>Bill Start Date</label>
+                            <input
+                                type="date"
+                                value={form.bill_start_date}
+                                onChange={(e) => setForm({ ...form, bill_start_date: e.target.value })}
+                            />
+                        </div>
 
-                        <label>Bill End Date</label>
-                        <input
-                            type="date"
-                            value={form.bill_end_date}
-                            onChange={(e) => setForm({ ...form, bill_end_date: e.target.value })}
-                        />
+                        <div className="form-field">
+                            <label>Bill End Date</label>
+                            <input
+                                type="date"
+                                value={form.bill_end_date}
+                                onChange={(e) => setForm({ ...form, bill_end_date: e.target.value })}
+                            />
+                        </div>
 
-                        <label>Bill Duration (Months)</label>
-                        <input
-                            type="number"
-                            value={form.bill_duration}
-                            readOnly
-                        />
+                        <div className="form-field">
+                            <label>Bill Duration (Months)</label>
+                            <input
+                                type="number"
+                                value={form.bill_duration}
+                                readOnly
+                            />
+                        </div>
 
-                        <label>Paid Amount</label>
-                        <input
-                            type="number"
-                            placeholder="Paid Amount"
-                            value={form.paid_amount}
-                            onChange={(e) => handlePaidAmount(e.target.value)}
-                        />
+                        <div className="form-field">
+                            <label>Paid Amount</label>
+                            <input
+                                type="number"
+                                placeholder="Paid Amount"
+                                value={form.paid_amount}
+                                onChange={(e) => handlePaidAmount(e.target.value)}
+                            />
+                        </div>
 
-                        <label>Payment Mode</label>
-                        <select
-                            value={form.payment_mode}
-                            onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
-                        >
-                            <option value="">Select Payment Mode</option>
-                            <option value="Cash">Cash</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Online">Online</option>
-                            <option value="Cheque">Cheque</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="Debit Card">Debit Card</option>
-                        </select>
+                        <div className="form-field">
+                            <label>Payment Mode</label>
+                            <select
+                                value={form.payment_mode}
+                                onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
+                            >
+                                <option value="">Select Payment Mode</option>
+                                <option value="Cash">Cash</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                            </select>
+                        </div>
 
-                        <label>Penalty</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Enter penalty amount"
-                            value={form.penalty || 0}
-                            onChange={(e) => {
-                                const penalty = Number(e.target.value) || 0;
-                                setForm({ ...form, penalty });
-                            }}
-                        />
+                        <div className="form-field">
+                            <label>Penalty</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Enter penalty amount"
+                                value={form.penalty || 0}
+                                onChange={(e) => {
+                                    const penalty = Number(e.target.value) || 0;
+                                    setForm({ ...form, penalty });
+                                }}
+                            />
+                        </div>
 
                         <div className="summary-box">
                             <p><b>Rate Amount (per month):</b> ₹{totalRateAmount.toFixed(2)}</p>
@@ -1297,7 +1313,7 @@ const MaintenanceDetail = () => {
                                 onClick={async () => {
                                     const maintainId = receiptMethodModal.maintainId;
                                     setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' });
-                                    
+
                                     try {
                                         await sendReceiptByEmail(maintainId);
                                         alert("Receipt sent successfully via Email!");
@@ -1316,7 +1332,7 @@ const MaintenanceDetail = () => {
                                 onClick={async () => {
                                     const maintainId = receiptMethodModal.maintainId;
                                     setReceiptMethodModal({ show: false, maintainId: null, ownerId: null, status: '' });
-                                    
+
                                     try {
                                         const response = await sendReceiptByWhatsApp(maintainId);
                                         const data = response.data || response;
@@ -1572,7 +1588,7 @@ const MaintenanceDetail = () => {
                                             billGenerationModal.sendWhatsApp
                                         );
                                         const data = response.data || response;
-                                        
+
                                         alert(
                                             `Bill Generation Completed!\n\n` +
                                             `Generated: ${data.results?.generated || 0}\n` +
@@ -1581,7 +1597,7 @@ const MaintenanceDetail = () => {
                                             (billGenerationModal.sendEmail ? `Emails Sent: ${data.results?.emailsSent || 0}\n` : '') +
                                             (billGenerationModal.sendWhatsApp ? `WhatsApp Sent: ${data.results?.whatsappSent || 0}` : '')
                                         );
-                                        
+
                                         setBillGenerationModal(prev => ({ ...prev, show: false, loading: false }));
                                         fetchData(); // Refresh the data
                                     } catch (error) {

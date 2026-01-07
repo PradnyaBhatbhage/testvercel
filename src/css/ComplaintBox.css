@@ -65,25 +65,29 @@
 
 /* Form */
 .complaint-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
     background: var(--surface);
-    padding: 25px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
 }
 
 .complaint-form h3 {
+    grid-column: 1 / -1;
     color: var(--primary);
     margin: 0 0 20px 0;
     font-size: 20px;
     font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(2, 62, 138, 0.06);
 }
 
 .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
+    display: contents;
 }
 
 .form-field {
@@ -374,7 +378,7 @@
         width: 100%;
     }
 
-    .form-grid {
+    .complaint-form {
         grid-template-columns: 1fr;
     }
 

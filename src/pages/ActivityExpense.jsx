@@ -54,9 +54,44 @@ const ActivityExpense = () => {
         fetchActivities();
     }, []);
 
+    // ===== Generate Bill Number =====
+    const generateBillNo = (activityId) => {
+        if (!activityId) return "";
+        
+        // Get current date
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        
+        // Find all expenses for this activity in the current month
+        const currentMonthExpenses = expenses.filter(exp => {
+            if (parseInt(exp.activity_id) !== parseInt(activityId)) return false;
+            
+            // Check if expense was created this month (if created_at exists)
+            if (exp.created_at) {
+                const expDate = new Date(exp.created_at);
+                return expDate.getFullYear() === year && expDate.getMonth() + 1 === parseInt(month);
+            }
+            return true; // If no created_at, include it
+        });
+        
+        // Generate sequential number
+        const nextNumber = currentMonthExpenses.length + 1;
+        
+        // Format: ACT-{activity_id}-{YYYYMM}-{sequential_number}
+        return `ACT-${activityId}-${year}${month}-${String(nextNumber).padStart(3, '0')}`;
+    };
+
     // ===== Handle Input Change =====
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const updatedFormData = { ...formData, [e.target.name]: e.target.value };
+        
+        // Auto-generate bill number when activity is selected (only for new entries)
+        if (e.target.name === 'activity_id' && !editingId && e.target.value) {
+            updatedFormData.bill_no = generateBillNo(e.target.value);
+        }
+        
+        setFormData(updatedFormData);
     };
 
     const handleFileChange = (e) => {
@@ -268,7 +303,18 @@ const ActivityExpense = () => {
             {!showForm && (
                 <div className="expense-controls">
                     {canEdit() && (
-                        <button className="new-entry-btn" onClick={() => setShowForm(true)}>
+                        <button className="new-entry-btn" onClick={() => {
+                            // Reset form and generate initial bill number if activity is pre-selected
+                            setFormData({
+                                activity_id: "",
+                                bill_no: "",
+                                particulars: "",
+                                amount: "",
+                                payment_mode: "",
+                                description: "",
+                            });
+                            setShowForm(true);
+                        }}>
                             New Entry
                         </button>
                     )}
@@ -312,6 +358,8 @@ const ActivityExpense = () => {
                                 value={formData.bill_no}
                                 onChange={handleChange}
                                 required
+                                readOnly={!editingId}
+                                style={!editingId ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 

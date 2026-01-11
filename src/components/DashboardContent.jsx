@@ -293,12 +293,17 @@ const DashboardContent = ({ user }) => {
     }, [fetchDashboardData]);
 
     // Prepare data for pie charts
-    const financialData = [
-        { name: 'Maintenance Collected', value: stats.totalMaintenanceCollected },
-        { name: 'Maintenance Pending', value: stats.totalMaintenancePending },
-        { name: 'Total Expenses', value: stats.totalExpenseAmount },
-        { name: 'Activity Expenses', value: stats.totalActivityExpenseAmount },
-    ].filter(item => item.value > 0);
+    // For owners, exclude Maintenance Collected, Total Expenses, and Activity Expenses
+    const financialData = isOwnerRole() 
+        ? [
+            { name: 'Maintenance Pending', value: stats.totalMaintenancePending },
+        ].filter(item => item.value > 0)
+        : [
+            { name: 'Maintenance Collected', value: stats.totalMaintenanceCollected },
+            { name: 'Maintenance Pending', value: stats.totalMaintenancePending },
+            { name: 'Total Expenses', value: stats.totalExpenseAmount },
+            { name: 'Activity Expenses', value: stats.totalActivityExpenseAmount },
+        ].filter(item => item.value > 0);
 
     const entityData = [
         { name: 'Owners', value: stats.totalOwners },
@@ -393,11 +398,13 @@ const DashboardContent = ({ user }) => {
                     <div className="stat-label">Total Maintenance</div>
                 </div>
 
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}>
-                    <div className="stat-icon">💸</div>
-                    <div className="stat-value">{formatCurrency(stats.totalExpenseAmount)}</div>
-                    <div className="stat-label">Total Expenses</div>
-                </div>
+                {!isOwnerRole() && (
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}>
+                        <div className="stat-icon">💸</div>
+                        <div className="stat-value">{formatCurrency(stats.totalExpenseAmount)}</div>
+                        <div className="stat-label">Total Expenses</div>
+                    </div>
+                )}
 
                 <div className="stat-card" style={{ background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' }}>
                     <div className="stat-icon">🎯</div>
@@ -405,39 +412,52 @@ const DashboardContent = ({ user }) => {
                     <div className="stat-label">Activity Payments Received</div>
                 </div>
 
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' }}>
-                    <div className="stat-icon">📊</div>
-                    <div className="stat-value">{formatCurrency(stats.totalActivityExpenseAmount)}</div>
-                    <div className="stat-label">Activity Expenses</div>
-                </div>
+                {!isOwnerRole() && (
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' }}>
+                        <div className="stat-icon">📊</div>
+                        <div className="stat-value">{formatCurrency(stats.totalActivityExpenseAmount)}</div>
+                        <div className="stat-label">Activity Expenses</div>
+                    </div>
+                )}
 
                 <div className="stat-card" style={{ background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' }}>
                     <div className="stat-icon">📅</div>
                     <div className="stat-value">{stats.totalMeetings}</div>
                     <div className="stat-label">Total Meetings</div>
                 </div>
+
+                {/* For owners: show Maintenance Pending as a normal card (not a full-width single row) */}
+                {isOwnerRole() && (
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' }}>
+                        <div className="stat-icon">⏳</div>
+                        <div className="stat-value">{formatCurrency(stats.totalMaintenancePending)}</div>
+                        <div className="stat-label">Maintenance Pending</div>
+                    </div>
+                )}
             </div>
 
             {/* Additional Financial Stats */}
-            <div className="stats-grid" style={{ marginTop: '20px' }}>
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)' }}>
-                    <div className="stat-icon">✅</div>
-                    <div className="stat-value">{formatCurrency(stats.totalMaintenanceCollected)}</div>
-                    <div className="stat-label">Maintenance Collected</div>
-                </div>
+            {!isOwnerRole() && (
+                <div className="stats-grid" style={{ marginTop: '20px' }}>
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)' }}>
+                        <div className="stat-icon">✅</div>
+                        <div className="stat-value">{formatCurrency(stats.totalMaintenanceCollected)}</div>
+                        <div className="stat-label">Maintenance Collected</div>
+                    </div>
 
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' }}>
-                    <div className="stat-icon">⏳</div>
-                    <div className="stat-value">{formatCurrency(stats.totalMaintenancePending)}</div>
-                    <div className="stat-label">Maintenance Pending</div>
-                </div>
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' }}>
+                        <div className="stat-icon">⏳</div>
+                        <div className="stat-value">{formatCurrency(stats.totalMaintenancePending)}</div>
+                        <div className="stat-label">Maintenance Pending</div>
+                    </div>
 
-                <div className="stat-card" style={{ background: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }}>
-                    <div className="stat-icon">📈</div>
-                    <div className="stat-value">{formatCurrency(stats.totalMaintenanceCollected - stats.totalExpenseAmount - stats.totalActivityExpenseAmount)}</div>
-                    <div className="stat-label">Net Balance</div>
+                    <div className="stat-card" style={{ background: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }}>
+                        <div className="stat-icon">📈</div>
+                        <div className="stat-value">{formatCurrency(stats.totalMaintenanceCollected - stats.totalExpenseAmount - stats.totalActivityExpenseAmount)}</div>
+                        <div className="stat-label">Net Balance</div>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Pie Charts Section */}
             <div className="charts-section">
@@ -502,69 +522,71 @@ const DashboardContent = ({ user }) => {
                 </div>
             </div>
 
-            {/* Detailed Breakdown */}
-            <div className="breakdown-section">
-                <h3>📋 Detailed Breakdown</h3>
-                <div className="breakdown-grid">
-                    <div className="breakdown-card">
-                        <h4>Maintenance Summary</h4>
-                        <div className="breakdown-item">
-                            <span>Total Amount:</span>
-                            <strong>{formatCurrency(stats.totalMaintenanceAmount)}</strong>
+            {/* Detailed Breakdown - Hidden for owners */}
+            {!isOwnerRole() && (
+                <div className="breakdown-section">
+                    <h3>📋 Detailed Breakdown</h3>
+                    <div className="breakdown-grid">
+                        <div className="breakdown-card">
+                            <h4>Maintenance Summary</h4>
+                            <div className="breakdown-item">
+                                <span>Total Amount:</span>
+                                <strong>{formatCurrency(stats.totalMaintenanceAmount)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Collected:</span>
+                                <strong style={{ color: '#00C49F' }}>{formatCurrency(stats.totalMaintenanceCollected)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Pending:</span>
+                                <strong style={{ color: '#FF8042' }}>{formatCurrency(stats.totalMaintenancePending)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Collection Rate:</span>
+                                <strong>
+                                    {stats.totalMaintenanceAmount > 0
+                                        ? `${((stats.totalMaintenanceCollected / stats.totalMaintenanceAmount) * 100).toFixed(1)}%`
+                                        : '0%'}
+                                </strong>
+                            </div>
                         </div>
-                        <div className="breakdown-item">
-                            <span>Collected:</span>
-                            <strong style={{ color: '#00C49F' }}>{formatCurrency(stats.totalMaintenanceCollected)}</strong>
-                        </div>
-                        <div className="breakdown-item">
-                            <span>Pending:</span>
-                            <strong style={{ color: '#FF8042' }}>{formatCurrency(stats.totalMaintenancePending)}</strong>
-                        </div>
-                        <div className="breakdown-item">
-                            <span>Collection Rate:</span>
-                            <strong>
-                                {stats.totalMaintenanceAmount > 0
-                                    ? `${((stats.totalMaintenanceCollected / stats.totalMaintenanceAmount) * 100).toFixed(1)}%`
-                                    : '0%'}
-                            </strong>
-                        </div>
-                    </div>
 
-                    <div className="breakdown-card">
-                        <h4>Expense Summary</h4>
-                        <div className="breakdown-item">
-                            <span>Total Expenses:</span>
-                            <strong>{formatCurrency(stats.totalExpenseAmount)}</strong>
+                        <div className="breakdown-card">
+                            <h4>Expense Summary</h4>
+                            <div className="breakdown-item">
+                                <span>Total Expenses:</span>
+                                <strong>{formatCurrency(stats.totalExpenseAmount)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Activity Expenses:</span>
+                                <strong>{formatCurrency(stats.totalActivityExpenseAmount)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Total Expenses:</span>
+                                <strong>{formatCurrency(stats.totalExpenseAmount + stats.totalActivityExpenseAmount)}</strong>
+                            </div>
                         </div>
-                        <div className="breakdown-item">
-                            <span>Activity Expenses:</span>
-                            <strong>{formatCurrency(stats.totalActivityExpenseAmount)}</strong>
-                        </div>
-                        <div className="breakdown-item">
-                            <span>Total Expenses:</span>
-                            <strong>{formatCurrency(stats.totalExpenseAmount + stats.totalActivityExpenseAmount)}</strong>
-                        </div>
-                    </div>
 
-                    <div className="breakdown-card">
-                        <h4>Activity Summary</h4>
-                        <div className="breakdown-item">
-                            <span>Activity Payments Received:</span>
-                            <strong>{formatCurrency(stats.totalActivityAmount)}</strong>
-                        </div>
-                        <div className="breakdown-item">
-                            <span>Activity Expenses:</span>
-                            <strong>{formatCurrency(stats.totalActivityExpenseAmount)}</strong>
-                        </div>
-                        <div className="breakdown-item">
-                            <span>Net Activity Profit:</span>
-                            <strong style={{ color: stats.totalActivityAmount - stats.totalActivityExpenseAmount >= 0 ? '#00C49F' : '#FF8042' }}>
-                                {formatCurrency(stats.totalActivityAmount - stats.totalActivityExpenseAmount)}
-                            </strong>
+                        <div className="breakdown-card">
+                            <h4>Activity Summary</h4>
+                            <div className="breakdown-item">
+                                <span>Activity Payments Received:</span>
+                                <strong>{formatCurrency(stats.totalActivityAmount)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Activity Expenses:</span>
+                                <strong>{formatCurrency(stats.totalActivityExpenseAmount)}</strong>
+                            </div>
+                            <div className="breakdown-item">
+                                <span>Net Activity Profit:</span>
+                                <strong style={{ color: stats.totalActivityAmount - stats.totalActivityExpenseAmount >= 0 ? '#00C49F' : '#FF8042' }}>
+                                    {formatCurrency(stats.totalActivityAmount - stats.totalActivityExpenseAmount)}
+                                </strong>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

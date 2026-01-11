@@ -666,60 +666,64 @@ const MaintenanceDetail = () => {
                         </button>
                     )}
                     <div className="maintenance-controls-right">
-                        <button
-                            className="send-reminders-btn"
-                            onClick={async () => {
-                                if (window.confirm("Generate WhatsApp links for payment reminders to all owners with pending payments?")) {
-                                    try {
-                                        const response = await sendMonthlyReminders();
-                                        const data = response.data || response;
+                        {!isOwnerRole() && (
+                            <>
+                                <button
+                                    className="send-reminders-btn"
+                                    onClick={async () => {
+                                        if (window.confirm("Generate WhatsApp links for payment reminders to all owners with pending payments?")) {
+                                            try {
+                                                const response = await sendMonthlyReminders();
+                                                const data = response.data || response;
 
-                                        if (data.reminderLinks && data.reminderLinks.length > 0) {
-                                            // Show modal with all reminder links
-                                            setRemindersModal({
-                                                show: true,
-                                                reminderLinks: data.reminderLinks
-                                            });
-                                        } else {
-                                            let message = `No reminders to send!\n\n`;
-                                            message += `✅ Processed: ${data.remindersSent || 0}\n`;
-                                            message += `❌ Failed: ${data.failed || 0}\n`;
-                                            message += `📊 Total: ${data.totalOwners || 0}`;
+                                                if (data.reminderLinks && data.reminderLinks.length > 0) {
+                                                    // Show modal with all reminder links
+                                                    setRemindersModal({
+                                                        show: true,
+                                                        reminderLinks: data.reminderLinks
+                                                    });
+                                                } else {
+                                                    let message = `No reminders to send!\n\n`;
+                                                    message += `✅ Processed: ${data.remindersSent || 0}\n`;
+                                                    message += `❌ Failed: ${data.failed || 0}\n`;
+                                                    message += `📊 Total: ${data.totalOwners || 0}`;
 
-                                            if (data.failedOwners && data.failedOwners.length > 0) {
-                                                message += `\n\nFailed owners:\n`;
-                                                data.failedOwners.slice(0, 5).forEach(owner => {
-                                                    message += `- ${owner.owner_name} (${owner.flat_no}): ${owner.reason}\n`;
-                                                });
+                                                    if (data.failedOwners && data.failedOwners.length > 0) {
+                                                        message += `\n\nFailed owners:\n`;
+                                                        data.failedOwners.slice(0, 5).forEach(owner => {
+                                                            message += `- ${owner.owner_name} (${owner.flat_no}): ${owner.reason}\n`;
+                                                        });
+                                                    }
+
+                                                    alert(message);
+                                                }
+                                            } catch (error) {
+                                                console.error("Error sending reminders:", error);
+                                                const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to generate reminder links. Please try again later.";
+                                                alert(`Failed to generate reminder links.\n\n${errorMessage}`);
                                             }
-
-                                            alert(message);
                                         }
-                                    } catch (error) {
-                                        console.error("Error sending reminders:", error);
-                                        const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to generate reminder links. Please try again later.";
-                                        alert(`Failed to generate reminder links.\n\n${errorMessage}`);
-                                    }
-                                }
-                            }}
-                        >
-                            📱 Send Reminders
-                        </button>
-                        <button
-                            className="btn-generate-bills"
-                            onClick={() => setBillGenerationModal(prev => ({ ...prev, show: true }))}
-                            style={{
-                                backgroundColor: '#28a745',
-                                color: 'white',
-                                padding: '10px 20px',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                marginLeft: '10px'
-                            }}
-                        >
-                            ⚡ Generate Bills Automatically
-                        </button>
+                                    }}
+                                >
+                                    📱 Send Reminders
+                                </button>
+                                <button
+                                    className="btn-generate-bills"
+                                    onClick={() => setBillGenerationModal(prev => ({ ...prev, show: true }))}
+                                    style={{
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        padding: '10px 20px',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        marginLeft: '10px'
+                                    }}
+                                >
+                                    ⚡ Generate Bills Automatically
+                                </button>
+                            </>
+                        )}
                         <div className="search-bar">
                             <input
                                 type="text"
